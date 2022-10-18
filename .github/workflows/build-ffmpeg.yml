@@ -1,0 +1,173 @@
+---
+name: Build ffmpeg
+
+on:
+  pull_request:
+    branches: [master, nightly]
+    types: [opened, synchronize, edited, reopened]
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  linux:
+    name: "Linux"
+    runs-on: ubuntu-22.04
+    # https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
+
+    steps:
+      - name: Checkout dependency branch
+        uses: actions/checkout@v3
+        with:
+          ref: ffmpeg-${{ GITHUB.RUNNER_OS }}
+          path: ffmpeg-${{ GITHUB.RUNNER_OS }}
+          persist-credentials: false  # otherwise, the token used is the GITHUB_TOKEN, instead of the personal token
+          fetch-depth: 0  # otherwise, will fail to push refs to dest repo
+
+      - name: Setup Dependencies
+        run: |
+          sudo apt-get update -qq && sudo apt-get -y install \
+            autoconf \
+            automake \
+            build-essential \
+            cmake \
+            git-core \
+            libass-dev \
+            libfreetype6-dev \
+            libgnutls28-dev \
+            libmp3lame-dev \
+            libsdl2-dev \
+            libtool \
+            libva-dev \
+            libvdpau-dev \
+            libvorbis-dev \
+            libxcb1-dev \
+            libxcb-shm0-dev \
+            libxcb-xfixes0-dev \
+            meson \
+            ninja-build \
+            pkg-config \
+            texinfo \
+            wget \
+            yasm \
+            zlib1g-dev
+
+          # NASM
+          sudo apt-get install nasm
+
+          # libopus
+          sudo apt-get install libopus-dev
+
+          # libx264... build from source to enable static library
+          # sudo apt-get install libx264-dev
+
+          # libx265... build from source to enable static library
+          # sudo apt-get install libx265-dev libnuma-dev
+
+      - name: Create Directories
+        run: |
+          mkdir -p ~/ffmpeg_sources ~/bin
+
+      - name: libx264  # do we need to build this or can we just install it? https://packages.ubuntu.com/kinetic/libx264-dev
+        working-directory: ~/ffmpeg_sources
+        run: |
+          git -C x264 pull 2> /dev/null || git clone --depth 1 https://code.videolan.org/videolan/x264.git
+          cd x264
+          PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig" ./configure \
+            --prefix="$HOME/ffmpeg_build" \
+            --bindir="$HOME/bin" \
+            --disable-cli \
+            --enable-shared
+          PATH="$HOME/bin:$PATH" make -j$(nproc)
+          make install
+
+      - name: libx265  # do we need to build this or can we just install it? https://packages.ubuntu.com/kinetic/libx265-dev
+        working-directory: ~/ffmpeg_sources
+        run: |
+          wget -O x265.tar.bz2 https://bitbucket.org/multicoreware/x265_git/get/master.tar.bz2
+          tar xjvf x265.tar.bz2
+          cd multicoreware*/build/linux
+          PATH="$HOME/bin:$PATH" cmake -G "Unix Makefiles" \
+            -DCMAKE_INSTALL_PREFIX="$HOME/ffmpeg_build" \
+            -DENABLE_CLI=off \
+            -DENABLE_SHARED=on \
+            ../../source
+          PATH="$HOME/bin:$PATH" make -j$(nproc)
+          make install
+
+      - name: nvenc  # do we need to build this or can we just install it? https://packages.ubuntu.com/jammy/libffmpeg-nvenc-dev
+        # https://trac.ffmpeg.org/wiki/HWAccelIntro#NVENC
+        run: |
+          git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
+          cd nv-codec-headers
+          make -j$(nproc)
+          sudo make install
+
+      - name: ffmpeg
+        working-directory: ~/ffmpeg_sources
+        run: |
+          wget -O ffmpeg-snapshot.tar.bz2 https://ffmpeg.org/releases/ffmpeg-snapshot.tar.bz2
+          tar xjvf ffmpeg-snapshot.tar.bz2
+          cd ffmpeg
+          PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig" ./configure \
+            --prefix="$HOME/ffmpeg_build" \
+            --pkg-config-flags="--static" \
+            --extra-cflags="-I$HOME/ffmpeg_build/include" \
+            --extra-ldflags="-L$HOME/ffmpeg_build/lib" \
+            --extra-libs="-lpthread -lm" \
+            --ld="g++" \
+            --bindir="$HOME/bin" \
+            --disable-audiotoolbox \
+            --disable-autodetect \
+            --disable-avfilter \
+            --disable-decoders \
+            --disable-doc \
+            --disable-filters \
+            --disable-postproc \
+            --disable-programs \
+            --disable-sdl2 \
+            --disable-static \
+            --disable-videotoolbox \
+            --disable-vdpau \
+            --disable-vulkan \
+            --enable-ffnvcodec \
+            --enable-gpl \
+            --enable-nvenc \
+            --enable-shared \
+            --enable-vaapi
+          PATH="$HOME/bin:$PATH" make -j$(nproc)
+          make install
+          hash -r
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ffmpeg-linux
+          path: |
+            ~/ffmpeg_build/
+            # ~/ffmpeg_build/include/
+            # ~/ffmpeg_build/lib/
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Prepare dependency branch
+        run: |
+          # empty contents
+          rm -f -r ./ffmpeg-${{ GITHUB.RUNNER_OS }}/*
+
+          # copy build back to dependency branch
+          cp -f -r ~/ffmpeg_build/. ./ffmpeg-${{ GITHUB.RUNNER_OS }}/
+
+#      - name: Commit build
+#        if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'workflow_dispatch') }}  # yamllint disable-line rule:line-length
+#        uses: actions-js/push@v1.3
+#        with:
+#          github_token: ${{ secrets.GH_BOT_TOKEN }}
+#          author_email: ${{ secrets.GH_BOT_EMAIL }}
+#          author_name: ${{ secrets.GH_BOT_NAME }}
+#          directory: ffmpeg-${{ GITHUB.RUNNER_OS }}
+#          branch: ffmpeg-${{ GITHUB.RUNNER_OS }}
+#          force: false
+#          message: update-${{ steps.date.outputs.date }}
