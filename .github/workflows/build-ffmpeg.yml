@@ -19,8 +19,8 @@ jobs:
       - name: Checkout dependency branch
         uses: actions/checkout@v3
         with:
-          ref: ffmpeg-${{ GITHUB.RUNNER_OS }}
-          path: ffmpeg-${{ GITHUB.RUNNER_OS }}
+          ref: ffmpeg-${{ runner.os }}
+          path: ffmpeg-${{ runner.os }}
           persist-credentials: false  # otherwise, the token used is the GITHUB_TOKEN, instead of the personal token
           fetch-depth: 0  # otherwise, will fail to push refs to dest repo
 
@@ -155,10 +155,10 @@ jobs:
       - name: Prepare dependency branch
         run: |
           # empty contents
-          rm -f -r ./ffmpeg-${{ GITHUB.RUNNER_OS }}/*
+          rm -f -r ./ffmpeg-${{ runner.os }}/*
 
           # copy build back to dependency branch
-          cp -f -r ~/ffmpeg_build/. ./ffmpeg-${{ GITHUB.RUNNER_OS }}/
+          cp -f -r ~/ffmpeg_build/. ./ffmpeg-${{ runner.os }}/
 
 #      - name: Commit build
 #        if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'workflow_dispatch') }}  # yamllint disable-line rule:line-length
@@ -167,7 +167,7 @@ jobs:
 #          github_token: ${{ secrets.GH_BOT_TOKEN }}
 #          author_email: ${{ secrets.GH_BOT_EMAIL }}
 #          author_name: ${{ secrets.GH_BOT_NAME }}
-#          directory: ffmpeg-${{ GITHUB.RUNNER_OS }}
-#          branch: ffmpeg-${{ GITHUB.RUNNER_OS }}
+#          directory: ffmpeg-${{ runner.os }}
+#          branch: ffmpeg-${{ runner.os }}
 #          force: false
 #          message: update-${{ steps.date.outputs.date }}
