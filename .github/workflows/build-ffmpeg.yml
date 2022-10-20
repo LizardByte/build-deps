@@ -132,6 +132,8 @@ jobs:
             --disable-vulkan \
             --enable-ffnvcodec \
             --enable-gpl \
+            --enable-libx264 \
+            --enable-libx265 \
             --enable-nvenc \
             --enable-shared \
             --enable-vaapi
