@@ -68,7 +68,8 @@ jobs:
         run: |
           mkdir -p ~/ffmpeg_sources ~/bin
 
-      - name: libx264  # do we need to build this or can we just install it? https://packages.ubuntu.com/kinetic/libx264-dev
+      - name: libx264
+        # do we need to build this or can we just install it? https://packages.ubuntu.com/kinetic/libx264-dev
         run: |
           cd ~/ffmpeg_sources
           git -C x264 pull 2> /dev/null || git clone --depth 1 https://code.videolan.org/videolan/x264.git
@@ -81,7 +82,8 @@ jobs:
           PATH="$HOME/bin:$PATH" make -j$(nproc)
           make install
 
-      - name: libx265  # do we need to build this or can we just install it? https://packages.ubuntu.com/kinetic/libx265-dev
+      - name: libx265
+        # do we need to build this or can we just install it? https://packages.ubuntu.com/kinetic/libx265-dev
         run: |
           cd ~/ffmpeg_sources
           wget -O x265.tar.bz2 https://bitbucket.org/multicoreware/x265_git/get/master.tar.bz2
@@ -95,7 +97,8 @@ jobs:
           PATH="$HOME/bin:$PATH" make -j$(nproc)
           make install
 
-      - name: nvenc  # do we need to build this or can we just install it? https://packages.ubuntu.com/jammy/libffmpeg-nvenc-dev
+      - name: nvenc
+        # do we need to build this or can we just install it? https://packages.ubuntu.com/jammy/libffmpeg-nvenc-dev
         # https://trac.ffmpeg.org/wiki/HWAccelIntro#NVENC
         run: |
           git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
@@ -162,14 +165,14 @@ jobs:
           # copy build back to dependency branch
           cp -f -r ~/ffmpeg_build/. ./ffmpeg-${{ runner.os }}/
 
-#      - name: Commit build
-#        if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'workflow_dispatch') }}  # yamllint disable-line rule:line-length
-#        uses: actions-js/push@v1.3
-#        with:
-#          github_token: ${{ secrets.GH_BOT_TOKEN }}
-#          author_email: ${{ secrets.GH_BOT_EMAIL }}
-#          author_name: ${{ secrets.GH_BOT_NAME }}
-#          directory: ffmpeg-${{ runner.os }}
-#          branch: ffmpeg-${{ runner.os }}
-#          force: false
-#          message: update-${{ steps.date.outputs.date }}
+      - name: Commit build
+        if: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}  # yamllint disable-line rule:line-length
+        uses: actions-js/push@v1.3
+        with:
+          github_token: ${{ secrets.GH_BOT_TOKEN }}
+          author_email: ${{ secrets.GH_BOT_EMAIL }}
+          author_name: ${{ secrets.GH_BOT_NAME }}
+          directory: ffmpeg-${{ runner.os }}
+          branch: ffmpeg-${{ runner.os }}
+          force: false
+          message: update-${{ steps.date.outputs.date }}
