@@ -22,6 +22,7 @@ jobs:
             cmake_generator: Unix
             ffmpeg_extras: |
               --disable-videotoolbox \
+              --enable-amf \
               --enable-vaapi
           - os_type: windows
             os: windows-2022
@@ -98,47 +99,54 @@ jobs:
             mingw-w64-x86_64-nasm
 
       - name: Create Directories
+        id: root
         run: |
-          mkdir -p $HOME/ffmpeg_sources $HOME/bin
+          echo "root_path=$PWD" >> $GITHUB_OUTPUT
+          mkdir -p ./bin ./ffmpeg_build ./ffmpeg_sources
 
       - name: amf
+        working-directory: ffmpeg_sources
         # https://ffmpeg.org/general.html#AMD-AMF_002fVCE
         run: |
-          cd $HOME/ffmpeg_sources
           git clone https://github.com/GPUOpen-LibrariesAndSDKs/AMF.git
-          mkdir -p $HOME/ffmpeg_build/include/AMF
-          cp -av "AMF/amf/public/include/." "$HOME/ffmpeg_build/include/AMF"
+          mkdir -p ../ffmpeg_build/include/AMF
+          cp -av "AMF/amf/public/include/." "../ffmpeg_build/include/AMF"
 
       - name: libx264
+        env:
+          root_path: ${{ steps.root.outputs.root_path }}
+        working-directory: ffmpeg_sources
         run: |
-          cd $HOME/ffmpeg_sources
           git clone --depth 1 https://code.videolan.org/videolan/x264.git
           cd x264
-          PATH="$HOME/bin:$PATH" \
-            PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig" \
+          PATH="$root_path/bin:$PATH" \
+            PKG_CONFIG_PATH="$root_path/ffmpeg_build/lib/pkgconfig" \
             ./configure \
-            --prefix="$HOME/ffmpeg_build" \
-            --bindir="$HOME/bin" \
+            --prefix="$root_path/ffmpeg_build" \
+            --bindir="$root_path/bin" \
             --disable-cli \
             --enable-shared
-          PATH="$HOME/bin:$PATH" make -j$(nproc)
+          PATH="$root_path/bin:$PATH" make -j$(nproc)
           make install
 
       - name: libx265
+        env:
+          root_path: ${{ steps.root.outputs.root_path }}
+        working-directory: ffmpeg_sources
         run: |
-          cd $HOME/ffmpeg_sources
           git clone https://bitbucket.org/multicoreware/x265_git.git
           cd x265_git/build/msys
-          PATH="$HOME/bin:$PATH" cmake -G "${{ matrix.cmake_generator }} Makefiles" \
-            -DCMAKE_INSTALL_PREFIX="$HOME/ffmpeg_build" \
+          PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }} Makefiles" \
+            -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
             -DENABLE_CLI=off \
             -DENABLE_SHARED=on \
             ../../source
-          PATH="$HOME/bin:$PATH" make -j$(nproc)
+          PATH="$root_path/bin:$PATH" make -j$(nproc)
           make install
 
       - name: nvenc
         id: nvenc
+        working-directory: ffmpeg_sources
         # https://trac.ffmpeg.org/wiki/HWAccelIntro#NVENC
         run: |
           git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
@@ -155,20 +163,21 @@ jobs:
       - name: ffmpeg
         env:
           nvenc_path: ${{ steps.nvenc.outputs.nvenc_path }}
+          root_path: ${{ steps.root.outputs.root_path }}
+        working-directory: ffmpeg_sources
         run: |
-          cd $HOME/ffmpeg_sources
           git clone https://git.ffmpeg.org/ffmpeg.git
           cd ffmpeg
-          PATH="$HOME/bin:$PATH" \
-            PKG_CONFIG_PATH="$nvenc_path:$HOME/ffmpeg_build/lib/pkgconfig" \
+          PATH="$root_path/bin:$PATH" \
+            PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig" \
             ./configure \
-            --prefix="$HOME/ffmpeg_build" \
+            --prefix="$root_path/ffmpeg_build" \
             --pkg-config-flags="--static" \
-            --extra-cflags="-I$HOME/ffmpeg_build/include" \
-            --extra-ldflags="-L$HOME/ffmpeg_build/lib" \
+            --extra-cflags="-I$root_path/ffmpeg_build/include" \
+            --extra-ldflags="-L$root_path/ffmpeg_build/lib" \
             --extra-libs="-lpthread -lm" \
             --ld="g++" \
-            --bindir="$HOME/bin" \
+            --bindir="$root_path/bin" \
             --disable-audiotoolbox \
             --disable-autodetect \
             --disable-avfilter \
@@ -188,18 +197,16 @@ jobs:
             --enable-nvenc \
             --enable-shared \
             ${{ matrix.ffmpeg_extras }}
-          PATH="$HOME/bin:$PATH" make -j$(nproc)
+          PATH="$root_path/bin:$PATH" make -j$(nproc)
           make install
           hash -r
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ffmpeg-linux
+          name: ffmpeg-${{ matrix.os_type }}
           path: |
-            ~/ffmpeg_build/
-            # ~/ffmpeg_build/include/
-            # ~/ffmpeg_build/lib/
+            ./ffmpeg_build/
 
       - name: Get current date
         id: date
@@ -213,7 +220,7 @@ jobs:
           rm -f -r ./ffmpeg-${{ runner.os }}/*
 
           # copy build back to dependency branch
-          cp -f -r $HOME/ffmpeg_build/. ./ffmpeg-${{ runner.os }}/
+          cp -f -r ./ffmpeg_build/. ./ffmpeg-${{ runner.os }}/
 
       - name: Commit build
         if: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}  # yamllint disable-line rule:line-length
