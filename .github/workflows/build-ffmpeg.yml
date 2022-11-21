@@ -12,6 +12,9 @@ on:
 jobs:
   ffmpeg:
     name: "FFmpeg"
+    # https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
+    # https://trac.ffmpeg.org/wiki/CompilationGuide/macOS
+    # https://trac.ffmpeg.org/wiki/CompilationGuide/MinGW
     strategy:
       fail-fast: false  # false to test all, true to fail entire job if any fail
       matrix:
@@ -23,7 +26,15 @@ jobs:
             ffmpeg_extras: |
               --disable-videotoolbox \
               --enable-amf \
+              --enable-ffnvcodec \
+              --enable-nvenc \
               --enable-vaapi
+          - os_type: macos
+            os: macos-11
+            shell: bash
+            cmake_generator: Unix
+            ffmpeg_extras: |
+              --enable-videotoolbox
           - os_type: windows
             os: windows-2022
             shell: msys2 {0}
@@ -35,14 +46,15 @@ jobs:
               --enable-cuvid \
               --enable-d3d11va \
               --enable-dxva2 \
+              --enable-ffnvcodec \
               --enable-lzma \
+              --enable-nvenc \
               --enable-schannel \
               --enable-zlib
     runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: ${{ matrix.shell }}
-    # https://trac.ffmpeg.org/wiki/CompilationGuide/MinGW
 
     steps:
       - name: Checkout dependency branch
@@ -53,36 +65,58 @@ jobs:
           persist-credentials: false  # otherwise, the token used is the GITHUB_TOKEN, instead of the personal token
           fetch-depth: 0  # otherwise, will fail to push refs to dest repo
 
-      - name: Setup Dependencies Linux
-        if: ${{ matrix.os_type == 'linux' }}
+      - name: Setup Dependencies Unix
+        if: ${{ matrix.os_type != 'windows' }}
         run: |
-          sudo apt-get update -qq && sudo apt-get -y install \
-            autoconf \
-            automake \
-            build-essential \
-            cmake \
-            git-core \
-            libass-dev \
-            libfreetype6-dev \
-            libgnutls28-dev \
-            libmp3lame-dev \
-            libopus-dev \
-            libsdl2-dev \
-            libtool \
-            libva-dev \
-            libvdpau-dev \
-            libvorbis-dev \
-            libxcb1-dev \
-            libxcb-shm0-dev \
-            libxcb-xfixes0-dev \
-            meson \
-            nasm \
-            ninja-build \
-            pkg-config \
-            texinfo \
-            wget \
-            yasm \
-            zlib1g-dev
+          if [[ ${{ matrix.os_type }} == "linux" ]]; then
+            sudo apt-get update -qq && sudo apt-get -y install \
+              autoconf \
+              automake \
+              build-essential \
+              cmake \
+              git-core \
+              libass-dev \
+              libfreetype6-dev \
+              libgnutls28-dev \
+              libmp3lame-dev \
+              libopus-dev \
+              libsdl2-dev \
+              libtool \
+              libva-dev \
+              libvdpau-dev \
+              libvorbis-dev \
+              libxcb1-dev \
+              libxcb-shm0-dev \
+              libxcb-xfixes0-dev \
+              meson \
+              nasm \
+              ninja-build \
+              pkg-config \
+              texinfo \
+              wget \
+              yasm \
+              zlib1g-dev
+          elif [[ ${{ matrix.os_type }} == "macos" ]]; then
+            brew install \
+              automake \
+              fdk-aac \
+              git \
+              lame \
+              libass \
+              libtool \
+              libvorbis \
+              libvpx \
+              nasm \
+              opus \
+              sdl \
+              shtool \
+              texi2html \
+              theora \
+              wget \
+              x264 \
+              x265 \
+              xvid
+          fi
 
       - name: Setup Dependencies Windows
         if: ${{ matrix.os_type == 'windows' }}
@@ -105,6 +139,7 @@ jobs:
           mkdir -p ./bin ./ffmpeg_build ./ffmpeg_sources
 
       - name: amf
+        if: ${{ matrix.os_type != 'macos' }}
         working-directory: ffmpeg_sources
         # https://ffmpeg.org/general.html#AMD-AMF_002fVCE
         run: |
@@ -146,6 +181,7 @@ jobs:
 
       - name: nvenc
         id: nvenc
+        if: ${{ matrix.os_type != 'macos' }}
         working-directory: ffmpeg_sources
         # https://trac.ffmpeg.org/wiki/HWAccelIntro#NVENC
         run: |
@@ -190,11 +226,9 @@ jobs:
             --disable-static \
             --disable-vdpau \
             --disable-vulkan \
-            --enable-ffnvcodec \
             --enable-gpl \
             --enable-libx264 \
             --enable-libx265 \
-            --enable-nvenc \
             --enable-shared \
             ${{ matrix.ffmpeg_extras }}
           PATH="$root_path/bin:$PATH" make -j$(nproc)
