@@ -149,6 +149,13 @@ jobs:
           echo "root_path=$PWD" >> $GITHUB_OUTPUT
           mkdir -p ./bin ./ffmpeg_build ./ffmpeg_sources
 
+      - name: patch
+        shell: bash
+        working-directory: ffmpeg_sources/ffmpeg
+        run: |
+          git apply ../../ffmpeg_patches/ffmpeg/01-idr-on-amf.patch
+          git apply ../../ffmpeg_patches/ffmpeg/02-amf-color-fixes.patch
+
       - name: amf
         if: ${{ matrix.os_type != 'macos' }}
         # https://ffmpeg.org/general.html#AMD-AMF_002fVCE
