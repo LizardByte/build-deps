@@ -11,7 +11,7 @@ on:
 
 jobs:
   ffmpeg:
-    name: "FFmpeg"
+    name: FFmpeg (${{ matrix.os_type }})
     # https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
     # https://trac.ffmpeg.org/wiki/CompilationGuide/macOS
     # https://trac.ffmpeg.org/wiki/CompilationGuide/MinGW
@@ -22,7 +22,7 @@ jobs:
           - os_type: linux
             os: ubuntu-22.04
             shell: bash
-            cmake_generator: Unix
+            cmake_generator: Unix Makefiles
             ffmpeg_extras: |
               --enable-amf \
               --enable-encoder=h264_amf \
@@ -34,7 +34,7 @@ jobs:
           - os_type: macos
             os: macos-11
             shell: bash
-            cmake_generator: Unix
+            cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
             ffmpeg_extras: |
               --enable-encoder=libx264,libx265 \
               --enable-encoder=h264_videotoolbox,hevc_videotoolbox \
@@ -42,10 +42,10 @@ jobs:
           - os_type: windows
             os: windows-2022
             shell: msys2 {0}
-            cmake_generator: MSYS
+            cmake_generator: MSYS Makefiles
             ffmpeg_extras: |
               --enable-amf \
-              --enable-encoder=h264_amf,hevc_amd \
+              --enable-encoder=h264_amf,hevc_amf \
               --enable-encoder=libx264,libx265 \
               --enable-encoder=h264_mf,hevc_mf \
               --enable-encoder=h264_nvenc,hevc_nvenc \
@@ -57,7 +57,10 @@ jobs:
         shell: ${{ matrix.shell }}
 
     steps:
-      - name: Checkout dependency branch
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Checkout destination branch
         uses: actions/checkout@v3
         with:
           ref: ffmpeg-${{ runner.os }}
@@ -113,8 +116,7 @@ jobs:
               texi2html \
               theora \
               wget \
-              x264 \
-              x265 \
+              yasm \
               xvid
           fi
 
@@ -132,6 +134,12 @@ jobs:
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-nasm
 
+      - name: Initialize Submodules
+        # libx265 has issues when using the recursive method of the first checkout action
+        # this is after `msys2/setup-msys2@v2` because `msys2` (default) shell is not available until then.
+        run: |
+          git submodule update --init --recursive
+
       - name: Create Directories
         id: root
         run: |
@@ -140,20 +148,16 @@ jobs:
 
       - name: amf
         if: ${{ matrix.os_type != 'macos' }}
-        working-directory: ffmpeg_sources
         # https://ffmpeg.org/general.html#AMD-AMF_002fVCE
         run: |
-          git clone https://github.com/GPUOpen-LibrariesAndSDKs/AMF.git
-          mkdir -p ../ffmpeg_build/include/AMF
-          cp -av "AMF/amf/public/include/." "../ffmpeg_build/include/AMF"
+          mkdir -p ./ffmpeg_build/include/AMF
+          cp -av "./ffmpeg_sources/AMF/amf/public/include/." "./ffmpeg_build/include/AMF"
 
       - name: libx264
         env:
           root_path: ${{ steps.root.outputs.root_path }}
-        working-directory: ffmpeg_sources
+        working-directory: ffmpeg_sources/x264
         run: |
-          git clone https://code.videolan.org/videolan/x264.git
-          cd x264
           PATH="$root_path/bin:$PATH" \
             PKG_CONFIG_PATH="$root_path/ffmpeg_build/lib/pkgconfig" \
             ./configure \
@@ -161,34 +165,30 @@ jobs:
             --bindir="$root_path/bin" \
             --disable-cli \
             --enable-static
-          PATH="$root_path/bin:$PATH" make -j$(nproc)
+          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
           make install
 
       - name: libx265
         env:
           root_path: ${{ steps.root.outputs.root_path }}
-        working-directory: ffmpeg_sources
+        working-directory: ffmpeg_sources/x265_git
         run: |
-          git clone https://bitbucket.org/multicoreware/x265_git.git
-          cd x265_git
-          PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }} Makefiles" \
+          PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
             -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
             -DENABLE_CLI=off \
             -DENABLE_HDR10_PLUS=1 \
             -DSTATIC_LINK_CRT=1 \
             ./source
-          PATH="$root_path/bin:$PATH" make -j$(nproc)
+          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
           make install
 
       - name: nvenc
         id: nvenc
         if: ${{ matrix.os_type != 'macos' }}
-        working-directory: ffmpeg_sources
+        working-directory: ffmpeg_sources/nv-codec-headers
         # https://trac.ffmpeg.org/wiki/HWAccelIntro#NVENC
         run: |
-          git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
-          cd nv-codec-headers
-          make -j$(nproc)
+          make -j$(nproc || sysctl -n hw.logicalcpu)
           if [[ ${{ matrix.os_type }} == "windows" ]]; then
             make install
           else
@@ -201,10 +201,8 @@ jobs:
         env:
           nvenc_path: ${{ steps.nvenc.outputs.nvenc_path }}
           root_path: ${{ steps.root.outputs.root_path }}
-        working-directory: ffmpeg_sources
+        working-directory: ffmpeg_sources/ffmpeg
         run: |
-          git clone https://git.ffmpeg.org/ffmpeg.git
-          cd ffmpeg
           PATH="$root_path/bin:$PATH" \
             PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig" \
             ./configure \
@@ -224,7 +222,7 @@ jobs:
             --enable-swscale \
             --enable-version3 \
             ${{ matrix.ffmpeg_extras }}
-          PATH="$root_path/bin:$PATH" make -j$(nproc)
+          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
           make install
           hash -r
 
