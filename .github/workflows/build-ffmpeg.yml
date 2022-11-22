@@ -4,166 +4,255 @@ name: Build ffmpeg
 on:
   pull_request:
     branches: [master, nightly]
-    types: [opened, synchronize, edited, reopened]
+    types: [opened, synchronize, reopened]
   push:
     branches: [master]
   workflow_dispatch:
 
 jobs:
-  linux:
-    name: "Linux"
-    runs-on: ubuntu-22.04
+  ffmpeg:
+    name: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
     # https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
+    # https://trac.ffmpeg.org/wiki/CompilationGuide/macOS
+    # https://trac.ffmpeg.org/wiki/CompilationGuide/MinGW
+    strategy:
+      fail-fast: false  # false to test all, true to fail entire job if any fail
+      matrix:
+        include:
+          - os_type: linux
+            os: ubuntu-22.04
+            arch: x86_64
+            shell: bash
+            cmake_generator: Unix Makefiles
+            ffmpeg_extras: |
+              --enable-amf \
+              --enable-encoder=h264_amf \
+              --enable-encoder=h264_nvenc,hevc_nvenc \
+              --enable-encoder=h264_vaapi,hevc_vaapi \
+              --enable-encoder=libx264,libx265 \
+              --enable-nvenc \
+              --enable-vaapi
+          - os_type: macos
+            os: macos-11
+            arch: x86_64
+            shell: bash
+            cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
+            ffmpeg_extras: |
+              --enable-encoder=libx264,libx265 \
+              --enable-encoder=h264_videotoolbox,hevc_videotoolbox \
+              --enable-videotoolbox
+          - os_type: windows
+            os: windows-2022
+            arch: x86_64
+            shell: msys2 {0}
+            cmake_generator: MSYS Makefiles
+            ffmpeg_extras: |
+              --enable-amf \
+              --enable-encoder=h264_amf,hevc_amf \
+              --enable-encoder=libx264,libx265 \
+              --enable-encoder=h264_mf,hevc_mf \
+              --enable-encoder=h264_nvenc,hevc_nvenc \
+              --enable-nvenc \
+              --enable-mediafoundation
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
 
     steps:
-      - name: Checkout dependency branch
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Checkout destination branch
         uses: actions/checkout@v3
         with:
-          ref: ffmpeg-${{ runner.os }}
-          path: ffmpeg-${{ runner.os }}
+          ref: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
+          path: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
           persist-credentials: false  # otherwise, the token used is the GITHUB_TOKEN, instead of the personal token
           fetch-depth: 0  # otherwise, will fail to push refs to dest repo
 
-      - name: Setup Dependencies
+      - name: Setup Dependencies Unix
+        if: ${{ matrix.os_type != 'windows' }}
         run: |
-          sudo apt-get update -qq && sudo apt-get -y install \
-            autoconf \
-            automake \
-            build-essential \
-            cmake \
-            git-core \
-            libass-dev \
-            libfreetype6-dev \
-            libgnutls28-dev \
-            libmp3lame-dev \
-            libsdl2-dev \
-            libtool \
-            libva-dev \
-            libvdpau-dev \
-            libvorbis-dev \
-            libxcb1-dev \
-            libxcb-shm0-dev \
-            libxcb-xfixes0-dev \
-            meson \
-            ninja-build \
-            pkg-config \
-            texinfo \
-            wget \
-            yasm \
-            zlib1g-dev
+          if [[ ${{ matrix.os_type }} == "linux" ]]; then
+            sudo apt-get update -qq && sudo apt-get -y install \
+              autoconf \
+              automake \
+              build-essential \
+              cmake \
+              git-core \
+              libass-dev \
+              libfreetype6-dev \
+              libgnutls28-dev \
+              libmp3lame-dev \
+              libopus-dev \
+              libsdl2-dev \
+              libtool \
+              libva-dev \
+              libvdpau-dev \
+              libvorbis-dev \
+              libxcb1-dev \
+              libxcb-shm0-dev \
+              libxcb-xfixes0-dev \
+              meson \
+              nasm \
+              ninja-build \
+              pkg-config \
+              texinfo \
+              wget \
+              yasm \
+              zlib1g-dev
+          elif [[ ${{ matrix.os_type }} == "macos" ]]; then
+            brew install \
+              automake \
+              fdk-aac \
+              git \
+              lame \
+              libass \
+              libtool \
+              libvorbis \
+              libvpx \
+              nasm \
+              opus \
+              sdl \
+              shtool \
+              texi2html \
+              theora \
+              wget \
+              yasm \
+              xvid
+          fi
 
-          # NASM
-          sudo apt-get install nasm
+      - name: Setup Dependencies Windows
+        if: ${{ matrix.os_type == 'windows' }}
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >-
+            diffutils
+            git
+            make
+            pkg-config
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-nasm
 
-          # libopus
-          sudo apt-get install libopus-dev
-
-          # libx264... build from source to enable static library
-          # sudo apt-get install libx264-dev
-
-          # libx265... build from source to enable static library
-          # sudo apt-get install libx265-dev libnuma-dev
+      - name: Initialize Submodules
+        # libx265 has issues when using the recursive method of the first checkout action
+        # this is after `msys2/setup-msys2@v2` because `msys2` (default) shell is not available until then.
+        run: |
+          git submodule update --init --recursive
 
       - name: Create Directories
+        id: root
         run: |
-          mkdir -p ~/ffmpeg_sources ~/bin
+          echo "root_path=$PWD" >> $GITHUB_OUTPUT
+          mkdir -p ./bin ./ffmpeg_build ./ffmpeg_sources
+
+      - name: amf
+        if: ${{ matrix.os_type != 'macos' }}
+        # https://ffmpeg.org/general.html#AMD-AMF_002fVCE
+        run: |
+          mkdir -p ./ffmpeg_build/include/AMF
+          cp -av "./ffmpeg_sources/AMF/amf/public/include/." "./ffmpeg_build/include/AMF"
 
       - name: libx264
-        # do we need to build this or can we just install it? https://packages.ubuntu.com/kinetic/libx264-dev
+        env:
+          root_path: ${{ steps.root.outputs.root_path }}
+        working-directory: ffmpeg_sources/x264
         run: |
-          cd ~/ffmpeg_sources
-          git -C x264 pull 2> /dev/null || git clone --depth 1 https://code.videolan.org/videolan/x264.git
-          cd x264
-          PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig" ./configure \
-            --prefix="$HOME/ffmpeg_build" \
-            --bindir="$HOME/bin" \
+          PATH="$root_path/bin:$PATH" \
+            PKG_CONFIG_PATH="$root_path/ffmpeg_build/lib/pkgconfig" \
+            ./configure \
+            --prefix="$root_path/ffmpeg_build" \
+            --bindir="$root_path/bin" \
             --disable-cli \
-            --enable-shared
-          PATH="$HOME/bin:$PATH" make -j$(nproc)
+            --enable-static
+          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
           make install
 
       - name: libx265
-        # do we need to build this or can we just install it? https://packages.ubuntu.com/kinetic/libx265-dev
+        env:
+          root_path: ${{ steps.root.outputs.root_path }}
+        working-directory: ffmpeg_sources/x265_git
         run: |
-          cd ~/ffmpeg_sources
-          wget -O x265.tar.bz2 https://bitbucket.org/multicoreware/x265_git/get/master.tar.bz2
-          tar xjvf x265.tar.bz2
-          cd multicoreware*/build/linux
-          PATH="$HOME/bin:$PATH" cmake -G "Unix Makefiles" \
-            -DCMAKE_INSTALL_PREFIX="$HOME/ffmpeg_build" \
+          PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
+            -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
             -DENABLE_CLI=off \
-            -DENABLE_SHARED=on \
-            ../../source
-          PATH="$HOME/bin:$PATH" make -j$(nproc)
+            -DENABLE_HDR10_PLUS=1 \
+            -DSTATIC_LINK_CRT=1 \
+            ./source
+          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
           make install
 
       - name: nvenc
-        # do we need to build this or can we just install it? https://packages.ubuntu.com/jammy/libffmpeg-nvenc-dev
+        id: nvenc
+        if: ${{ matrix.os_type != 'macos' }}
+        working-directory: ffmpeg_sources/nv-codec-headers
         # https://trac.ffmpeg.org/wiki/HWAccelIntro#NVENC
         run: |
-          git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
-          cd nv-codec-headers
-          make -j$(nproc)
-          sudo make install
+          make -j$(nproc || sysctl -n hw.logicalcpu)
+          if [[ ${{ matrix.os_type }} == "windows" ]]; then
+            make install
+          else
+            sudo make install
+          fi
+
+          echo "nvenc_path=$PWD" >> $GITHUB_OUTPUT
 
       - name: ffmpeg
+        env:
+          nvenc_path: ${{ steps.nvenc.outputs.nvenc_path }}
+          root_path: ${{ steps.root.outputs.root_path }}
+        working-directory: ffmpeg_sources/ffmpeg
         run: |
-          cd ~/ffmpeg_sources
-          wget -O ffmpeg-snapshot.tar.bz2 https://ffmpeg.org/releases/ffmpeg-snapshot.tar.bz2
-          tar xjvf ffmpeg-snapshot.tar.bz2
-          cd ffmpeg
-          PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig" ./configure \
-            --prefix="$HOME/ffmpeg_build" \
+          PATH="$root_path/bin:$PATH" \
+            PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig" \
+            ./configure \
+            --prefix="$root_path/ffmpeg_build" \
             --pkg-config-flags="--static" \
-            --extra-cflags="-I$HOME/ffmpeg_build/include" \
-            --extra-ldflags="-L$HOME/ffmpeg_build/lib" \
+            --extra-cflags="-I$root_path/ffmpeg_build/include" \
+            --extra-ldflags="-L$root_path/ffmpeg_build/lib" \
             --extra-libs="-lpthread -lm" \
             --ld="g++" \
-            --bindir="$HOME/bin" \
-            --disable-audiotoolbox \
-            --disable-autodetect \
-            --disable-avfilter \
-            --disable-decoders \
-            --disable-doc \
-            --disable-filters \
-            --disable-postproc \
-            --disable-programs \
-            --disable-sdl2 \
-            --disable-static \
-            --disable-videotoolbox \
-            --disable-vdpau \
-            --disable-vulkan \
-            --enable-ffnvcodec \
+            --bindir="$root_path/bin" \
+            --disable-all \
+            --enable-avcodec \
             --enable-gpl \
             --enable-libx264 \
             --enable-libx265 \
-            --enable-nvenc \
-            --enable-shared \
-            --enable-vaapi
-          PATH="$HOME/bin:$PATH" make -j$(nproc)
+            --enable-static \
+            --enable-swscale \
+            --enable-version3 \
+            ${{ matrix.ffmpeg_extras }}
+          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
           make install
           hash -r
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ffmpeg-linux
+          name: ffmpeg-${{ matrix.os_type }}
           path: |
-            ~/ffmpeg_build/
-            # ~/ffmpeg_build/include/
-            # ~/ffmpeg_build/lib/
+            ./ffmpeg_build/
 
       - name: Get current date
         id: date
-        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+        run: |
+          echo "date=$(date +'%Y-%m-%d')"
+          echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
       - name: Prepare dependency branch
         run: |
+          # cleanup build
+          rm -f -r ./ffmpeg_build/share
+          rm -f -r ./ffmpeg_build/lib/pkgconfig
+
           # empty contents
-          rm -f -r ./ffmpeg-${{ runner.os }}/*
+          rm -f -r ./ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}/*
 
           # copy build back to dependency branch
-          cp -f -r ~/ffmpeg_build/. ./ffmpeg-${{ runner.os }}/
+          cp -f -r ./ffmpeg_build/. ./ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}/
 
       - name: Commit build
         if: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}  # yamllint disable-line rule:line-length
@@ -172,7 +261,7 @@ jobs:
           github_token: ${{ secrets.GH_BOT_TOKEN }}
           author_email: ${{ secrets.GH_BOT_EMAIL }}
           author_name: ${{ secrets.GH_BOT_NAME }}
-          directory: ffmpeg-${{ runner.os }}
-          branch: ffmpeg-${{ runner.os }}
+          directory: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
+          branch: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
           force: false
           message: update-${{ steps.date.outputs.date }}
