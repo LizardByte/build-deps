@@ -24,8 +24,8 @@ jobs:
             shell: bash
             cmake_generator: Unix
             ffmpeg_extras: |
-              --disable-videotoolbox \
               --enable-amf \
+              --enable-encoder=libx264,libx265,h264_amf,h264_nvenc,hevc_nvenc \
               --enable-ffnvcodec \
               --enable-nvenc \
               --enable-vaapi
@@ -34,22 +34,25 @@ jobs:
             shell: bash
             cmake_generator: Unix
             ffmpeg_extras: |
+              --enable-encoder=libx264,libx265 \
               --enable-videotoolbox
           - os_type: windows
             os: windows-2022
             shell: msys2 {0}
             cmake_generator: MSYS
             ffmpeg_extras: |
-              --disable-videotoolbox \
               --enable-amf \
+              --enable-avcodec \
               --enable-bzlib \
               --enable-cuvid \
               --enable-d3d11va \
               --enable-dxva2 \
+              --enable-encoder=libx264,libx265,h264_amf,hevc_amd,h264_nvenc,hevc_nvenc \
               --enable-ffnvcodec \
               --enable-lzma \
               --enable-nvenc \
               --enable-schannel \
+              --enable-swscale \
               --enable-zlib
     runs-on: ${{ matrix.os }}
     defaults:
@@ -152,7 +155,7 @@ jobs:
           root_path: ${{ steps.root.outputs.root_path }}
         working-directory: ffmpeg_sources
         run: |
-          git clone --depth 1 https://code.videolan.org/videolan/x264.git
+          git clone https://code.videolan.org/videolan/x264.git
           cd x264
           PATH="$root_path/bin:$PATH" \
             PKG_CONFIG_PATH="$root_path/ffmpeg_build/lib/pkgconfig" \
@@ -160,7 +163,7 @@ jobs:
             --prefix="$root_path/ffmpeg_build" \
             --bindir="$root_path/bin" \
             --disable-cli \
-            --enable-shared
+            --enable-static
           PATH="$root_path/bin:$PATH" make -j$(nproc)
           make install
 
@@ -174,7 +177,8 @@ jobs:
           PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }} Makefiles" \
             -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
             -DENABLE_CLI=off \
-            -DENABLE_SHARED=on \
+            -DENABLE_HDR10_PLUS=1 \
+            -DSTATIC_LINK_CRT=1 \
             ../../source
           PATH="$root_path/bin:$PATH" make -j$(nproc)
           make install
@@ -214,22 +218,12 @@ jobs:
             --extra-libs="-lpthread -lm" \
             --ld="g++" \
             --bindir="$root_path/bin" \
-            --disable-audiotoolbox \
-            --disable-autodetect \
-            --disable-avfilter \
-            --disable-decoders \
-            --disable-doc \
-            --disable-filters \
-            --disable-postproc \
-            --disable-programs \
-            --disable-sdl2 \
-            --disable-static \
-            --disable-vdpau \
-            --disable-vulkan \
+            --disable-all \
             --enable-gpl \
             --enable-libx264 \
             --enable-libx265 \
-            --enable-shared \
+            --enable-static \
+            --enable-version3 \
             ${{ matrix.ffmpeg_extras }}
           PATH="$root_path/bin:$PATH" make -j$(nproc)
           make install
