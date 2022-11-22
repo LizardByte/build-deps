@@ -4,14 +4,14 @@ name: Build ffmpeg
 on:
   pull_request:
     branches: [master, nightly]
-    types: [opened, synchronize, edited, reopened]
+    types: [opened, synchronize, reopened]
   push:
     branches: [master]
   workflow_dispatch:
 
 jobs:
   ffmpeg:
-    name: FFmpeg (${{ matrix.os_type }})
+    name: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
     # https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
     # https://trac.ffmpeg.org/wiki/CompilationGuide/macOS
     # https://trac.ffmpeg.org/wiki/CompilationGuide/MinGW
@@ -21,6 +21,7 @@ jobs:
         include:
           - os_type: linux
             os: ubuntu-22.04
+            arch: x86_64
             shell: bash
             cmake_generator: Unix Makefiles
             ffmpeg_extras: |
@@ -33,6 +34,7 @@ jobs:
               --enable-vaapi
           - os_type: macos
             os: macos-11
+            arch: x86_64
             shell: bash
             cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
             ffmpeg_extras: |
@@ -41,6 +43,7 @@ jobs:
               --enable-videotoolbox
           - os_type: windows
             os: windows-2022
+            arch: x86_64
             shell: msys2 {0}
             cmake_generator: MSYS Makefiles
             ffmpeg_extras: |
@@ -63,8 +66,8 @@ jobs:
       - name: Checkout destination branch
         uses: actions/checkout@v3
         with:
-          ref: ffmpeg-${{ runner.os }}
-          path: ffmpeg-${{ runner.os }}
+          ref: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
+          path: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
           persist-credentials: false  # otherwise, the token used is the GITHUB_TOKEN, instead of the personal token
           fetch-depth: 0  # otherwise, will fail to push refs to dest repo
 
@@ -241,11 +244,15 @@ jobs:
 
       - name: Prepare dependency branch
         run: |
+          # cleanup build
+          rm -f -r ./ffmpeg_build/share
+          rm -f -r ./ffmpeg_build/lib/pkgconfig
+
           # empty contents
-          rm -f -r ./ffmpeg-${{ runner.os }}/*
+          rm -f -r ./ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}/*
 
           # copy build back to dependency branch
-          cp -f -r ./ffmpeg_build/. ./ffmpeg-${{ runner.os }}/
+          cp -f -r ./ffmpeg_build/. ./ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}/
 
       - name: Commit build
         if: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}  # yamllint disable-line rule:line-length
@@ -254,7 +261,7 @@ jobs:
           github_token: ${{ secrets.GH_BOT_TOKEN }}
           author_email: ${{ secrets.GH_BOT_EMAIL }}
           author_name: ${{ secrets.GH_BOT_NAME }}
-          directory: ffmpeg-${{ runner.os }}
-          branch: ffmpeg-${{ runner.os }}
+          directory: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
+          branch: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
           force: false
           message: update-${{ steps.date.outputs.date }}
