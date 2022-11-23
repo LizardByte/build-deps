@@ -13,3 +13,6 @@
 [submodule "ffmpeg_sources/ffmpeg"]
 	path = ffmpeg_sources/ffmpeg
 	url = https://git.ffmpeg.org/ffmpeg.git
+[submodule "third_party/crosstool-ng"]
+	path = third_party/crosstool-ng
+	url = https://github.com/crosstool-ng/crosstool-ng

@@ -32,6 +32,20 @@ jobs:
               --enable-encoder=libx264,libx265 \
               --enable-nvenc \
               --enable-vaapi
+          - os_type: linux
+            os: ubuntu-22.04
+            arch: aarch64
+            shell: bash
+            cmake_generator: Unix Makefiles
+            host: aarch64-unknown-linux-gnu
+            ffmpeg_extras: |
+              --enable-amf \
+              --enable-encoder=h264_amf,hevc_amf \
+              --enable-encoder=h264_nvenc,hevc_nvenc \
+              --enable-encoder=h264_vaapi,hevc_vaapi \
+              --enable-encoder=libx264,libx265 \
+              --enable-nvenc \
+              --enable-vaapi
           - os_type: macos
             os: macos-11
             arch: x86_64
@@ -123,6 +137,15 @@ jobs:
               xvid
           fi
 
+          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
+            sudo apt-get -y install \
+              bison \
+              gawk \
+              help2man \
+              libtool-bin \
+              libncurses-dev
+          fi
+
       - name: Setup Dependencies Windows
         if: ${{ matrix.os_type == 'windows' }}
         uses: msys2/setup-msys2@v2
@@ -149,6 +172,25 @@ jobs:
           echo "root_path=$PWD" >> $GITHUB_OUTPUT
           mkdir -p ./bin ./ffmpeg_build ./ffmpeg_sources
 
+      - name: Setup cross compilation
+        id: cross
+        if: ${{ matrix.arch == 'aarch64' }}
+        working-directory: third_party/crosstool-ng
+        run: |
+          # compile crosstool-ng
+          ./bootstrap
+          ./configure --prefix=/opt/cross
+          make
+          sudo make install
+          export PATH=$PATH:/opt/cross/bin
+          echo "/opt/cross/bin" >> $GITHUB_PATH
+
+          # setup toolchain
+          cd ../../crosstool-ng/aarch64
+          ct-ng build.$(nproc)
+          echo "/opt/cross/x-tools/${{ matrix.host }}/bin" >> $GITHUB_PATH
+          echo "CCPREFIX=/opt/cross/x-tools/${{ matrix.host }}/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
+
       - name: amf
         if: ${{ matrix.os_type != 'macos' }}
         # https://ffmpeg.org/general.html#AMD-AMF_002fVCE
@@ -159,15 +201,29 @@ jobs:
       - name: libx264
         env:
           root_path: ${{ steps.root.outputs.root_path }}
+          CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
         working-directory: ffmpeg_sources/x264
         run: |
+          # configure extra flags for cross compilation
+          extra_configure=$(cat <<VAREOF
+          --host=${{ matrix.host }}
+          --cross-prefix=${CCPREFIX}
+          --extra-cflags="-march=armv8"
+          --extra-ldflags="-march=armv8"
+          VAREOF
+          )
+          if [[ ${{ matrix.arch }} != "aarch64" ]]; then
+            extra_configure=""
+          fi
+
           PATH="$root_path/bin:$PATH" \
             PKG_CONFIG_PATH="$root_path/ffmpeg_build/lib/pkgconfig" \
             ./configure \
             --prefix="$root_path/ffmpeg_build" \
             --bindir="$root_path/bin" \
             --disable-cli \
-            --enable-static
+            --enable-static \
+            $extra_configure
           PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
           make install
 
@@ -176,7 +232,15 @@ jobs:
           root_path: ${{ steps.root.outputs.root_path }}
         working-directory: ffmpeg_sources/x265_git
         run: |
+          # configure extra flags for cross compilation
+          if [[ ${{ matrix.arch }} == "aarch64" ]]; then
+            extra_configure='-DCMAKE_TOOLCHAIN_FILE="./build/aarch64-linux/crosscompile.cmake"'
+          else
+            extra_configure=""
+          fi
+
           PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
+            $extra_configure \
             -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
             -DENABLE_CLI=off \
             -DENABLE_HDR10_PLUS=1 \
@@ -204,8 +268,21 @@ jobs:
         env:
           nvenc_path: ${{ steps.nvenc.outputs.nvenc_path }}
           root_path: ${{ steps.root.outputs.root_path }}
+          CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
         working-directory: ffmpeg_sources/ffmpeg
         run: |
+          # configure extra flags for cross compilation
+          extra_configure=$(cat <<VAREOF
+          --enable-cross-compile
+          --cross-prefix=${CCPREFIX}
+          --arch=${{ matrix.arch }}
+          --target-os=${{ matrix.os_type }}
+          VAREOF
+          )
+          if [[ ${{ matrix.arch }} != "aarch64" ]]; then
+            extra_configure=""
+          fi
+
           PATH="$root_path/bin:$PATH" \
             PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig" \
             ./configure \
@@ -224,7 +301,8 @@ jobs:
             --enable-static \
             --enable-swscale \
             --enable-version3 \
-            ${{ matrix.ffmpeg_extras }}
+            ${{ matrix.ffmpeg_extras }} \
+            $extra_configure
           PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
           make install
           hash -r
