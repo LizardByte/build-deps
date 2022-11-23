@@ -248,11 +248,14 @@ jobs:
           rm -f -r ./ffmpeg_build/share
           rm -f -r ./ffmpeg_build/lib/pkgconfig
 
+          # setup path
+          release_path=./ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
+
           # empty contents
-          rm -f -r ./ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}/*
+          rm -f -r $release_path/{*,.*}
 
           # copy build back to dependency branch
-          cp -f -r ./ffmpeg_build/. ./ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}/
+          cp -f -r ./ffmpeg_build/. $release_path/
 
       - name: Commit build
         if: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}  # yamllint disable-line rule:line-length
