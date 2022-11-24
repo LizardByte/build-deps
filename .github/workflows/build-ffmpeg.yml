@@ -175,6 +175,7 @@ jobs:
       - name: Setup cross compilation
         id: cross
         if: ${{ matrix.arch == 'aarch64' }}
+        shell: bash -e {0}
         working-directory: third_party/crosstool-ng
         run: |
           # compile crosstool-ng
@@ -190,6 +191,9 @@ jobs:
           ct-ng build.$(nproc)
           echo "/opt/cross/x-tools/${{ matrix.host }}/bin" >> $GITHUB_PATH
           echo "CCPREFIX=/opt/cross/x-tools/${{ matrix.host }}/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
+
+          # list contents
+          ls /opt/cross/x-tools/${{ matrix.host }}/bin
 
       - name: amf
         if: ${{ matrix.os_type != 'macos' }}
@@ -208,8 +212,8 @@ jobs:
           extra_configure=$(cat <<VAREOF
           --host=${{ matrix.host }}
           --cross-prefix=${CCPREFIX}
-          --extra-cflags="-march=armv8"
-          --extra-ldflags="-march=armv8"
+          --extra-cflags="-march=${{ matrix.arch }}"
+          --extra-ldflags="-march=${{ matrix.arch }}"
           VAREOF
           )
           if [[ ${{ matrix.arch }} != "aarch64" ]]; then
