@@ -217,6 +217,7 @@ jobs:
             --ld="g++" \
             --bindir="$root_path/bin" \
             --disable-all \
+            --disable-iconv \
             --enable-avcodec \
             --enable-gpl \
             --enable-libx264 \
