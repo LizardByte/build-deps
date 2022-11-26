@@ -1,15 +1,20 @@
 [submodule "ffmpeg_sources/AMF"]
 	path = ffmpeg_sources/AMF
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/AMF
+	branch = master
 [submodule "ffmpeg_sources/x264"]
 	path = ffmpeg_sources/x264
 	url = https://code.videolan.org/videolan/x264.git
+	branch = stable
 [submodule "ffmpeg_sources/x265_git"]
 	path = ffmpeg_sources/x265_git
 	url = https://bitbucket.org/multicoreware/x265_git.git
+	branch = stable
 [submodule "ffmpeg_sources/nv-codec-headers"]
 	path = ffmpeg_sources/nv-codec-headers
 	url = https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
+	branch = sdk/11.1
 [submodule "ffmpeg_sources/ffmpeg"]
 	path = ffmpeg_sources/ffmpeg
 	url = https://git.ffmpeg.org/ffmpeg.git
+	branch = release/4.4
