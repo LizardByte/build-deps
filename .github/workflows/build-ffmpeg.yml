@@ -180,20 +180,22 @@ jobs:
         run: |
           # compile crosstool-ng
           ./bootstrap
-          ./configure --prefix=/opt/cross
+          ./configure --prefix=$HOME/cross/x-tools
           make
-          sudo make install
-          export PATH=$PATH:/opt/cross/bin
-          echo "/opt/cross/bin" >> $GITHUB_PATH
+          make install
+          export PATH=$PATH:$HOME/cross/x-tools/bin
+          echo "$HOME/cross/x-tools/bin" >> $GITHUB_PATH
 
           # setup toolchain
           cd ../../crosstool-ng/aarch64
           ct-ng build.$(nproc)
-          echo "/opt/cross/x-tools/${{ matrix.host }}/bin" >> $GITHUB_PATH
-          echo "CCPREFIX=/opt/cross/x-tools/${{ matrix.host }}/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
+          echo "$HOME/cross/x-tools/${{ matrix.host }}/bin" >> $GITHUB_PATH
+          echo "CCPREFIX=$HOME/cross/x-tools/${{ matrix.host }}/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
 
           # list contents
-          ls /opt/cross/x-tools/${{ matrix.host }}/bin
+          ls $HOME/cross/x-tools
+          ls $HOME/cross/x-tools/${{ matrix.host }}
+          ls $HOME/cross/x-tools/${{ matrix.host }}/bin
 
       - name: amf
         if: ${{ matrix.os_type != 'macos' }}
