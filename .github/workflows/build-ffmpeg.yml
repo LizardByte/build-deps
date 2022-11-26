@@ -20,7 +20,7 @@ jobs:
       matrix:
         include:
           - os_type: linux
-            os: ubuntu-20.04 # Pinned for now until all platforms moved to 22.04
+            os: ubuntu-20.04  # Pinned until all platforms moved to 22.04
             arch: x86_64
             shell: bash
             cmake_generator: Unix Makefiles
@@ -225,8 +225,8 @@ jobs:
             --disable-autodetect \
             --disable-iconv \
             --enable-avcodec \
-            --enable-gpl \
             --enable-encoder=libx264,libx265 \
+            --enable-gpl \
             --enable-libx264 \
             --enable-libx265 \
             --enable-static \
