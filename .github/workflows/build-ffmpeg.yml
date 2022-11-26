@@ -20,25 +20,28 @@ jobs:
       matrix:
         include:
           - os_type: linux
-            os: ubuntu-22.04
+            os: ubuntu-20.04 # Pinned for now until all platforms moved to 22.04
             arch: x86_64
             shell: bash
             cmake_generator: Unix Makefiles
             ffmpeg_extras: |
               --enable-amf \
+              --enable-cuda \
+              --enable-cuda_llvm \
               --enable-encoder=h264_amf,hevc_amf \
               --enable-encoder=h264_nvenc,hevc_nvenc \
               --enable-encoder=h264_vaapi,hevc_vaapi \
-              --enable-encoder=libx264,libx265 \
+              --enable-ffnvcodec \
               --enable-nvenc \
-              --enable-vaapi
+              --enable-v4l2_m2m \
+              --enable-vaapi \
+              --enable-vdpau
           - os_type: macos
             os: macos-11
             arch: x86_64
             shell: bash
             cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
             ffmpeg_extras: |
-              --enable-encoder=libx264,libx265 \
               --enable-encoder=h264_videotoolbox,hevc_videotoolbox \
               --enable-videotoolbox
           - os_type: windows
@@ -48,10 +51,12 @@ jobs:
             cmake_generator: MSYS Makefiles
             ffmpeg_extras: |
               --enable-amf \
+              --enable-cuda \
+              --enable-d3d11va \
               --enable-encoder=h264_amf,hevc_amf \
-              --enable-encoder=libx264,libx265 \
               --enable-encoder=h264_mf,hevc_mf \
               --enable-encoder=h264_nvenc,hevc_nvenc \
+              --enable-ffnvcodec \
               --enable-nvenc \
               --enable-mediafoundation
     runs-on: ${{ matrix.os }}
@@ -217,8 +222,11 @@ jobs:
             --ld="g++" \
             --bindir="$root_path/bin" \
             --disable-all \
+            --disable-autodetect \
+            --disable-iconv \
             --enable-avcodec \
             --enable-gpl \
+            --enable-encoder=libx264,libx265 \
             --enable-libx264 \
             --enable-libx265 \
             --enable-static \
