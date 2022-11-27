@@ -201,11 +201,6 @@ jobs:
           echo "$HOME/cross/x-tools/${{ matrix.host }}/bin" >> $GITHUB_PATH
           echo "CCPREFIX=$HOME/cross/x-tools/${{ matrix.host }}/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
 
-          # list contents
-          ls $HOME/cross/x-tools
-          ls $HOME/cross/x-tools/${{ matrix.host }}
-          ls $HOME/cross/x-tools/${{ matrix.host }}/bin
-
       - name: amf
         if: ${{ matrix.os_type != 'macos' }}
         # https://ffmpeg.org/general.html#AMD-AMF_002fVCE
@@ -222,9 +217,7 @@ jobs:
           # configure extra flags for cross compilation
           extra_configure=$(cat <<VAREOF
           --host=${{ matrix.host }}
-          --cross-prefix=${CCPREFIX}
-          --extra-cflags="-march=${{ matrix.arch }}"
-          --extra-ldflags="-march=${{ matrix.arch }}"
+          --cross-prefix=${{ matrix.host }}-
           VAREOF
           )
           if [[ ${{ matrix.arch }} != "aarch64" ]]; then
@@ -234,31 +227,38 @@ jobs:
           PATH="$root_path/bin:$PATH" \
             PKG_CONFIG_PATH="$root_path/ffmpeg_build/lib/pkgconfig" \
             ./configure \
+            $extra_configure \
             --prefix="$root_path/ffmpeg_build" \
             --bindir="$root_path/bin" \
             --disable-cli \
-            --enable-static \
-            $extra_configure
+            --enable-static
           PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
           make install
 
       - name: libx265
         env:
           root_path: ${{ steps.root.outputs.root_path }}
+          CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
         working-directory: ffmpeg_sources/x265_git
         run: |
           # configure extra flags for cross compilation
-          if [[ ${{ matrix.arch }} == "aarch64" ]]; then
-            extra_configure='-DCMAKE_TOOLCHAIN_FILE="./build/aarch64-linux/crosscompile.cmake"'
-          else
-            extra_configure=""
+          # extra_configure='-DCMAKE_TOOLCHAIN_FILE=build/aarch64-linux/crosscompile.cmake'
+          extra_configure=$(cat <<VAREOF
+          -DCROSS_COMPILE_ARM=1
+          -DCMAKE_SYSTEM_NAME=Linux
+          -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }}
+          -DCMAKE_C_COMPILER=${CCPREFIX}gcc
+          -DCMAKE_CXX_COMPILER=${CCPREFIX}g++
+          VAREOF
+          )
+          if [[ ${{ matrix.arch }} != "aarch64" ]]; then
+            extra_configure="-DENABLE_HDR10_PLUS=1"
           fi
 
           PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
             $extra_configure \
             -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
             -DENABLE_CLI=off \
-            -DENABLE_HDR10_PLUS=1 \
             -DSTATIC_LINK_CRT=1 \
             ./source
           PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
@@ -288,9 +288,9 @@ jobs:
         run: |
           # configure extra flags for cross compilation
           extra_configure=$(cat <<VAREOF
-          --enable-cross-compile
-          --cross-prefix=${CCPREFIX}
           --arch=${{ matrix.arch }}
+          --cross-prefix=${{ matrix.host }}-
+          --enable-cross-compile
           --target-os=${{ matrix.os_type }}
           VAREOF
           )
@@ -324,6 +324,12 @@ jobs:
           PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
           make install
           hash -r
+
+      - name: Testing
+        if: failure()
+        working-directory: ffmpeg_sources/ffmpeg
+        run: |
+          cat ./ffbuild/config.log
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
