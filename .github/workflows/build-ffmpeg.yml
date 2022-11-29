@@ -97,6 +97,7 @@ jobs:
       - name: Setup Dependencies Unix
         if: ${{ matrix.os_type != 'windows' }}
         run: |
+          echo "::group::${{ matrix.os_type }} dependencies"
           if [[ ${{ matrix.os_type }} == "linux" ]]; then
             sudo apt-get update -qq && sudo apt-get -y install \
               autoconf \
@@ -145,12 +146,15 @@ jobs:
               yasm \
               xvid
           fi
+          echo "::endgroup::"
 
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
+            echo "::group::${{ matrix.os_type }}-${{ matrix.arch }} dependencies"
             sudo apt-get -y install \
               binutils-${{ matrix.host }} \
               g++-${{ matrix.host }} \
               gcc-${{ matrix.host }}
+            echo "::endgroup::"
           fi
 
       - name: Setup Dependencies Windows
@@ -198,16 +202,22 @@ jobs:
           CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
         working-directory: ffmpeg_sources/x264
         run: |
-          # configure extra flags for cross compilation
+          echo "::group::configure options"
+          ./configure --help || true  # this command has a non zero exit status, but we should continue anyway
+          echo "::endgroup::"
+
+          echo "::group::configure extra flags for cross compilation"
           extra_configure=$(cat <<VAREOF
-          --host=${{ matrix.host }}
-          --cross-prefix=${{ matrix.host }}-
+          --host=${{ matrix.arch }}-${{ matrix.os_type }}
+          --cross-prefix=${CCPREFIX}
           VAREOF
           )
           if [[ ${{ matrix.arch }} != "aarch64" ]]; then
             extra_configure=""
           fi
+          echo "::endgroup::"
 
+          echo "::group::configure"
           PATH="$root_path/bin:$PATH" \
             PKG_CONFIG_PATH="$root_path/ffmpeg_build/lib/pkgconfig" \
             ./configure \
@@ -216,8 +226,15 @@ jobs:
             --bindir="$root_path/bin" \
             --disable-cli \
             --enable-static
+          echo "::endgroup::"
+
+          echo "::group::make"
           PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
+          echo "::endgroup::"
+
+          echo "::group::make install"
           make install
+          echo "::endgroup::"
 
       - name: libx265
         env:
