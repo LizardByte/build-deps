@@ -289,6 +289,8 @@ jobs:
           # configure extra flags for cross compilation
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
+          --cc=${{ matrix.host }}-gcc
+          --cxx=${{ matrix.host }}-g++
           --cross-prefix=${{ matrix.host }}-
           --enable-cross-compile
           --target-os=${{ matrix.os_type }}
@@ -306,7 +308,6 @@ jobs:
             --extra-cflags="-I$root_path/ffmpeg_build/include" \
             --extra-ldflags="-L$root_path/ffmpeg_build/lib" \
             --extra-libs="-lpthread -lm" \
-            --ld="g++" \
             --bindir="$root_path/bin" \
             --disable-all \
             --disable-autodetect \
