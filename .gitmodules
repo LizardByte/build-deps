@@ -18,7 +18,3 @@
 	path = ffmpeg_sources/ffmpeg
 	url = https://git.ffmpeg.org/ffmpeg.git
 	branch = release/4.4
-[submodule "third_party/crosstool-ng"]
-	path = third_party/crosstool-ng
-	url = https://github.com/crosstool-ng/crosstool-ng
-	branch = master

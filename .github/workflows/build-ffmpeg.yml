@@ -41,7 +41,7 @@ jobs:
             arch: aarch64
             shell: bash
             cmake_generator: Unix Makefiles
-            host: aarch64-unknown-linux-gnu
+            host: aarch64-linux-gnu
             ffmpeg_extras: |
               --enable-amf \
               --enable-cuda \
@@ -148,11 +148,9 @@ jobs:
 
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
             sudo apt-get -y install \
-              bison \
-              gawk \
-              help2man \
-              libtool-bin \
-              libncurses-dev
+              binutils-${{ matrix.host }} \
+              g++-${{ matrix.host }} \
+              gcc-${{ matrix.host }}
           fi
 
       - name: Setup Dependencies Windows
@@ -184,22 +182,8 @@ jobs:
       - name: Setup cross compilation
         id: cross
         if: ${{ matrix.arch == 'aarch64' }}
-        shell: bash -e {0}
-        working-directory: third_party/crosstool-ng
         run: |
-          # compile crosstool-ng
-          ./bootstrap
-          ./configure --prefix=$HOME/cross/x-tools
-          make
-          make install
-          export PATH=$PATH:$HOME/cross/x-tools/bin
-          echo "$HOME/cross/x-tools/bin" >> $GITHUB_PATH
-
-          # setup toolchain
-          cd ../../crosstool-ng/aarch64
-          ct-ng build.$(nproc)
-          echo "$HOME/cross/x-tools/${{ matrix.host }}/bin" >> $GITHUB_PATH
-          echo "CCPREFIX=$HOME/cross/x-tools/${{ matrix.host }}/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
+          echo "CCPREFIX=/usr/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
 
       - name: amf
         if: ${{ matrix.os_type != 'macos' }}
@@ -291,7 +275,7 @@ jobs:
           --arch=${{ matrix.arch }}
           --cc=${{ matrix.host }}-gcc
           --cxx=${{ matrix.host }}-g++
-          --cross-prefix=${{ matrix.host }}-
+          --cross-prefix=${CCPREFIX}
           --enable-cross-compile
           --target-os=${{ matrix.os_type }}
           VAREOF
