@@ -314,10 +314,10 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::configure"
-          set +e  # don't fail
           PATH="$root_path/bin:$PATH" \
             PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig" \
             ./configure \
+            $extra_configure \
             --prefix="$root_path/ffmpeg_build" \
             --pkg-config-flags="--static" \
             --extra-cflags="-I$root_path/ffmpeg_build/include" \
@@ -335,9 +335,7 @@ jobs:
             --enable-static \
             --enable-swscale \
             --enable-version3 \
-            ${{ matrix.ffmpeg_extras }} \
-            $extra_configure || config_error=true
-          set -e  # reset fail
+            ${{ matrix.ffmpeg_extras }} || config_error=true
 
           # temp disabled
           # --ar="${CCPREFIX}ar" \
