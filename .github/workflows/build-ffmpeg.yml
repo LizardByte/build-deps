@@ -109,6 +109,7 @@ jobs:
               libfreetype6-dev \
               libgnutls28-dev \
               libmp3lame-dev \
+              libnuma-dev \
               libopus-dev \
               libsdl2-dev \
               libtool \
@@ -118,6 +119,7 @@ jobs:
               libxcb1-dev \
               libxcb-shm0-dev \
               libxcb-xfixes0-dev \
+              mercurial \
               meson \
               nasm \
               ninja-build \
@@ -136,6 +138,7 @@ jobs:
               libtool \
               libvorbis \
               libvpx \
+              mercurial \
               nasm \
               opus \
               sdl \
@@ -166,6 +169,7 @@ jobs:
             diffutils
             git
             make
+            mercurial
             pkg-config
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-gcc
@@ -245,6 +249,7 @@ jobs:
         run: |
           echo "::group::configure extra flags for cross compilation"
           extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
+          cat ./build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake
           if [[ ${{ matrix.arch }} != "aarch64" ]]; then
             extra_configure="-DENABLE_HDR10_PLUS=1"
           fi
@@ -256,6 +261,7 @@ jobs:
             $extra_configure \
             -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
             -DENABLE_CLI=off \
+            -DENABLE_SHARED=off \
             -DSTATIC_LINK_CRT=1 \
             ./source
           echo "::endgroup::"
