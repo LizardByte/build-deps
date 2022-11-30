@@ -249,7 +249,7 @@ jobs:
         run: |
           echo "::group::configure extra flags for cross compilation"
           extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
-          cat ./build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake
+          cat ./build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake || true
           if [[ ${{ matrix.arch }} != "aarch64" ]]; then
             extra_configure="-DENABLE_HDR10_PLUS=1"
           fi
