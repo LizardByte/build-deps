@@ -215,6 +215,7 @@ jobs:
           if [[ ${{ matrix.arch }} != "aarch64" ]]; then
             extra_configure=""
           fi
+          echo "$extra_configure"
           echo "::endgroup::"
 
           echo "::group::configure"
@@ -242,28 +243,30 @@ jobs:
           CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
         working-directory: ffmpeg_sources/x265_git
         run: |
-          # configure extra flags for cross compilation
-          # extra_configure='-DCMAKE_TOOLCHAIN_FILE=build/aarch64-linux/crosscompile.cmake'
-          extra_configure=$(cat <<VAREOF
-          -DCROSS_COMPILE_ARM=1
-          -DCMAKE_SYSTEM_NAME=Linux
-          -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }}
-          -DCMAKE_C_COMPILER=${CCPREFIX}gcc
-          -DCMAKE_CXX_COMPILER=${CCPREFIX}g++
-          VAREOF
-          )
+          echo "::group::configure extra flags for cross compilation"
+          extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
           if [[ ${{ matrix.arch }} != "aarch64" ]]; then
             extra_configure="-DENABLE_HDR10_PLUS=1"
           fi
+          echo "$extra_configure"
+          echo "::endgroup::"
 
+          echo "::group::configure"
           PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
             $extra_configure \
             -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
             -DENABLE_CLI=off \
             -DSTATIC_LINK_CRT=1 \
             ./source
+          echo "::endgroup::"
+
+          echo "::group::make"
           PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
+          echo "::endgroup::"
+
+          echo "::group::make install"
           make install
+          echo "::endgroup::"
 
       - name: nvenc
         id: nvenc
@@ -271,12 +274,17 @@ jobs:
         working-directory: ffmpeg_sources/nv-codec-headers
         # https://trac.ffmpeg.org/wiki/HWAccelIntro#NVENC
         run: |
+          echo "::group::make"
           make -j$(nproc || sysctl -n hw.logicalcpu)
+          echo "::endgroup::"
+
+          echo "::group::make install"
           if [[ ${{ matrix.os_type }} == "windows" ]]; then
             make install
           else
             sudo make install
           fi
+          echo "::endgroup::"
 
           echo "nvenc_path=$PWD" >> $GITHUB_OUTPUT
 
@@ -287,7 +295,11 @@ jobs:
           CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
         working-directory: ffmpeg_sources/ffmpeg
         run: |
-          # configure extra flags for cross compilation
+          echo "::group::configure options"
+          ./configure --help || true  # this command has a non zero exit status, but we should continue anyway
+          echo "::endgroup::"
+
+          echo "::group::configure extra flags for cross compilation"
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
           --cc=${{ matrix.host }}-gcc
@@ -300,7 +312,11 @@ jobs:
           if [[ ${{ matrix.arch }} != "aarch64" ]]; then
             extra_configure=""
           fi
+          echo "$extra_configure"
+          echo "::endgroup::"
 
+          echo "::group::configure"
+          set +e  # don't fail
           PATH="$root_path/bin:$PATH" \
             PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig" \
             ./configure \
@@ -322,16 +338,25 @@ jobs:
             --enable-swscale \
             --enable-version3 \
             ${{ matrix.ffmpeg_extras }} \
-            $extra_configure
-          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
-          make install
-          hash -r
+            $extra_configure || config_error=true
+          set -e  # reset fail
+          echo "::endgroup::"
 
-      - name: Testing
-        if: failure()
-        working-directory: ffmpeg_sources/ffmpeg
-        run: |
-          cat ./ffbuild/config.log
+          if [ $config_error ]
+          then
+            echo "::group::config error log"
+            cat ./ffbuild/config.log
+            exit -1
+            echo "::endgroup::"
+          fi
+
+          echo "::group::make"
+          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
+          echo "::endgroup::"
+
+          echo "::group::make install"
+          make install
+          echo "::endgroup::"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -348,15 +373,18 @@ jobs:
 
       - name: Prepare dependency branch
         run: |
-          # cleanup build
+          echo "::group::cleanup build"
           rm -f -r ./ffmpeg_build/share
           rm -f -r ./ffmpeg_build/lib/pkgconfig
+          echo "::endgroup::"
 
-          # empty contents
+          echo "::group::empty contents"
           rm -f -r ./ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}/*
+          echo "::endgroup::"
 
-          # copy build back to dependency branch
+          echo "::group::copy build back to dependency branch"
           cp -f -r ./ffmpeg_build/. ./ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}/
+          echo "::endgroup::"
 
       - name: Commit build
         if: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}  # yamllint disable-line rule:line-length
