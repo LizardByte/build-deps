@@ -302,8 +302,6 @@ jobs:
           echo "::group::configure extra flags for cross compilation"
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
-          --cc=${{ matrix.host }}-gcc
-          --cxx=${{ matrix.host }}-g++
           --cross-prefix=${CCPREFIX}
           --enable-cross-compile
           --target-os=${{ matrix.os_type }}
@@ -340,6 +338,14 @@ jobs:
             ${{ matrix.ffmpeg_extras }} \
             $extra_configure || config_error=true
           set -e  # reset fail
+
+          # temp disabled
+          # --ar="${CCPREFIX}ar" \
+          # --cc="${CCPREFIX}gcc" \
+          # --cxx="${CCPREFIX}g++" \
+          # --nm="${CCPREFIX}nm" \
+          # --ranlib="${CCPREFIX}ranlib" \
+          # --ld="${CCPREFIX}ld" \
           echo "::endgroup::"
 
           if [ $config_error ]
