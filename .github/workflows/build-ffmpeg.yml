@@ -98,10 +98,23 @@ jobs:
         if: ${{ matrix.os_type != 'windows' }}
         run: |
           echo "::group::${{ matrix.os_type }} dependencies"
+          if [[ ${{ matrix.os }} == "ubuntu-18.04" ]]; then
+            dist="bionic"
+          elif [[ ${{ matrix.os }} == "ubuntu-20.04" ]]; then
+            dist="focal"
+          elif [[ ${{ matrix.os }} == "ubuntu-22.04" ]]; then
+            dist="jammy"
+          fi
+          
           package_arch="amd64"
           if [[ ${{ matrix.arch }} == "aarch64" ]]; then
             package_arch="arm64"
+          fi
+          
+          if [[ $package_arch != "amd64" ]]; then
             sudo dpkg --add-architecture $package_arch
+            echo "deb [arch=$package_arch] http://archive.ubuntu.com/ubuntu $dist main universe" | sudo tee /etc/apt/sources.list
+            echo "deb [arch=$package_arch] http://archive.ubuntu.com/ubuntu $dist main universe" | sudo tee /etc/apt/sources.list.d
           fi
           
           if [[ ${{ matrix.os_type }} == "linux" ]]; then
