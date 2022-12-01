@@ -166,10 +166,6 @@ jobs:
             echo "::endgroup::"
           fi
 
-      - name: testing find libva.pc
-        run: |
-          sudo find / -type f -name "libva.pc"
-
       - name: Setup Dependencies Windows
         if: ${{ matrix.os_type == 'windows' }}
         uses: msys2/setup-msys2@v2
@@ -332,7 +328,7 @@ jobs:
           echo "::group::configure"
           set +e  # do not fail
           PATH="$root_path/bin:$PATH" \
-            PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig" \
+            PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig:/usr/lib/${{ matrix.host }}/pkgconfig" \
             ./configure \
             $extra_configure \
             --prefix="$root_path/ffmpeg_build" \
