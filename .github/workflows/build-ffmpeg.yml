@@ -151,12 +151,18 @@ jobs:
           fi
           echo "::endgroup::"
 
+          package_arch="amd64"
+          if [[ ${{ matrix.arch }} == "aarch64" ]]; then
+            package_arch="arm64"
+          fi
+
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
             echo "::group::${{ matrix.os_type }}-${{ matrix.arch }} dependencies"
             sudo apt-get -y install \
               binutils-${{ matrix.host }} \
               g++-${{ matrix.host }} \
               gcc-${{ matrix.host }}
+              vaapi:$package_arch
             echo "::endgroup::"
           fi
 
