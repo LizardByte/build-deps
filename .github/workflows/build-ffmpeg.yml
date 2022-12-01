@@ -113,7 +113,7 @@ jobs:
           
           if [[ $package_arch != "amd64" ]]; then
             sudo dpkg --add-architecture $package_arch
-            echo "deb [arch=$package_arch] http://archive.ubuntu.com/ubuntu $dist main universe" | sudo tee /etc/apt/sources.list
+            echo "deb [arch=$package_arch] http://archive.ubuntu.com/ubuntu $dist main universe" | sudo tee -a /etc/apt/sources.list
           fi
           
           if [[ ${{ matrix.os_type }} == "linux" ]]; then
