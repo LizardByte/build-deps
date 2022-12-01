@@ -158,6 +158,7 @@ jobs:
 
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
             echo "::group::${{ matrix.os_type }}-${{ matrix.arch }} dependencies"
+            sudo dpkg --add-architecture $package_arch
             sudo apt-get -y install \
               binutils-${{ matrix.host }} \
               g++-${{ matrix.host }} \
