@@ -166,6 +166,10 @@ jobs:
             echo "::endgroup::"
           fi
 
+      - name: testing find libva.pc
+        run: |
+          find / -type f "libva.pc"
+
       - name: Setup Dependencies Windows
         if: ${{ matrix.os_type == 'windows' }}
         uses: msys2/setup-msys2@v2
