@@ -132,7 +132,7 @@ jobs:
             echo "$extra_sources" | sudo tee /etc/apt/sources.list
             echo "----"
             # fix original sources
-            sed -i -e "s#deb http#deb [arch=amd64] http#g" /etc/apt/sources.list
+            sudo sed -i -e "s#deb http#deb [arch=amd64] http#g" /etc/apt/sources.list
             sudo cat /etc/apt/sources.list
           fi
 
