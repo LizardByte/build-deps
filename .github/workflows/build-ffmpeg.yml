@@ -168,7 +168,7 @@ jobs:
 
       - name: testing find libva.pc
         run: |
-          find / -type f -name "libva.pc"
+          sudo find / -type f -name "libva.pc"
 
       - name: Setup Dependencies Windows
         if: ${{ matrix.os_type == 'windows' }}
