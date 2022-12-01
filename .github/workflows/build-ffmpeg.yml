@@ -161,7 +161,7 @@ jobs:
             sudo apt-get -y install \
               binutils-${{ matrix.host }} \
               g++-${{ matrix.host }} \
-              gcc-${{ matrix.host }}
+              gcc-${{ matrix.host }} \
               vaapi:$package_arch
             echo "::endgroup::"
           fi
