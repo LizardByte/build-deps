@@ -105,19 +105,36 @@ jobs:
           elif [[ ${{ matrix.os }} == "ubuntu-22.04" ]]; then
             dist="jammy"
           fi
-          
+
           package_arch="amd64"
           if [[ ${{ matrix.arch }} == "aarch64" ]]; then
             package_arch="arm64"
           fi
-          
+
           if [[ $package_arch != "amd64" ]]; then
             sudo dpkg --add-architecture $package_arch
-            echo "deb [arch=$package_arch] http://archive.ubuntu.com/ubuntu $dist main universe" | sudo tee -a /etc/apt/sources.list
+
+            mirror="http://ports.ubuntu.com/ubuntu-ports/"
+            nl=$'\n'
+            extra_sources=$(cat <<VAREOF
+            deb [arch=$package_arch] $mirror $dist main restricted $nl
+            deb [arch=$package_arch] $mirror $dist-updates main restricted $nl
+            deb [arch=$package_arch] $mirror $dist universe $nl
+            deb [arch=$package_arch] $mirror $dist-updates universe $nl
+            deb [arch=$package_arch] $mirror $dist multiverse $nl
+            deb [arch=$package_arch] $mirror $dist-updates multiverse $nl
+            deb [arch=$package_arch] $mirror $dist-backports main restricted universe multiverse $nl
+            deb [arch=$package_arch] $mirror $dist-security main restricted $nl
+            deb [arch=$package_arch] $mirror $dist-security universe $nl
+            deb [arch=$package_arch] $mirror $dist-security multiverse $nl
+            VAREOF
+            )
+
+            echo "$extra_sources" | sudo tee -a /etc/apt/sources.list
             echo "----"
             sudo cat /etc/apt/sources.list
           fi
-          
+
           if [[ ${{ matrix.os_type }} == "linux" ]]; then
             sudo apt-get update -qq && sudo apt-get -y install \
               autoconf \
