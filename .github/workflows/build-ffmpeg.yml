@@ -111,24 +111,24 @@ jobs:
             package_arch="arm64"
           fi
 
+          mirror="http://ports.ubuntu.com/ubuntu-ports/"
+          nl=$'\n'
+          extra_sources=$(cat <<VAREOF
+          deb [arch=$package_arch] $mirror $dist main restricted $nl
+          deb [arch=$package_arch] $mirror $dist-updates main restricted $nl
+          deb [arch=$package_arch] $mirror $dist universe $nl
+          deb [arch=$package_arch] $mirror $dist-updates universe $nl
+          deb [arch=$package_arch] $mirror $dist multiverse $nl
+          deb [arch=$package_arch] $mirror $dist-updates multiverse $nl
+          deb [arch=$package_arch] $mirror $dist-backports main restricted universe multiverse $nl
+          deb [arch=$package_arch] $mirror $dist-security main restricted $nl
+          deb [arch=$package_arch] $mirror $dist-security universe $nl
+          deb [arch=$package_arch] $mirror $dist-security multiverse $nl
+          VAREOF
+          )
+
           if [[ $package_arch != "amd64" ]]; then
             sudo dpkg --add-architecture $package_arch
-
-            mirror="http://ports.ubuntu.com/ubuntu-ports/"
-            nl=$'\n'
-            extra_sources=$(cat <<VAREOF
-            deb [arch=$package_arch] $mirror $dist main restricted $nl
-            deb [arch=$package_arch] $mirror $dist-updates main restricted $nl
-            deb [arch=$package_arch] $mirror $dist universe $nl
-            deb [arch=$package_arch] $mirror $dist-updates universe $nl
-            deb [arch=$package_arch] $mirror $dist multiverse $nl
-            deb [arch=$package_arch] $mirror $dist-updates multiverse $nl
-            deb [arch=$package_arch] $mirror $dist-backports main restricted universe multiverse $nl
-            deb [arch=$package_arch] $mirror $dist-security main restricted $nl
-            deb [arch=$package_arch] $mirror $dist-security universe $nl
-            deb [arch=$package_arch] $mirror $dist-security multiverse $nl
-            VAREOF
-            )
 
             echo "$extra_sources" | sudo tee -a /etc/apt/sources.list
             echo "----"
