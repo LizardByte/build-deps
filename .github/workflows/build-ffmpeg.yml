@@ -303,8 +303,9 @@ jobs:
           PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
             $extra_configure \
             -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
-            -DENABLE_CLI=off \
-            -DSTATIC_LINK_CRT=1 \
+            -DENABLE_CLI=OFF \
+            -DENABLE_SHARED=OFF \
+            -DSTATIC_LINK_CRT=ON \
             ./source
           echo "::endgroup::"
 
