@@ -158,7 +158,6 @@ jobs:
               libxcb1-dev \
               libxcb-shm0-dev \
               libxcb-xfixes0-dev \
-              mercurial \
               meson \
               nasm \
               ninja-build \
@@ -177,7 +176,6 @@ jobs:
               libtool \
               libvorbis \
               libvpx \
-              mercurial \
               nasm \
               opus \
               sdl \
@@ -208,7 +206,6 @@ jobs:
             diffutils
             git
             make
-            mercurial
             pkg-config
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-gcc
@@ -288,8 +285,9 @@ jobs:
         run: |
           echo "::group::configure extra flags for cross compilation"
           extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
-          cat ./build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake || true
+
           if [[ ${{ matrix.arch }} != "aarch64" ]]; then
+            # not currently supported in `aarch64`
             extra_configure="-DENABLE_HDR10_PLUS=1"
           fi
           echo "$extra_configure"
@@ -300,7 +298,6 @@ jobs:
             $extra_configure \
             -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
             -DENABLE_CLI=off \
-            -DENABLE_SHARED=off \
             -DSTATIC_LINK_CRT=1 \
             ./source
           echo "::endgroup::"
@@ -385,23 +382,16 @@ jobs:
             ${{ matrix.ffmpeg_extras }} \
             || config_error=true
           set -e  # reset fail on error
-
-          # temp disabled
-          # --ar="${CCPREFIX}ar" \
-          # --cc="${CCPREFIX}gcc" \
-          # --cxx="${CCPREFIX}g++" \
-          # --nm="${CCPREFIX}nm" \
-          # --ranlib="${CCPREFIX}ranlib" \
-          # --ld="${CCPREFIX}ld" \
           echo "::endgroup::"
+
+          echo "::group::config error log"
+          cat ./ffbuild/config.log
 
           if [ $config_error ]
           then
-            echo "::group::config error log"
-            cat ./ffbuild/config.log
             exit -1
-            echo "::endgroup::"
           fi
+          echo "::endgroup::"
 
           echo "::group::make"
           PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
