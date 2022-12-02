@@ -223,6 +223,12 @@ jobs:
           echo "root_path=$PWD" >> $GITHUB_OUTPUT
           mkdir -p ./bin ./ffmpeg_build ./ffmpeg_sources
 
+      - name: patch
+        working-directory: ffmpeg_sources/ffmpeg
+        run: |
+          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/01-idr-on-amf.patch
+          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/02-amf-color-fixes.patch
+
       - name: Setup cross compilation
         id: cross
         if: ${{ matrix.arch == 'aarch64' }}
