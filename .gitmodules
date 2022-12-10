@@ -17,4 +17,4 @@
 [submodule "ffmpeg_sources/ffmpeg"]
 	path = ffmpeg_sources/ffmpeg
 	url = https://github.com/FFmpeg/FFmpeg
-	branch = release/4.4
+	branch = release/5.1
