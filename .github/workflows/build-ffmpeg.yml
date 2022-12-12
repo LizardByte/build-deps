@@ -270,7 +270,7 @@ jobs:
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
             CC="clang -arch arm64"
-            extra_configure="--arch=arm64"
+            extra_configure="--host=arm64-darwin"
           fi
           echo "$extra_configure"
           echo "::endgroup::"
