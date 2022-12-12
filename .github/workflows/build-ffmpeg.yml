@@ -19,76 +19,81 @@ jobs:
       fail-fast: false  # false to test all, true to fail entire job if any fail
       matrix:
         include:
-          - os_type: linux
-            os: ubuntu-20.04  # Pinned until all platforms moved to 22.04
-            arch: x86_64
-            shell: bash
-            cmake_generator: Unix Makefiles
-            ffmpeg_extras: >-
-              --enable-amf
-              --enable-cuda
-              --enable-cuda_llvm
-              --enable-encoder=h264_amf,hevc_amf
-              --enable-encoder=h264_nvenc,hevc_nvenc
-              --enable-encoder=h264_vaapi,hevc_vaapi
-              --enable-ffnvcodec
-              --enable-libx265
-              --enable-nvenc
-              --enable-v4l2_m2m
-              --enable-vaapi
-              --enable-vdpau
-          - os_type: linux
-            os: ubuntu-22.04
-            arch: aarch64
-            shell: bash
-            cmake_generator: Unix Makefiles
-            host: aarch64-linux-gnu
-            ffmpeg_extras: >-
-              --enable-amf
-              --enable-cuda
-              --enable-cuda_llvm
-              --enable-encoder=h264_amf,hevc_amf
-              --enable-encoder=h264_nvenc,hevc_nvenc
-              --enable-encoder=h264_vaapi,hevc_vaapi
-              --enable-ffnvcodec
-              --enable-libx265
-              --enable-nvenc
-              --enable-v4l2_m2m
-              --enable-vaapi
-              --enable-vdpau
+          # - os_type: linux
+          #   os: ubuntu-20.04  # Pinned until all platforms moved to 22.04
+          #   arch: x86_64
+          #   shell: bash
+          #   cmake_generator: Unix Makefiles
+          #   ffmpeg_extras: >-
+          #     --enable-amf
+          #     --enable-cuda
+          #     --enable-cuda_llvm
+          #     --enable-encoder=h264_amf,hevc_amf
+          #     --enable-encoder=h264_nvenc,hevc_nvenc
+          #     --enable-encoder=h264_vaapi,hevc_vaapi
+          #     --enable-encoder=libx265
+          #     --enable-ffnvcodec
+          #     --enable-libx265
+          #     --enable-nvenc
+          #     --enable-v4l2_m2m
+          #     --enable-vaapi
+          #     --enable-vdpau
+          # - os_type: linux
+          #   os: ubuntu-22.04
+          #   arch: aarch64
+          #   shell: bash
+          #   cmake_generator: Unix Makefiles
+          #   host: aarch64-linux-gnu
+          #   ffmpeg_extras: >-
+          #     --enable-amf
+          #     --enable-cuda
+          #     --enable-cuda_llvm
+          #     --enable-encoder=h264_amf,hevc_amf
+          #     --enable-encoder=h264_nvenc,hevc_nvenc
+          #     --enable-encoder=h264_vaapi,hevc_vaapi
+          #     --enable-encoder=libx265
+          #     --enable-ffnvcodec
+          #     --enable-libx265
+          #     --enable-nvenc
+          #     --enable-v4l2_m2m
+          #     --enable-vaapi
+          #     --enable-vdpau
+          # - os_type: macos
+          #   os: macos-11
+          #   arch: x86_64
+          #   shell: bash
+          #   cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
+          #   ffmpeg_extras: >-
+          #     --enable-encoder=h264_videotoolbox,hevc_videotoolbox
+          #     --enable-encoder=libx265
+          #     --enable-videotoolbox
+          #     --enable-libx265
           - os_type: macos
             os: macos-11
-            arch: x86_64
+            arch: aarch64
             shell: bash
             cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
+            host: arm64-apple-darwin
             ffmpeg_extras: >-
               --enable-encoder=h264_videotoolbox,hevc_videotoolbox
               --enable-videotoolbox
-              --enable-libx265
-          - os_type: macos
-            os: macos-11
-            arch: aarch64
-            shell: bash
-            cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
-            ffmpeg_extras: >-
-              --enable-encoder=h264_videotoolbox,hevc_videotoolbox
-              --enable-videotoolbox
-          - os_type: windows
-            os: windows-2022
-            arch: x86_64
-            shell: msys2 {0}
-            cmake_generator: MSYS Makefiles
-            ffmpeg_extras: >-
-              --enable-amf
-              --enable-cuda
-              --enable-d3d11va
-              --enable-encoder=h264_amf,hevc_amf
-              --enable-encoder=h264_mf,hevc_mf
-              --enable-encoder=h264_nvenc,hevc_nvenc
-              --enable-ffnvcodec
-              --enable-libx265
-              --enable-nvenc
-              --enable-mediafoundation
+          # - os_type: windows
+          #   os: windows-2022
+          #   arch: x86_64
+          #   shell: msys2 {0}
+          #   cmake_generator: MSYS Makefiles
+          #   ffmpeg_extras: >-
+          #     --enable-amf
+          #     --enable-cuda
+          #     --enable-d3d11va
+          #     --enable-encoder=h264_amf,hevc_amf
+          #     --enable-encoder=h264_mf,hevc_mf
+          #     --enable-encoder=h264_nvenc,hevc_nvenc
+          #     --enable-encoder=libx265
+          #     --enable-ffnvcodec
+          #     --enable-libx265
+          #     --enable-nvenc
+          #     --enable-mediafoundation
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -202,6 +207,12 @@ jobs:
               wget \
               yasm \
               xvid
+            
+            which llvm-gcc || true
+            which clang || true
+            which ar || true
+            which llvm-ar || true
+            which ld || true
 
       - name: Setup Dependencies Windows
         if: ${{ matrix.os_type == 'windows' }}
@@ -269,8 +280,12 @@ jobs:
           VAREOF
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-            CC="clang -arch arm64"
-            extra_configure="--host=arm64-darwin"
+          CC="clang"
+          CFLAGS="-target aarch64-apple-darwin"
+          extra_configure=$(cat <<VAREOF
+          --host=arm64-darwin
+          VAREOF
+          )
           fi
           echo "$extra_configure"
           echo "::endgroup::"
@@ -278,6 +293,7 @@ jobs:
           echo "::group::configure"
           PATH="$root_path/bin:$PATH" \
             PKG_CONFIG_PATH="$root_path/ffmpeg_build/lib/pkgconfig" \
+            $test_env \
             ./configure \
             $extra_configure \
             --prefix="$root_path/ffmpeg_build" \
@@ -295,7 +311,7 @@ jobs:
           echo "::endgroup::"
 
       - name: libx265
-        if: ${{ matrix.os_type != 'macos' && matrix.arch != 'aarch64' }}
+        if: ${{ matrix.os_type != 'macos' || matrix.arch != 'aarch64' }}
         env:
           root_path: ${{ steps.root.outputs.root_path }}
           CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
@@ -353,9 +369,9 @@ jobs:
         env:
           nvenc_path: ${{ steps.nvenc.outputs.nvenc_path }}
           root_path: ${{ steps.root.outputs.root_path }}
-          CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
         working-directory: ffmpeg_sources/ffmpeg
         run: |
+          set -o xtrace
           echo "::group::configure options"
           ./configure --help || true  # this command has a non zero exit status, but we should continue anyway
           echo "::endgroup::"
@@ -363,6 +379,7 @@ jobs:
           echo "::group::configure extra flags for cross compilation"
           extra_configure=""
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
+          CCPREFIX=${{ steps.cross.outputs.CCPREFIX }}
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
           --cross-prefix=${CCPREFIX}
@@ -370,13 +387,18 @@ jobs:
           --target-os=${{ matrix.os_type }}
           VAREOF
           )
+          targetos=${{ matrix.host }}
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          CC='clang -arch arm64'
+          targetos=darwin
+          CC="clang"
+          CFLAGS="-target aarch64-apple-darwin"
           extra_configure=$(cat <<VAREOF
-          --arch=${{ matrix.arch }}
+          --arch=aarch64
           --enable-cross-compile
+          --target-os=darwin
           VAREOF
           )
+          # --cross-prefix="$root_path/ffmpeg_build"
           fi
           echo "$extra_configure"
           echo "::endgroup::"
@@ -384,7 +406,7 @@ jobs:
           echo "::group::configure"
           set +e  # do not fail
           PATH="$root_path/bin:$PATH" \
-            PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig:/usr/lib/${{ matrix.host }}/pkgconfig" \
+            PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig:/usr/lib/$targetos/pkgconfig" \
             ./configure \
             $extra_configure \
             --prefix="$root_path/ffmpeg_build" \
@@ -397,7 +419,7 @@ jobs:
             --disable-autodetect \
             --disable-iconv \
             --enable-avcodec \
-            --enable-encoder=libx264,libx265 \
+            --enable-encoder=libx264 \
             --enable-gpl \
             --enable-libx264 \
             --enable-static \
@@ -424,6 +446,7 @@ jobs:
           echo "::group::make install"
           make install
           echo "::endgroup::"
+          set +o xtrace
 
           echo "::group::copy license"
           cp ./COPYING.GPLv2 $root_path/ffmpeg_build/LICENSE
