@@ -1,0 +1,43 @@
+From 8b0966a3723a05d29810b116454a1eb94e15a0b1 Mon Sep 17 00:00:00 2001
+From: Conn O'Griofa <connogriofa@gmail.com>
+Date: Thu, 24 Nov 2022 06:34:48 +0000
+Subject: [PATCH] amfenc: disable buffering & blocking delay in IPP mode
+
+When realtime encoding is required, the HW queue and arbitrary
+1ms sleep during blocking introduces unnecessary latency, especially
+in low FPS situations such as streaming desktop content at a variable
+framerate.
+
+Resolve by disabling buffering and blocking delay if no B-frames are
+requested, as is typical for zero latency streaming use cases.
+---
+ libavcodec/amfenc.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/libavcodec/amfenc.c b/libavcodec/amfenc.c
+index fb23ed738c..c452a0fd5b 100644
+--- a/libavcodec/amfenc.c
++++ b/libavcodec/amfenc.c
+@@ -219,7 +219,7 @@ static int amf_init_context(AVCodecContext *avctx)
+     av_unused int ret;
+ 
+     ctx->hwsurfaces_in_queue = 0;
+-    ctx->hwsurfaces_in_queue_max = 16;
++    ctx->hwsurfaces_in_queue_max = avctx->max_b_frames > 0 ? 16 : 0; // avoid buffering frames if no B frames are in use
+ 
+     // configure AMF logger
+     // the return of these functions indicates old state and do not affect behaviour
+@@ -769,7 +769,9 @@ int ff_amf_receive_packet(AVCodecContext *avctx, AVPacket *avpkt)
+             }
+         } else if (ctx->delayed_surface != NULL || ctx->delayed_drain || (ctx->eof && res_query != AMF_EOF) || (ctx->hwsurfaces_in_queue >= ctx->hwsurfaces_in_queue_max)) {
+             block_and_wait = 1;
+-            av_usleep(1000); // wait and poll again
++            if (avctx->max_b_frames > 0) {
++                av_usleep(1000); // wait and poll again
++            }
+         }
+     } while (block_and_wait);
+ 
+-- 
+2.37.2
+
