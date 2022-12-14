@@ -384,7 +384,6 @@ jobs:
             --enable-libx265 \
             --enable-static \
             --enable-swscale \
-            --enable-version3 \
             --pkg-config=pkg-config \
             ${{ matrix.ffmpeg_extras }} \
             || config_error=true
@@ -406,6 +405,10 @@ jobs:
 
           echo "::group::make install"
           make install
+          echo "::endgroup::"
+
+          echo "::group::copy license"
+          cp ./COPYING.GPLv2 $root_path/ffmpeg_build/LICENSE
           echo "::endgroup::"
 
       - name: Upload Artifacts
