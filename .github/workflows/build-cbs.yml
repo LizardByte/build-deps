@@ -1,0 +1,408 @@
+---
+name: Build cbs
+
+on:
+  pull_request:
+    branches: [master, nightly]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  ffmpeg:
+    name: cbs-${{ matrix.os_type }}-${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os_type: linux
+            os: ubuntu-20.04  # Pinned until all platforms moved to 22.04
+            arch: x86_64
+            shell: bash
+            cmake_generator: Unix Makefiles
+          - os_type: linux
+            os: ubuntu-22.04
+            arch: aarch64
+            shell: bash
+            cmake_generator: Unix Makefiles
+          - os_type: macos
+            os: macos-11
+            arch: x86_64
+            shell: bash
+            cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
+          - os_type: windows
+            os: windows-2022
+            arch: x86_64
+            shell: msys2 {0}
+            cmake_generator: MSYS Makefiles
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Checkout destination branch
+        uses: actions/checkout@v3
+        with:
+          ref: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
+          path: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
+          persist-credentials: false  # otherwise, the token used is the GITHUB_TOKEN, instead of the personal token
+          fetch-depth: 0  # otherwise, will fail to push refs to dest repo
+
+      - name: Setup Dependencies Unix
+        if: ${{ matrix.os_type != 'windows' }}
+        run: |
+          echo "::group::${{ matrix.os_type }} dependencies"
+          if [[ ${{ matrix.os }} == "ubuntu-18.04" ]]; then
+            dist="bionic"
+          elif [[ ${{ matrix.os }} == "ubuntu-20.04" ]]; then
+            dist="focal"
+          elif [[ ${{ matrix.os }} == "ubuntu-22.04" ]]; then
+            dist="jammy"
+          fi
+
+          package_arch="amd64"
+          if [[ ${{ matrix.arch }} == "aarch64" ]]; then
+            package_arch="arm64"
+          fi
+
+          mirror="http://ports.ubuntu.com/ubuntu-ports"
+          extra_sources=$(cat <<VAREOF
+          deb [arch=$package_arch] $mirror $dist main restricted
+          deb [arch=$package_arch] $mirror $dist-updates main restricted
+          deb [arch=$package_arch] $mirror $dist universe
+          deb [arch=$package_arch] $mirror $dist-updates universe
+          deb [arch=$package_arch] $mirror $dist multiverse
+          deb [arch=$package_arch] $mirror $dist-updates multiverse
+          deb [arch=$package_arch] $mirror $dist-backports main restricted universe multiverse
+          deb [arch=$package_arch] $mirror $dist-security main restricted
+          deb [arch=$package_arch] $mirror $dist-security universe
+          deb [arch=$package_arch] $mirror $dist-security multiverse
+          VAREOF
+          )
+
+          if [[ $package_arch != "amd64" ]]; then
+            # fix original sources
+            sudo sed -i -e "s#deb http#deb [arch=amd64] http#g" /etc/apt/sources.list
+
+            sudo dpkg --add-architecture $package_arch
+
+            echo "$extra_sources" | sudo tee -a /etc/apt/sources.list
+            echo "----"
+            sudo cat /etc/apt/sources.list
+          fi
+
+          if [[ ${{ matrix.os_type }} == "linux" ]]; then
+            sudo apt-get update -qq && sudo apt-get -y install \
+              autoconf \
+              automake \
+              build-essential \
+              cmake \
+              git-core \
+              libass-dev \
+              libfreetype6-dev \
+              libgnutls28-dev \
+              libmp3lame-dev \
+              libnuma-dev \
+              libopus-dev \
+              libsdl2-dev \
+              libtool \
+              libva-dev:$package_arch \
+              libvdpau-dev \
+              libvorbis-dev \
+              libxcb1-dev \
+              libxcb-shm0-dev \
+              libxcb-xfixes0-dev \
+              meson \
+              nasm \
+              ninja-build \
+              pkg-config \
+              texinfo \
+              wget \
+              yasm \
+              zlib1g-dev
+          elif [[ ${{ matrix.os_type }} == "macos" ]]; then
+            brew install \
+              automake \
+              fdk-aac \
+              git \
+              lame \
+              libass \
+              libtool \
+              libvorbis \
+              libvpx \
+              nasm \
+              opus \
+              sdl \
+              shtool \
+              texi2html \
+              theora \
+              wget \
+              yasm \
+              xvid
+          fi
+          echo "::endgroup::"
+
+          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
+            echo "::group::${{ matrix.os_type }}-${{ matrix.arch }} dependencies"
+            sudo apt-get -y install \
+              binutils-${{ matrix.host }} \
+              g++-${{ matrix.host }} \
+              gcc-${{ matrix.host }}
+            echo "::endgroup::"
+          fi
+
+      - name: Setup Dependencies Windows
+        if: ${{ matrix.os_type == 'windows' }}
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >-
+            diffutils
+            git
+            make
+            pkg-config
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-nasm
+
+      - name: Initialize Submodules
+        # libx265 has issues when using the recursive method of the first checkout action
+        # this is after `msys2/setup-msys2@v2` because `msys2` (default) shell is not available until then.
+        run: |
+          git submodule update --init --recursive
+
+      - name: Create Directories
+        id: root
+        run: |
+          echo "root_path=$PWD" >> $GITHUB_OUTPUT
+          mkdir -p ./bin ./ffmpeg_build ./ffmpeg_sources
+
+      - name: patch
+        working-directory: ffmpeg_sources/ffmpeg
+        run: |
+          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/01-idr-on-amf.patch
+          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/02-amf-color-fixes.patch
+
+      - name: Setup cross compilation
+        id: cross
+        if: ${{ matrix.arch == 'aarch64' }}
+        run: |
+          echo "CCPREFIX=/usr/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
+
+      - name: amf
+        if: ${{ matrix.os_type != 'macos' }}
+        # https://ffmpeg.org/general.html#AMD-AMF_002fVCE
+        run: |
+          mkdir -p ./ffmpeg_build/include/AMF
+          cp -av "./ffmpeg_sources/AMF/amf/public/include/." "./ffmpeg_build/include/AMF"
+
+      - name: libx264
+        env:
+          root_path: ${{ steps.root.outputs.root_path }}
+          CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
+        working-directory: ffmpeg_sources/x264
+        run: |
+          echo "::group::configure options"
+          ./configure --help || true  # this command has a non zero exit status, but we should continue anyway
+          echo "::endgroup::"
+
+          echo "::group::configure extra flags for cross compilation"
+          extra_configure=$(cat <<VAREOF
+          --host=${{ matrix.arch }}-${{ matrix.os_type }}
+          --cross-prefix=${CCPREFIX}
+          VAREOF
+          )
+          if [[ ${{ matrix.arch }} != "aarch64" ]]; then
+            extra_configure=""
+          fi
+          echo "$extra_configure"
+          echo "::endgroup::"
+
+          echo "::group::configure"
+          PATH="$root_path/bin:$PATH" \
+            PKG_CONFIG_PATH="$root_path/ffmpeg_build/lib/pkgconfig" \
+            ./configure \
+            $extra_configure \
+            --prefix="$root_path/ffmpeg_build" \
+            --bindir="$root_path/bin" \
+            --disable-cli \
+            --enable-static
+          echo "::endgroup::"
+
+          echo "::group::make"
+          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
+          echo "::endgroup::"
+
+          echo "::group::make install"
+          make install
+          echo "::endgroup::"
+
+      - name: libx265
+        env:
+          root_path: ${{ steps.root.outputs.root_path }}
+          CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
+        working-directory: ffmpeg_sources/x265_git
+        run: |
+          echo "::group::configure extra flags for cross compilation"
+          extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
+
+          if [[ ${{ matrix.arch }} != "aarch64" ]]; then
+            # not currently supported in `aarch64`
+            extra_configure="-DENABLE_HDR10_PLUS=1"
+          fi
+          echo "$extra_configure"
+          echo "::endgroup::"
+
+          echo "::group::configure"
+          PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
+            $extra_configure \
+            -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
+            -DENABLE_CLI=OFF \
+            -DENABLE_SHARED=OFF \
+            -DSTATIC_LINK_CRT=ON \
+            ./source
+          echo "::endgroup::"
+
+          echo "::group::make"
+          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
+          echo "::endgroup::"
+
+          echo "::group::make install"
+          make install
+          echo "::endgroup::"
+
+      - name: nvenc
+        id: nvenc
+        if: ${{ matrix.os_type != 'macos' }}
+        working-directory: ffmpeg_sources/nv-codec-headers
+        # https://trac.ffmpeg.org/wiki/HWAccelIntro#NVENC
+        run: |
+          echo "::group::make"
+          make -j$(nproc || sysctl -n hw.logicalcpu)
+          echo "::endgroup::"
+
+          echo "::group::make install"
+          if [[ ${{ matrix.os_type }} == "windows" ]]; then
+            make install
+          else
+            sudo make install
+          fi
+          echo "::endgroup::"
+
+          echo "nvenc_path=$PWD" >> $GITHUB_OUTPUT
+
+      - name: ffmpeg
+        env:
+          nvenc_path: ${{ steps.nvenc.outputs.nvenc_path }}
+          root_path: ${{ steps.root.outputs.root_path }}
+          CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
+        working-directory: ffmpeg_sources/ffmpeg
+        run: |
+          echo "::group::configure options"
+          ./configure --help || true  # this command has a non zero exit status, but we should continue anyway
+          echo "::endgroup::"
+
+          echo "::group::configure extra flags for cross compilation"
+          extra_configure=$(cat <<VAREOF
+          --arch=${{ matrix.arch }}
+          --cross-prefix=${CCPREFIX}
+          --enable-cross-compile
+          --target-os=${{ matrix.os_type }}
+          VAREOF
+          )
+          if [[ ${{ matrix.arch }} != "aarch64" ]]; then
+            extra_configure=""
+          fi
+          echo "$extra_configure"
+          echo "::endgroup::"
+
+          echo "::group::configure"
+          set +e  # do not fail
+          PATH="$root_path/bin:$PATH" \
+            PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig:/usr/lib/${{ matrix.host }}/pkgconfig" \
+            ./configure \
+            $extra_configure \
+            --prefix="$root_path/ffmpeg_build" \
+            --pkg-config-flags="--static" \
+            --extra-cflags="-I$root_path/ffmpeg_build/include" \
+            --extra-ldflags="-L$root_path/ffmpeg_build/lib" \
+            --extra-libs="-lpthread -lm" \
+            --bindir="$root_path/bin" \
+            --disable-all \
+            --disable-autodetect \
+            --disable-iconv \
+            --enable-avcodec \
+            --enable-encoder=libx264,libx265 \
+            --enable-gpl \
+            --enable-libx264 \
+            --enable-libx265 \
+            --enable-static \
+            --enable-swscale \
+            --enable-version3 \
+            --pkg-config=pkg-config \
+            ${{ matrix.ffmpeg_extras }} \
+            || config_error=true
+          set -e  # reset fail on error
+          echo "::endgroup::"
+
+          echo "::group::config error log"
+          cat ./ffbuild/config.log
+
+          if [ $config_error ]
+          then
+            exit -1
+          fi
+          echo "::endgroup::"
+
+          echo "::group::make"
+          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
+          echo "::endgroup::"
+
+          echo "::group::make install"
+          make install
+          echo "::endgroup::"
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
+          path: |
+            ./ffmpeg_build/
+
+      - name: Get current date
+        id: date
+        run: |
+          echo "date=$(date +'%Y-%m-%d')"
+          echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Prepare dependency branch
+        run: |
+          echo "::group::cleanup build"
+          rm -f -r ./ffmpeg_build/share
+          rm -f -r ./ffmpeg_build/lib/pkgconfig
+          echo "::endgroup::"
+
+          echo "::group::empty contents"
+          rm -f -r ./ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}/*
+          echo "::endgroup::"
+
+          echo "::group::copy build back to dependency branch"
+          cp -f -r ./ffmpeg_build/. ./ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}/
+          echo "::endgroup::"
+
+      - name: Commit build
+        if: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}  # yamllint disable-line rule:line-length
+        uses: actions-js/push@v1.3
+        with:
+          github_token: ${{ secrets.GH_BOT_TOKEN }}
+          author_email: ${{ secrets.GH_BOT_EMAIL }}
+          author_name: ${{ secrets.GH_BOT_NAME }}
+          directory: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
+          branch: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
+          force: false
+          message: update-${{ steps.date.outputs.date }}
