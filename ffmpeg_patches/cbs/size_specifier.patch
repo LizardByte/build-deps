@@ -1,0 +1,66 @@
+diff --git a/libavcodec/cbs.c b/libavcodec/cbs.c
+index 8c0a5b5719..4594abe022 100644
+--- a/libavcodec/cbs.c
++++ b/libavcodec/cbs.c
+@@ -352,7 +352,7 @@ static int cbs_write_unit_data(CodedBitstreamContext *ctx,
+         if (ret < 0) {
+             av_log(ctx->log_ctx, AV_LOG_ERROR, "Unable to allocate a "
+                    "sufficiently large write buffer (last attempt "
+-                   "%"SIZE_SPECIFIER" bytes).\n", ctx->write_buffer_size);
++                   "%zu bytes).\n", ctx->write_buffer_size);
+             return ret;
+         }
+     }
+diff --git a/libavcodec/cbs_av1.c b/libavcodec/cbs_av1.c
+index 1229480567..c3e2dd8694 100644
+--- a/libavcodec/cbs_av1.c
++++ b/libavcodec/cbs_av1.c
+@@ -754,7 +754,7 @@ static int cbs_av1_split_fragment(CodedBitstreamContext *ctx,
+ 
+     if (INT_MAX / 8 < size) {
+         av_log(ctx->log_ctx, AV_LOG_ERROR, "Invalid fragment: "
+-               "too large (%"SIZE_SPECIFIER" bytes).\n", size);
++               "too large (%zu bytes).\n", size);
+         err = AVERROR_INVALIDDATA;
+         goto fail;
+     }
+@@ -805,7 +805,7 @@ static int cbs_av1_split_fragment(CodedBitstreamContext *ctx,
+         if (header.obu_has_size_field) {
+             if (get_bits_left(&gbc) < 8) {
+                 av_log(ctx->log_ctx, AV_LOG_ERROR, "Invalid OBU: fragment "
+-                       "too short (%"SIZE_SPECIFIER" bytes).\n", size);
++                       "too short (%zu bytes).\n", size);
+                 err = AVERROR_INVALIDDATA;
+                 goto fail;
+             }
+@@ -822,7 +822,7 @@ static int cbs_av1_split_fragment(CodedBitstreamContext *ctx,
+ 
+         if (size < obu_length) {
+             av_log(ctx->log_ctx, AV_LOG_ERROR, "Invalid OBU length: "
+-                   "%"PRIu64", but only %"SIZE_SPECIFIER" bytes remaining in fragment.\n",
++                   "%"PRIu64", but only %zu bytes remaining in fragment.\n",
+                    obu_length, size);
+             err = AVERROR_INVALIDDATA;
+             goto fail;
+@@ -901,7 +901,7 @@ static int cbs_av1_read_unit(CodedBitstreamContext *ctx,
+     } else {
+         if (unit->data_size < 1 + obu->header.obu_extension_flag) {
+             av_log(ctx->log_ctx, AV_LOG_ERROR, "Invalid OBU length: "
+-                   "unit too short (%"SIZE_SPECIFIER").\n", unit->data_size);
++                   "unit too short (%zu).\n", unit->data_size);
+             return AVERROR_INVALIDDATA;
+         }
+         obu->obu_size = unit->data_size - 1 - obu->header.obu_extension_flag;
+diff --git a/libavcodec/cbs_vp9.c b/libavcodec/cbs_vp9.c
+index ae7f88a8a3..322215cbf2 100644
+--- a/libavcodec/cbs_vp9.c
++++ b/libavcodec/cbs_vp9.c
+@@ -461,7 +461,7 @@ static int cbs_vp9_split_fragment(CodedBitstreamContext *ctx,
+         }
+         if (pos + index_size != frag->data_size) {
+             av_log(ctx->log_ctx, AV_LOG_WARNING, "Extra padding at "
+-                   "end of superframe: %"SIZE_SPECIFIER" bytes.\n",
++                   "end of superframe: %zu bytes.\n",
+                    frag->data_size - (pos + index_size));
+         }
+ 
