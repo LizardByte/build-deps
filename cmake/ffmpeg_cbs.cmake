@@ -112,3 +112,6 @@ include_directories(
 
 add_library(cbs ${CBS_SOURCE_FILES})
 target_compile_options(cbs PRIVATE -Wall -Wno-incompatible-pointer-types -Wno-format -Wno-format-extra-args)
+
+install(DIRECTORY ${CBS_INCLUDE_PATH})
+install(FILES ${CMAKE_BINARY_DIR}/libcbs.a)
