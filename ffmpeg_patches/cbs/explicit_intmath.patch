@@ -1,5 +1,17 @@
 Explicitly imports intmath as our subset of sources doesn't have it included
 
+diff --git a/libavcodec/cbs_av1.c b/libavcodec/cbs_av1.c
+index 1229480567..600a24c47a 100644
+--- a/libavcodec/cbs_av1.c
++++ b/libavcodec/cbs_av1.c
+@@ -17,6 +17,7 @@
+  */
+ 
+ #include "libavutil/avassert.h"
++#include "libavutil/intmath.h"
+ #include "libavutil/opt.h"
+ #include "libavutil/pixfmt.h"
+ 
 diff --git a/libavcodec/cbs_h2645.c b/libavcodec/cbs_h2645.c
 index 12e38c80b5..03970520e7 100644
 --- a/libavcodec/cbs_h2645.c
