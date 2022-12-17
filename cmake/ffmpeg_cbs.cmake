@@ -87,10 +87,10 @@ set(CBS_SOURCE_FILES
     ${FFMPEG_GENERATED_SRC_PATH}/libavutil/intmath.c
 
     # Additional headers containing symbols needed to compile
-    ${CMAKE_GENERATED_SRC_PATH}/include/libavutil/x86/asm.h
-    ${CMAKE_GENERATED_SRC_PATH}/include/libavutil/x86/intmath.h
-    ${CMAKE_GENERATED_SRC_PATH}/include/libavutil/arm/intmath.h
-    ${CMAKE_GENERATED_SRC_PATH}/include/libavutil/intmath.h
+    ${FFMPEG_GENERATED_SRC_PATH}/libavutil/x86/asm.h
+    ${FFMPEG_GENERATED_SRC_PATH}/libavutil/x86/intmath.h
+    ${FFMPEG_GENERATED_SRC_PATH}/libavutil/arm/intmath.h
+    ${FFMPEG_GENERATED_SRC_PATH}/libavutil/intmath.h
 )
 
 include_directories(
