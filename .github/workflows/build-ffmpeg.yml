@@ -465,7 +465,6 @@ jobs:
         env:
           root_path: ${{ steps.root.outputs.root_path }}
           CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
-        working-directory: cmake
         run: |
           mkdir -p build
           cd build
