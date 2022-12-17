@@ -1,3 +1,5 @@
+Explicitly imports intmath as our subset of sources doesn't have it included
+
 diff --git a/libavcodec/cbs_h2645.c b/libavcodec/cbs_h2645.c
 index 12e38c80b5..03970520e7 100644
 --- a/libavcodec/cbs_h2645.c

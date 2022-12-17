@@ -1,3 +1,5 @@
+Patch macro in logs that isn't handled by ./configure
+
 diff --git a/libavcodec/cbs.c b/libavcodec/cbs.c
 index 8c0a5b5719..4594abe022 100644
 --- a/libavcodec/cbs.c

@@ -14,8 +14,7 @@ set(CBS_GENERATED_SRC_INCLUDE_PATH ${CMAKE_BINARY_DIR}/generated-src/include/cbs
 macro(apply_git_patch REPO_PATH PATCH_PATH)
     execute_process(COMMAND git apply --check ${PATCH_PATH}
         WORKING_DIRECTORY ${REPO_PATH}
-        RESULT_VARIABLE SUCCESS
-        ERROR_QUIET)
+        RESULT_VARIABLE SUCCESS)
 
     if(${SUCCESS} EQUAL 0)
         message("Applying git patch ${PATCH_PATH} in ${REPO_PATH} repository")
@@ -31,8 +30,6 @@ macro(apply_git_patch REPO_PATH PATCH_PATH)
 endmacro()
 
 # Apply patches
-apply_git_patch(${CMAKE_SOURCE_DIR}/ffmpeg_sources/ffmpeg ${CMAKE_SOURCE_DIR}/ffmpeg_patches/cbs/avconfig.patch)
-apply_git_patch(${CMAKE_SOURCE_DIR}/ffmpeg_sources/ffmpeg ${CMAKE_SOURCE_DIR}/ffmpeg_patches/cbs/config.patch)
 apply_git_patch(${CMAKE_SOURCE_DIR}/ffmpeg_sources/ffmpeg ${CMAKE_SOURCE_DIR}/ffmpeg_patches/cbs/explicit_intmath.patch)
 apply_git_patch(${CMAKE_SOURCE_DIR}/ffmpeg_sources/ffmpeg ${CMAKE_SOURCE_DIR}/ffmpeg_patches/cbs/size_specifier.patch)
 
@@ -42,69 +39,37 @@ set(FFMPEG_SRC_PATH ${CMAKE_GENERATED_SRC_PATH}/ffmpeg)
 set(AVCODEC_SRC_PATH ${CMAKE_GENERATED_SRC_PATH}/ffmpeg/libavcodec)
 set(AVUTIL_SRC_PATH ${CMAKE_GENERATED_SRC_PATH}/ffmpeg/libavutil)
 
-# TODO - reduce below to minimal set of needed headers now that we are using ffmpeg source directly
+# Configure FFmpeg to generate necessary config files
+message("Configuring FFmpeg")
+execute_process(COMMAND ./configure
+    WORKING_DIRECTORY ${FFMPEG_SRC_PATH}
+    )
 
-# Include headers
+# Minimal set of headers needed for Sunshine
 configure_file(${AVCODEC_SRC_PATH}/cbs_av1.h ${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs_av1.h COPYONLY)
-configure_file(${AVCODEC_SRC_PATH}/cbs_bsf.h ${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs_bsf.h COPYONLY)
-configure_file(${AVCODEC_SRC_PATH}/cbs.h ${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs.h COPYONLY)
-configure_file(${AVCODEC_SRC_PATH}/cbs_h2645.h ${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs_h2645.h COPYONLY)
 configure_file(${AVCODEC_SRC_PATH}/cbs_h264.h ${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs_h264.h COPYONLY)
 configure_file(${AVCODEC_SRC_PATH}/cbs_h265.h ${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs_h265.h COPYONLY)
-configure_file(${AVCODEC_SRC_PATH}/cbs_jpeg.h ${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs_jpeg.h COPYONLY)
-configure_file(${AVCODEC_SRC_PATH}/cbs_mpeg2.h ${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs_mpeg2.h COPYONLY)
-configure_file(${AVCODEC_SRC_PATH}/cbs_sei.h ${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs_sei.h COPYONLY)
-configure_file(${AVCODEC_SRC_PATH}/cbs_vp9.h ${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs_vp9.h COPYONLY)
 configure_file(${AVCODEC_SRC_PATH}/h264_levels.h ${CBS_GENERATED_SRC_INCLUDE_PATH}/h264_levels.h COPYONLY)
 
-
 set(CBS_SOURCE_FILES
-${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs_h264.h
-${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs_h265.h
-${CBS_GENERATED_SRC_INCLUDE_PATH}/h264_levels.h
+    ${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs_av1.h
+    ${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs_h264.h
+    ${CBS_GENERATED_SRC_INCLUDE_PATH}/cbs_h265.h
+    ${CBS_GENERATED_SRC_INCLUDE_PATH}/h264_levels.h
 
-${AVCODEC_SRC_PATH}/cbs.c
-${AVCODEC_SRC_PATH}/cbs_h2645.c
-${AVCODEC_SRC_PATH}/cbs_av1.c
-${AVCODEC_SRC_PATH}/cbs_vp9.c
-${AVCODEC_SRC_PATH}/cbs_mpeg2.c
-${AVCODEC_SRC_PATH}/cbs_jpeg.c
-${AVCODEC_SRC_PATH}/cbs_sei.c
-${AVCODEC_SRC_PATH}/h264_levels.c
-${AVCODEC_SRC_PATH}/h2645_parse.c
-
-# ${AVCODEC_SRC_PATH}/avcodec.h
-# ${AVCODEC_SRC_PATH}/bytestream.h
-# ${AVCODEC_SRC_PATH}/cbs_internal.h
-# ${AVCODEC_SRC_PATH}/codec.h
-# ${AVCODEC_SRC_PATH}/h264_ps.h
-# ${AVCODEC_SRC_PATH}/h264_sei.h
-# ${AVCODEC_SRC_PATH}/hevc_sei.h
-# ${AVUTIL_SRC_PATH}/intmath.h
-# ${AVCODEC_SRC_PATH}/put_bits.h
+    ${AVCODEC_SRC_PATH}/cbs.c
+    ${AVCODEC_SRC_PATH}/cbs_h2645.c
+    ${AVCODEC_SRC_PATH}/cbs_av1.c
+    ${AVCODEC_SRC_PATH}/cbs_vp9.c
+    ${AVCODEC_SRC_PATH}/cbs_mpeg2.c
+    ${AVCODEC_SRC_PATH}/cbs_jpeg.c
+    ${AVCODEC_SRC_PATH}/cbs_sei.c
+    ${AVCODEC_SRC_PATH}/h264_levels.c
+    ${AVCODEC_SRC_PATH}/h2645_parse.c
 )
 
 include_directories(${CBS_GENERATED_SRC_INCLUDE_PATH})
 include_directories(${FFMPEG_SRC_PATH})
 
-if(DEFINED FFMPEG_INCLUDE_DIRS)
-include_directories(${FFMPEG_INCLUDE_DIRS})
-endif()
-
-add_compile_definitions(
-    HAVE_THREADS=1
-    HAVE_FAST_UNALIGNED
-
-    PIC=1
-
-    CONFIG_CBS_AV1=1
-    CONFIG_CBS_H264=1
-    CONFIG_CBS_H265=1
-    CONFIG_CBS_JPEG=1
-    CONFIG_CBS_MPEG2=1
-    CONFIG_CBS_VP9=1
-    )
-
-
 add_library(cbs ${CBS_SOURCE_FILES})
-target_compile_options(cbs PRIVATE -Wall -Wno-incompatible-pointer-types -Wno-maybe-uninitialized -Wno-format -Wno-format-extra-args)
+target_compile_options(cbs PRIVATE -Wall -Wno-incompatible-pointer-types -Wno-format -Wno-format-extra-args)
