@@ -465,8 +465,11 @@ jobs:
         env:
           root_path: ${{ steps.root.outputs.root_path }}
           CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
-        working-directory: cmake/build
+        working-directory: cmake
         run: |
+          mkdir -p build
+          cd build
+
           echo "::group::configure"
           PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
             -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
