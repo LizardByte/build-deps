@@ -461,6 +461,35 @@ jobs:
           cp ./COPYING.GPLv2 $root_path/ffmpeg_build/LICENSE
           echo "::endgroup::"
 
+      - name: cbs
+        env:
+          root_path: ${{ steps.root.outputs.root_path }}
+          CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
+        run: |
+          echo "::group::configure extra flags for cross compilation"
+          extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
+
+          if [[ ${{ matrix.arch }} != "aarch64" ]]; then
+            extra_configure=""
+          fi
+          echo "$extra_configure"
+          echo "::endgroup::"
+
+          echo "::group::configure"
+          PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
+            $extra_configure \
+            -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
+            -DFFMPEG_CBS=ON
+          echo "::endgroup::"
+
+          echo "::group::make"
+          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
+          echo "::endgroup::"
+
+          echo "::group::make install"
+          make install
+          echo "::endgroup::"
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
