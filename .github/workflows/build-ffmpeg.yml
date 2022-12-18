@@ -470,7 +470,7 @@ jobs:
 
           echo "::group::configure extra flags for cross compilation"
           extra_configure=$(cat <<VAREOF
-          -DCMAKE_C_COMPILER==${{ matrix.host }}-gcc
+          -DCMAKE_C_COMPILER=${{ matrix.host }}-gcc
           -DCMAKE_CXX_COMPILER=${{ matrix.host }}-g++
           -DCMAKE_AR=${{ matrix.host }}-ar
           -DCMAKE_LINKER=${{ matrix.host }}-ld
