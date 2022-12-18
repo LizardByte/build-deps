@@ -66,6 +66,10 @@ configure_file(${AVCODEC_GENERATED_SRC_PATH}/packet.h ${CBS_INCLUDE_PATH}/packet
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/sei.h ${CBS_INCLUDE_PATH}/sei.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/vlc.h ${CBS_INCLUDE_PATH}/vlc.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/config.h ${CMAKE_BINARY_DIR}/include/config.h COPYONLY)
+configure_file(${FFMPEG_GENERATED_SRC_PATH}/include/libavutil/x86/asm.h ${CMAKE_BINARY_DIR}/include/libavutil/x86/asm.h COPYONLY)
+configure_file(${FFMPEG_GENERATED_SRC_PATH}/include/libavutil/x86/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/x86/intmath.h COPYONLY)
+configure_file(${FFMPEG_GENERATED_SRC_PATH}/include/libavutil/arm/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/arm/intmath.h COPYONLY)
+configure_file(${FFMPEG_GENERATED_SRC_PATH}/include/libavutil/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h COPYONLY)
 
 set(CBS_SOURCE_FILES
     ${CBS_INCLUDE_PATH}/arm/mathops.h
@@ -95,6 +99,10 @@ set(CBS_SOURCE_FILES
     ${CBS_INCLUDE_PATH}/sei.h
     ${CBS_INCLUDE_PATH}/vlc.h
     ${CMAKE_BINARY_DIR}/include/config.h
+    ${CMAKE_BINARY_DIR}/include/libavutil/x86/asm.h
+    ${CMAKE_BINARY_DIR}/include/libavutil/x86/intmath.h
+    ${CMAKE_BINARY_DIR}/include/libavutil/arm/intmath.h
+    ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h
 
     ${AVCODEC_GENERATED_SRC_PATH}/cbs.c
     ${AVCODEC_GENERATED_SRC_PATH}/cbs_h2645.c
@@ -106,12 +114,6 @@ set(CBS_SOURCE_FILES
     ${AVCODEC_GENERATED_SRC_PATH}/h264_levels.c
     ${AVCODEC_GENERATED_SRC_PATH}/h2645_parse.c
     ${FFMPEG_GENERATED_SRC_PATH}/libavutil/intmath.c
-
-    # Additional headers containing symbols needed to compile
-    ${FFMPEG_GENERATED_SRC_PATH}/libavutil/x86/asm.h
-    ${FFMPEG_GENERATED_SRC_PATH}/libavutil/x86/intmath.h
-    ${FFMPEG_GENERATED_SRC_PATH}/libavutil/arm/intmath.h
-    ${FFMPEG_GENERATED_SRC_PATH}/libavutil/intmath.h
 )
 
 include_directories(
