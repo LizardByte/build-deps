@@ -62,6 +62,7 @@ configure_file(${AVCODEC_GENERATED_SRC_PATH}/h2645_parse.h ${CBS_INCLUDE_PATH}/h
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/h264.h ${CBS_INCLUDE_PATH}/h264.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/hevc.h ${CBS_INCLUDE_PATH}/hevc.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/mathops.h ${CBS_INCLUDE_PATH}/mathops.h COPYONLY)
+configure_file(${AVCODEC_GENERATED_SRC_PATH}/packet.h ${CBS_INCLUDE_PATH}/packet.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/sei.h ${CBS_INCLUDE_PATH}/sei.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/vlc.h ${CBS_INCLUDE_PATH}/vlc.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/config.h ${CMAKE_GENERATED_SRC_PATH}/include/config.h COPYONLY)
@@ -90,6 +91,7 @@ set(CBS_SOURCE_FILES
     ${CBS_INCLUDE_PATH}/h264.h
     ${CBS_INCLUDE_PATH}/hevc.h
     ${CBS_INCLUDE_PATH}/mathops.h
+    ${CBS_INCLUDE_PATH}/packet.h
     ${CBS_INCLUDE_PATH}/sei.h
     ${CBS_INCLUDE_PATH}/vlc.h
     ${CMAKE_GENERATED_SRC_PATH}/include/config.h
