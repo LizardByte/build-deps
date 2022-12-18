@@ -118,6 +118,7 @@ install(DIRECTORY ${CBS_INCLUDE_PATH}
         DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 install(FILES ${CMAKE_BINARY_DIR}/libcbs.a
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
-configure_file(libcbs.pc.in libcbs.pc @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/libcbs.pc.in
+        ${CMAKE_BINARY_DIR}/libcbs.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/libcbs.pc
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
