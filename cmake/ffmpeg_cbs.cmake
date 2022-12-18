@@ -52,6 +52,9 @@ configure_file(${AVCODEC_GENERATED_SRC_PATH}/cbs_jpeg.h ${CBS_INCLUDE_PATH}/cbs_
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/cbs_mpeg2.h ${CBS_INCLUDE_PATH}/cbs_mpeg2.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/cbs_sei.h ${CBS_INCLUDE_PATH}/cbs_sei.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/cbs_vp9.h ${CBS_INCLUDE_PATH}/cbs_vp9.h COPYONLY)
+configure_file(${AVCODEC_GENERATED_SRC_PATH}/codec_desc.h ${CBS_INCLUDE_PATH}/codec_desc.h COPYONLY)
+configure_file(${AVCODEC_GENERATED_SRC_PATH}/codec_id.h ${CBS_INCLUDE_PATH}/codec_id.h COPYONLY)
+configure_file(${AVCODEC_GENERATED_SRC_PATH}/codec_par.h ${CBS_INCLUDE_PATH}/codec_par.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/defs.h ${CBS_INCLUDE_PATH}/defs.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/get_bits.h ${CBS_INCLUDE_PATH}/get_bits.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/h264_levels.h ${CBS_INCLUDE_PATH}/h264_levels.h COPYONLY)
@@ -77,6 +80,9 @@ set(CBS_SOURCE_FILES
     ${CBS_INCLUDE_PATH}/cbs_mpeg2.h
     ${CBS_INCLUDE_PATH}/cbs_sei.h
     ${CBS_INCLUDE_PATH}/cbs_vp9.h
+    ${CBS_INCLUDE_PATH}/codec_desc.h
+    ${CBS_INCLUDE_PATH}/codec_id.h
+    ${CBS_INCLUDE_PATH}/codec_par.h
     ${CBS_INCLUDE_PATH}/defs.h
     ${CBS_INCLUDE_PATH}/get_bits.h
     ${CBS_INCLUDE_PATH}/h264_levels.h
