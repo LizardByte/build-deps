@@ -66,10 +66,10 @@ configure_file(${AVCODEC_GENERATED_SRC_PATH}/packet.h ${CBS_INCLUDE_PATH}/packet
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/sei.h ${CBS_INCLUDE_PATH}/sei.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/vlc.h ${CBS_INCLUDE_PATH}/vlc.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/config.h ${CMAKE_BINARY_DIR}/include/config.h COPYONLY)
-configure_file(${FFMPEG_GENERATED_SRC_PATH}/include/libavutil/x86/asm.h ${CMAKE_BINARY_DIR}/include/libavutil/x86/asm.h COPYONLY)
-configure_file(${FFMPEG_GENERATED_SRC_PATH}/include/libavutil/x86/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/x86/intmath.h COPYONLY)
-configure_file(${FFMPEG_GENERATED_SRC_PATH}/include/libavutil/arm/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/arm/intmath.h COPYONLY)
-configure_file(${FFMPEG_GENERATED_SRC_PATH}/include/libavutil/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h COPYONLY)
+configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/x86/asm.h ${CMAKE_BINARY_DIR}/include/libavutil/x86/asm.h COPYONLY)
+configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/x86/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/x86/intmath.h COPYONLY)
+configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/arm/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/arm/intmath.h COPYONLY)
+configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h COPYONLY)
 
 set(CBS_SOURCE_FILES
     ${CBS_INCLUDE_PATH}/arm/mathops.h
@@ -124,7 +124,7 @@ include_directories(
 add_library(cbs ${CBS_SOURCE_FILES})
 target_compile_options(cbs PRIVATE -Wall -Wno-incompatible-pointer-types -Wno-format -Wno-format-extra-args)
 
-install(FILES ${CMAKE_BINARY_DIR}/include
+install(DIRECTORY ${CMAKE_BINARY_DIR}/include
         DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(FILES ${CMAKE_BINARY_DIR}/libcbs.a
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
