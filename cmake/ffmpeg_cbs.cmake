@@ -124,10 +124,8 @@ include_directories(
 add_library(cbs ${CBS_SOURCE_FILES})
 target_compile_options(cbs PRIVATE -Wall -Wno-incompatible-pointer-types -Wno-format -Wno-format-extra-args)
 
-install(DIRECTORY ${CBS_INCLUDE_PATH}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
-install(FILES ${CMAKE_BINARY_DIR}/include/config.h
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+install(FILES ${CMAKE_BINARY_DIR}/include
+        DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(FILES ${CMAKE_BINARY_DIR}/libcbs.a
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/libcbs.pc.in
