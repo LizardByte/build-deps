@@ -468,11 +468,6 @@ jobs:
           mkdir -p build
           cd build
 
-          echo "::group::echo path, /usr/bin"
-          echo "$PATH"
-          ls /usr/bin | grep aarch64-linux-gnu
-          echo "::endgroup::"
-
           echo "::group::configure extra flags for cross compilation"
           extra_configure=$(cat <<VAREOF
           -DCMAKE_C_COMPILER=${{ matrix.host }}-gcc
