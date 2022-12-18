@@ -1,3 +1,5 @@
+Register storage specifier is an error for modern compiler and generally ignored anyway.
+
 diff --git a/libavcodec/get_bits.h b/libavcodec/get_bits.h
 index 992765dc92..fffa461bbe 100644
 --- a/libavcodec/get_bits.h
