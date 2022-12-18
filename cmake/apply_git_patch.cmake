@@ -5,13 +5,15 @@
 macro(apply_git_patch REPO_PATH PATCH_PATH)
     execute_process(COMMAND git apply --check ${PATCH_PATH}
         WORKING_DIRECTORY ${REPO_PATH}
-        RESULT_VARIABLE SUCCESS)
+        RESULT_VARIABLE SUCCESS
+        COMMAND_ECHO STDOUT)
 
     if(${SUCCESS} EQUAL 0)
         message("Applying git patch ${PATCH_PATH} in ${REPO_PATH} repository")
         execute_process(COMMAND git apply ${PATCH_PATH}
             WORKING_DIRECTORY ${REPO_PATH}
-            RESULT_VARIABLE SUCCESS)
+            RESULT_VARIABLE SUCCESS
+            COMMAND_ECHO STDOUT)
 
         if(${SUCCESS} EQUAL 1)
             # We don't stop here because it can happen in case of parallel builds

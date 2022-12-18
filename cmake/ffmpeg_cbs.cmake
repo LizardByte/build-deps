@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.2)
 
 project(cbs
         DESCRIPTION "FFmpeg code subset to expose coded bitstream (CBS) internal APIs for Sunshine"
+        VERSION 0.1
         )
 
 set(CMAKE_GENERATED_SRC_PATH ${CMAKE_BINARY_DIR}/generated-src)
@@ -113,5 +114,10 @@ include_directories(
 add_library(cbs ${CBS_SOURCE_FILES})
 target_compile_options(cbs PRIVATE -Wall -Wno-incompatible-pointer-types -Wno-format -Wno-format-extra-args)
 
-install(DIRECTORY ${CBS_INCLUDE_PATH} DESTINATION "${CMAKE_INSTALL_PREFIX}/include")
-install(FILES ${CMAKE_BINARY_DIR}/libcbs.a DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
+install(DIRECTORY ${CBS_INCLUDE_PATH}
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+install(FILES ${CMAKE_BINARY_DIR}/libcbs.a
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+configure_file(libcbs.pc.in libcbs.pc @ONLY)
+install(FILES ${CMAKE_BINARY_DIR}/libcbs.pc
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
