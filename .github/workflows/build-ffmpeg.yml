@@ -315,11 +315,9 @@ jobs:
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
           extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          CPU="apple-m1"
           extra_configure=$(cat <<VAREOF
           -DCROSS_COMPILE_ARM64=ON
           -DENABLE_ASSEMBLY=0
-          -DCMAKE_APPLE_SILICON_PROCESSOR=arm64
           -DCMAKE_SYSTEM_PROCESSOR=arm64
           -DCMAKE_OSX_ARCHITECTURES=arm64
           -DCMAKE_C_COMPILER=clang
@@ -392,14 +390,13 @@ jobs:
           VAREOF
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          CC="clang"
-          CPU="apple-m1"
-          MORE_C_FLAGS="--target=${{ matrix.host }} -mcpu=$CPU"
+          MORE_C_FLAGS="--target=${{ matrix.host }} -arch=${{ matrix.arch }}"
+          MORE_LD_FLAGS="-arch=${{ matrix.arch }}"
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
-          --cpu=$CPU
+          --cc="clang"
           --enable-cross-compile
-          --target-os=darwin
+          --enable-pic
           VAREOF
           )
           fi
@@ -415,7 +412,7 @@ jobs:
             --prefix="$root_path/ffmpeg_build" \
             --pkg-config-flags="--static" \
             --extra-cflags="-I$root_path/ffmpeg_build/include ${MORE_C_FLAGS}" \
-            --extra-ldflags="-L$root_path/ffmpeg_build/lib ${MORE_C_FLAGS}" \
+            --extra-ldflags="-L$root_path/ffmpeg_build/lib ${MORE_LD_FLAGS}" \
             --extra-libs="-lpthread -lm" \
             --bindir="$root_path/bin" \
             --disable-all \
