@@ -320,7 +320,7 @@ jobs:
           -DCROSS_COMPILE_ARM64=ON
           -DCMAKE_APPLE_SILICON_PROCESSOR=arm64
           -DCMAKE_SYSTEM_PROCESSOR=arm64
-          -DCMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}"
+          -DCMAKE_OSX_ARCHITECTURES=arm64
           -DCMAKE_C_COMPILER=clang
           -DCMAKE_C_COMPILER_TARGET="${{ matrix.host }}"
           -DCMAKE_CXX_COMPILER=clang
