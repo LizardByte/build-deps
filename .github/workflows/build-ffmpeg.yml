@@ -394,7 +394,7 @@ jobs:
           MORE_LD_FLAGS="-arch=${{ matrix.arch }}"
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
-          --cc="clang"
+          --cc=clang
           --enable-cross-compile
           --enable-pic
           VAREOF
