@@ -69,11 +69,11 @@ jobs:
           #     --enable-videotoolbox
           #     --enable-libx265
           - os_type: macos
-            os: macos-11
+            os: macos-12
             arch: aarch64
             shell: bash
             cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
-            host: arm64-apple-darwin
+            host: aarch64-apple-darwin
             ffmpeg_extras: >-
               --enable-encoder=h264_videotoolbox,hevc_videotoolbox
               --enable-videotoolbox
@@ -103,11 +103,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Checkout destination branch
+        uses: actions/checkout@v3
+        with:
+          ref: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
+          path: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
+          persist-credentials: false  # otherwise, the token used is the GITHUB_TOKEN, instead of the personal token
+          fetch-depth: 0  # otherwise, will fail to push refs to dest repo
+
       - name: Setup Dependencies Linux
         if: ${{ matrix.os_type == 'linux' }}
         run: |
           echo "::group::${{ matrix.os_type }} dependencies"
-          if [[ ${{ matrix.os }} == "ubuntu-20.04" ]]; then
+          if [[ ${{ matrix.os }} == "ubuntu-18.04" ]]; then
+            dist="bionic"
+          elif [[ ${{ matrix.os }} == "ubuntu-20.04" ]]; then
             dist="focal"
           elif [[ ${{ matrix.os }} == "ubuntu-22.04" ]]; then
             dist="jammy"
@@ -207,12 +217,6 @@ jobs:
               wget \
               yasm \
               xvid
-            
-            which llvm-gcc || true
-            which clang || true
-            which ar || true
-            which llvm-ar || true
-            which ld || true
 
       - name: Setup Dependencies Windows
         if: ${{ matrix.os_type == 'windows' }}
@@ -281,9 +285,9 @@ jobs:
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
           CC="clang"
-          CFLAGS="-target aarch64-apple-darwin"
+          CFLAGS="-target ${{ matrix.host }}"
           extra_configure=$(cat <<VAREOF
-          --host=arm64-darwin
+          --host=${{ matrix.arch }}-darwin
           VAREOF
           )
           fi
@@ -293,7 +297,6 @@ jobs:
           echo "::group::configure"
           PATH="$root_path/bin:$PATH" \
             PKG_CONFIG_PATH="$root_path/ffmpeg_build/lib/pkgconfig" \
-            $test_env \
             ./configure \
             $extra_configure \
             --prefix="$root_path/ffmpeg_build" \
@@ -371,7 +374,6 @@ jobs:
           root_path: ${{ steps.root.outputs.root_path }}
         working-directory: ffmpeg_sources/ffmpeg
         run: |
-          set -o xtrace
           echo "::group::configure options"
           ./configure --help || true  # this command has a non zero exit status, but we should continue anyway
           echo "::endgroup::"
@@ -387,13 +389,13 @@ jobs:
           --target-os=${{ matrix.os_type }}
           VAREOF
           )
-          targetos=${{ matrix.host }}
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          targetos=darwin
           CC="clang"
-          CFLAGS="-target aarch64-apple-darwin"
+          CPU="apple-m1"
+          MORE_C_FLAGS="-target=${{ matrix.host }} -march=$CPU"
           extra_configure=$(cat <<VAREOF
-          --arch=aarch64
+          --arch=${{ matrix.arch }}
+          --cpu=$CPU
           --enable-cross-compile
           --target-os=darwin
           VAREOF
@@ -406,20 +408,20 @@ jobs:
           echo "::group::configure"
           set +e  # do not fail
           PATH="$root_path/bin:$PATH" \
-            PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig:/usr/lib/$targetos/pkgconfig" \
+            PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig:/usr/lib/${{ matrix.host }}/pkgconfig" \
             ./configure \
             $extra_configure \
             --prefix="$root_path/ffmpeg_build" \
             --pkg-config-flags="--static" \
-            --extra-cflags="-I$root_path/ffmpeg_build/include" \
-            --extra-ldflags="-L$root_path/ffmpeg_build/lib" \
+            --extra-cflags="-I$root_path/ffmpeg_build/include ${MORE_C_FLAGS}" \
+            --extra-ldflags="-L$root_path/ffmpeg_build/lib ${MORE_C_FLAGS}" \
             --extra-libs="-lpthread -lm" \
             --bindir="$root_path/bin" \
             --disable-all \
             --disable-autodetect \
             --disable-iconv \
             --enable-avcodec \
-            --enable-encoder=libx264 \
+            --enable-encoder=libx264,libx265 \
             --enable-gpl \
             --enable-libx264 \
             --enable-static \
@@ -446,7 +448,6 @@ jobs:
           echo "::group::make install"
           make install
           echo "::endgroup::"
-          set +o xtrace
 
           echo "::group::copy license"
           cp ./COPYING.GPLv2 $root_path/ffmpeg_build/LICENSE
@@ -464,14 +465,6 @@ jobs:
         run: |
           echo "date=$(date +'%Y-%m-%d')"
           echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
-
-      - name: Checkout destination branch
-        uses: actions/checkout@v3
-        with:
-          ref: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
-          path: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
-          persist-credentials: false  # otherwise, the token used is the GITHUB_TOKEN, instead of the personal token
-          fetch-depth: 0  # otherwise, will fail to push refs to dest repo
 
       - name: Prepare dependency branch
         run: |
