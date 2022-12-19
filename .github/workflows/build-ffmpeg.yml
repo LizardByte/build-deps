@@ -306,7 +306,6 @@ jobs:
           echo "::endgroup::"
 
       - name: libx265
-        if: ${{ matrix.os_type != 'macos' || matrix.arch != 'aarch64' }}
         env:
           root_path: ${{ steps.root.outputs.root_path }}
           CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
