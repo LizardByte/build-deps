@@ -72,7 +72,7 @@ jobs:
             os: macos-12
             arch: aarch64
             shell: bash
-            cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
+            cmake_generator: Xcode  # should be `Xcode` but that fails
             host: aarch64-apple-darwin
             ffmpeg_extras: >-
               --enable-encoder=h264_videotoolbox,hevc_videotoolbox
@@ -285,7 +285,7 @@ jobs:
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
           CC="clang"
-          CFLAGS="-target ${{ matrix.host }}"
+          CFLAGS="--target=${{ matrix.host }}"
           extra_configure=$(cat <<VAREOF
           --host=${{ matrix.arch }}-darwin
           VAREOF
@@ -314,18 +314,28 @@ jobs:
           echo "::endgroup::"
 
       - name: libx265
-        if: ${{ matrix.os_type != 'macos' || matrix.arch != 'aarch64' }}
+        # if: ${{ matrix.os_type != 'macos' || matrix.arch != 'aarch64' }}
         env:
           root_path: ${{ steps.root.outputs.root_path }}
           CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
         working-directory: ffmpeg_sources/x265_git
         run: |
           echo "::group::configure extra flags for cross compilation"
-          extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
 
-          if [[ ${{ matrix.arch }} != "aarch64" ]]; then
-            # not currently supported in `aarch64`
-            extra_configure="-DENABLE_HDR10_PLUS=1"
+          # not currently supported in `aarch64`
+          extra_configure="-DENABLE_HDR10_PLUS=1"
+          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
+          extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
+          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
+          CC="clang"
+          CXX="clang"
+          CPU="apple-m1"
+          TARGET="${{ matrix.host }}"
+          ARCH="${{ matrix.arch }}"
+          extra_configure=$(cat <<VAREOF
+          -DCROSS_COMPILE_ARM64=ON
+          VAREOF
+          )
           fi
           echo "$extra_configure"
           echo "::endgroup::"
@@ -392,7 +402,7 @@ jobs:
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
           CC="clang"
           CPU="apple-m1"
-          MORE_C_FLAGS="-target=${{ matrix.host }} -march=$CPU"
+          MORE_C_FLAGS="--target=${{ matrix.host }} -march=$CPU"
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
           --cpu=$CPU
