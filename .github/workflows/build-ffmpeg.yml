@@ -274,7 +274,6 @@ jobs:
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
           CC="clang"
-          # CFLAGS="--target=${{ matrix.host }} -march=${{ matrix.arch }}"
           CFLAGS="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           extra_configure=$(cat <<VAREOF
           --host=${{ matrix.arch }}-darwin
@@ -394,7 +393,7 @@ jobs:
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
           --cc=clang
-          --cxx=clang
+          --cxx=clang++
           --extra-cxxflags="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           --enable-cross-compile
           --enable-pic
