@@ -312,20 +312,18 @@ jobs:
 
           # not currently supported in `aarch64`
           extra_configure="-DENABLE_HDR10_PLUS=1"
-          
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
           extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
           CPU="apple-m1"
           extra_configure=$(cat <<VAREOF
           -DCROSS_COMPILE_ARM64=ON
-          -DCMAKE_SYSTEM_PROCESSOR=aarch64
-          -DCMAKE_C_COMPILER=clang
-          -DCMAKE_C_FLAGS="--target=${{ matrix.host }}"
-          -DCMAKE_CXX_COMPILER=clang
-          -DCMAKE_CXX_FLAGS="--target=${{ matrix.host }}"
-          -DCMAKE_EXE_LINKER_FLAGS="--target=${{ matrix.host }}"
+          -DCMAKE_APPLE_SILICON_PROCESSOR=arm64
           -DCMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}"
+          -DCMAKE_C_COMPILER=clang
+          -DCMAKE_C_COMPILER_TARGET="${{ matrix.host }}"
+          -DCMAKE_CXX_COMPILER=clang
+          -DCMAKE_CXX_COMPILER_TARGET="${{ matrix.host }}"
           VAREOF
           )
           fi
