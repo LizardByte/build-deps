@@ -394,6 +394,8 @@ jobs:
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
           --cc=clang
+          --cxx=clang
+          --extra-cxxflags="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           --enable-cross-compile
           --enable-pic
           VAREOF
