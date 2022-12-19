@@ -106,7 +106,7 @@ jobs:
       - name: Setup Dependencies Unix
         if: ${{ matrix.os_type != 'windows' }}
         run: |
-          echo "::group::${{ matrix.os_type }} dependencies prep"
+          echo "::group::dependencies prep"
           if [[ ${{ matrix.os }} == "ubuntu-18.04" ]]; then
             dist="bionic"
           elif [[ ${{ matrix.os }} == "ubuntu-20.04" ]]; then
@@ -411,8 +411,8 @@ jobs:
             $extra_configure \
             --prefix="$root_path/ffmpeg_build" \
             --pkg-config-flags="--static" \
-            --extra-cflags="-I$root_path/ffmpeg_build/include ${MORE_C_FLAGS}" \
-            --extra-ldflags="-L$root_path/ffmpeg_build/lib ${MORE_LD_FLAGS}" \
+            --extra-cflags="-I$root_path/ffmpeg_build/include --target=${{ matrix.host }} -arch=${{ matrix.arch }}" \
+            --extra-ldflags="-L$root_path/ffmpeg_build/lib -arch=${{ matrix.arch }}" \
             --extra-libs="-lpthread -lm" \
             --bindir="$root_path/bin" \
             --disable-all \
