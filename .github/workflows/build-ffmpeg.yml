@@ -106,7 +106,7 @@ jobs:
       - name: Setup Dependencies Unix
         if: ${{ matrix.os_type != 'windows' }}
         run: |
-          echo "::group::${{ matrix.os_type }} dependencies"
+          echo "::group::${{ matrix.os_type }} dependencies prep"
           if [[ ${{ matrix.os }} == "ubuntu-18.04" ]]; then
             dist="bionic"
           elif [[ ${{ matrix.os }} == "ubuntu-20.04" ]]; then
@@ -134,9 +134,10 @@ jobs:
           deb [arch=$package_arch] $mirror $dist-security multiverse
           VAREOF
           )
-
+          echo "::endgroup::"
 
           if [[ ${{ matrix.os_type }} == "linux" ]]; then
+            echo "::group::linux dependencies"
             if [[ $package_arch != "amd64" ]]; then
               # fix original sources
               sudo sed -i -e "s#deb http#deb [arch=amd64] http#g" /etc/apt/sources.list
@@ -176,17 +177,16 @@ jobs:
               wget \
               yasm \
               zlib1g-dev
-            echo "::endgroup::"
 
             if [[ ${{ matrix.arch }} == "aarch64" ]]; then
-              echo "::group::${{ matrix.os_type }}-${{ matrix.arch }} dependencies"
               sudo apt-get -y install \
                 binutils-${{ matrix.host }} \
                 g++-${{ matrix.host }} \
                 gcc-${{ matrix.host }}
-              echo "::endgroup::"
             fi
+            echo "::endgroup::"
           elif [[ ${{ matrix.os_type }} == "macos" ]]; then
+            echo "::group::macos dependencies"
             brew install \
               automake \
               fdk-aac \
@@ -205,6 +205,7 @@ jobs:
               wget \
               yasm \
               xvid
+            echo "::endgroup::"
           fi
 
       - name: Setup Dependencies Windows
@@ -264,7 +265,6 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::configure extra flags for cross compilation"
-
           extra_configure=""
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
           extra_configure=$(cat <<VAREOF
