@@ -426,9 +426,10 @@ jobs:
             --disable-autodetect \
             --disable-iconv \
             --enable-avcodec \
-            --enable-encoder=libx264 \
+            --enable-encoder=libx264,libx265 \
             --enable-gpl \
             --enable-libx264 \
+            --enable-libx265 \
             --enable-static \
             --enable-swscale \
             --pkg-config=pkg-config \
