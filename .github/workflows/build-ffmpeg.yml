@@ -188,7 +188,7 @@ jobs:
             fi
         elif [[ ${{ matrix.os_type }} == "macos" ]]; then
             brew install \
-              cmake \
+              automake \
               fdk-aac \
               git \
               lame \
