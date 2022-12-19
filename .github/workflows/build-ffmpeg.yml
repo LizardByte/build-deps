@@ -324,14 +324,13 @@ jobs:
           CPU="apple-m1"
           TARGET="${{ matrix.host }}"
           ARCH="${{ matrix.arch }}"
-          CFLAGS="--target=${{ matrix.host }} -march=${{ matrix.arch }}"
-          CXXFLAGS="--target=${{ matrix.host }}  -march=${{ matrix.arch }}"
-          LDFLAGS="--target=${{ matrix.host }}  -march=${{ matrix.arch }}"
+          CFLAGS="--target=${{ matrix.host }} -mcpu=$CPU"
+          CXXFLAGS="--target=${{ matrix.host }} -mcpu=$CPU"
+          LDFLAGS="--target=${{ matrix.host }} -mcpu=$CPU"
           CMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}"
-          CMAKE_EXE_LINKER_FLAGS="--target=${{ matrix.host }} -march=${{ matrix.arch }}"
           extra_configure=$(cat <<VAREOF
           -DCROSS_COMPILE_ARM64=ON
-          -DCMAKE_SYSTEM_PROCESSOR="$CPU"
+          -DCMAKE_SYSTEM_PROCESSOR=arm64
           VAREOF
           )
           fi
@@ -400,7 +399,7 @@ jobs:
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
           CC="clang"
           CPU="apple-m1"
-          MORE_C_FLAGS="--target=${{ matrix.host }} -march=${{ matrix.arch }}"
+          MORE_C_FLAGS="--target=${{ matrix.host }} -mcpu=$CPU"
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
           --cpu=$CPU
@@ -428,10 +427,9 @@ jobs:
             --disable-autodetect \
             --disable-iconv \
             --enable-avcodec \
-            --enable-encoder=libx264,libx265 \
+            --enable-encoder=libx264 \
             --enable-gpl \
             --enable-libx264 \
-            --enable-libx265 \
             --enable-static \
             --enable-swscale \
             --pkg-config=pkg-config \
