@@ -329,7 +329,7 @@ jobs:
           CMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}"
           extra_configure=$(cat <<VAREOF
           -DCROSS_COMPILE_ARM64=ON
-          -DCMAKE_SYSTEM_PROCESSOR=arm64
+          -DCMAKE_SYSTEM_PROCESSOR=aarch64
           VAREOF
           )
           fi
