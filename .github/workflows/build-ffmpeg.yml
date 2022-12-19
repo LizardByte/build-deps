@@ -66,7 +66,7 @@ jobs:
             os: macos-12
             arch: aarch64
             shell: bash
-            cmake_generator: Xcode
+            cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
             host: aarch64-apple-darwin
             ffmpeg_extras: >-
               --enable-encoder=h264_videotoolbox,hevc_videotoolbox
@@ -319,6 +319,7 @@ jobs:
           extra_configure=$(cat <<VAREOF
           -DCROSS_COMPILE_ARM64=ON
           -DCMAKE_APPLE_SILICON_PROCESSOR=arm64
+          -DCMAKE_SYSTEM_PROCESSOR=arm64
           -DCMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}"
           -DCMAKE_C_COMPILER=clang
           -DCMAKE_C_COMPILER_TARGET="${{ matrix.host }}"
