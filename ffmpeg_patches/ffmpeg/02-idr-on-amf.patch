@@ -25,8 +25,8 @@ diff --git a/libavcodec/amfenc.c b/libavcodec/amfenc.c
 index fb23ed738c..015be7d628 100644
 --- a/libavcodec/amfenc.c
 +++ b/libavcodec/amfenc.c
-@@ -685,6 +685,58 @@ int ff_amf_receive_packet(AVCodecContext *avctx, AVPacket *avpkt)
-             frame_ref_storage_buffer->pVtbl->Release(frame_ref_storage_buffer);
+@@ -758,6 +758,58 @@ int ff_amf_receive_packet(AVCodecContext *avctx, AVPacket *avpkt)
+             }
          }
  
 +        // Override Picture Type for Frame
