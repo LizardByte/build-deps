@@ -67,7 +67,7 @@ jobs:
             arch: aarch64
             shell: bash
             cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
-            host: aarch64-apple-darwin
+            host: arm64-apple-macosx
             ffmpeg_extras: >-
               --enable-encoder=h264_videotoolbox,hevc_videotoolbox
               --enable-videotoolbox
@@ -274,7 +274,8 @@ jobs:
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
           CC="clang"
-          CFLAGS="--target=${{ matrix.host }} -march=${{ matrix.arch }}"
+          # CFLAGS="--target=${{ matrix.host }} -march=${{ matrix.arch }}"
+          CFLAGS="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           extra_configure=$(cat <<VAREOF
           --host=${{ matrix.arch }}-darwin
           VAREOF
@@ -390,8 +391,6 @@ jobs:
           VAREOF
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          MORE_C_FLAGS="--target=${{ matrix.host }} -arch=${{ matrix.arch }}"
-          MORE_LD_FLAGS="-arch=${{ matrix.arch }}"
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
           --cc=clang
@@ -411,8 +410,8 @@ jobs:
             $extra_configure \
             --prefix="$root_path/ffmpeg_build" \
             --pkg-config-flags="--static" \
-            --extra-cflags="-I$root_path/ffmpeg_build/include --target=${{ matrix.host }} -arch=${{ matrix.arch }}" \
-            --extra-ldflags="-L$root_path/ffmpeg_build/lib -arch=${{ matrix.arch }}" \
+            --extra-cflags="-I$root_path/ffmpeg_build/include -arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic" \
+            --extra-ldflags="-L$root_path/ffmpeg_build/lib -arch arm64 -march=armv8-a+crc+crypto -target arm64-apple-macosx" \
             --extra-libs="-lpthread -lm" \
             --bindir="$root_path/bin" \
             --disable-all \
