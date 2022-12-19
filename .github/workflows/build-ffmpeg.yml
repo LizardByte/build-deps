@@ -66,7 +66,7 @@ jobs:
             os: macos-12
             arch: aarch64
             shell: bash
-            cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
+            cmake_generator: Xcode
             host: aarch64-apple-darwin
             ffmpeg_extras: >-
               --enable-encoder=h264_videotoolbox,hevc_videotoolbox
@@ -312,21 +312,20 @@ jobs:
 
           # not currently supported in `aarch64`
           extra_configure="-DENABLE_HDR10_PLUS=1"
+          
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
           extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          CC="clang"
-          CXX="clang"
           CPU="apple-m1"
-          TARGET="${{ matrix.host }}"
-          ARCH="${{ matrix.arch }}"
-          CFLAGS="--target=${{ matrix.host }} -mcpu=$CPU"
-          CXXFLAGS="--target=${{ matrix.host }} -mcpu=$CPU"
-          LDFLAGS="--target=${{ matrix.host }} -mcpu=$CPU"
-          CMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}"
           extra_configure=$(cat <<VAREOF
           -DCROSS_COMPILE_ARM64=ON
           -DCMAKE_SYSTEM_PROCESSOR=aarch64
+          -DCMAKE_C_COMPILER=clang
+          -DCMAKE_C_FLAGS="--target=${{ matrix.host }} -mcpu=$CPU"
+          -DCMAKE_CXX_COMPILER=clang
+          -DCMAKE_CXX_FLAGS="--target=${{ matrix.host }} -mcpu=$CPU"
+          -DCMAKE_EXE_LINKER_FLAGS="--target=${{ matrix.host }} -mcpu=$CPU"
+          -DCMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}"
           VAREOF
           )
           fi
