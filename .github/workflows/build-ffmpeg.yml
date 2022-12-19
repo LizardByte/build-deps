@@ -277,7 +277,7 @@ jobs:
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
           CC="clang"
-          CFLAGS="--target=${{ matrix.host }}"
+          CFLAGS="--target=${{ matrix.host }} -march=${{ matrix.arch }}"
           extra_configure=$(cat <<VAREOF
           --host=${{ matrix.arch }}-darwin
           VAREOF
@@ -306,7 +306,7 @@ jobs:
           echo "::endgroup::"
 
       - name: libx265
-        # if: ${{ matrix.os_type != 'macos' || matrix.arch != 'aarch64' }}
+        if: ${{ matrix.os_type != 'macos' || matrix.arch != 'aarch64' }}
         env:
           root_path: ${{ steps.root.outputs.root_path }}
           CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
@@ -324,11 +324,11 @@ jobs:
           CPU="apple-m1"
           TARGET="${{ matrix.host }}"
           ARCH="${{ matrix.arch }}"
-          CLFAGS="--target=${{ matrix.host }}"
-          CXXFLAGS="--target=${{ matrix.host }}"
-          LDFLAGS="--target=${{ matrix.host }}"
+          CFLAGS="--target=${{ matrix.host }} -march=${{ matrix.arch }}"
+          CXXFLAGS="--target=${{ matrix.host }}  -march=${{ matrix.arch }}"
+          LDFLAGS="--target=${{ matrix.host }}  -march=${{ matrix.arch }}"
           CMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}"
-          CMAKE_EXE_LINKER_FLAGS="--target=${{ matrix.host }}"
+          CMAKE_EXE_LINKER_FLAGS="--target=${{ matrix.host }} -march=${{ matrix.arch }}"
           extra_configure=$(cat <<VAREOF
           -DCROSS_COMPILE_ARM64=ON
           -DCMAKE_SYSTEM_PROCESSOR="$CPU"
@@ -408,7 +408,6 @@ jobs:
           --target-os=darwin
           VAREOF
           )
-          # --cross-prefix="$root_path/ffmpeg_build"
           fi
           echo "$extra_configure"
           echo "::endgroup::"
