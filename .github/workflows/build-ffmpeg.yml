@@ -349,7 +349,7 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::make"
-          PATH="$root_path/bin:$PATH" make -j $(sysctl -n hw.logicalcpu)
+          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
           echo "::endgroup::"
 
           echo "::group::make install"
@@ -432,7 +432,7 @@ jobs:
             --enable-encoder=libx264,libx265 \
             --enable-gpl \
             --enable-libx264 \
-            --enable-libx265
+            --enable-libx265 \
             --enable-static \
             --enable-swscale \
             --pkg-config=pkg-config \
