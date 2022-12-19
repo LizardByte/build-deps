@@ -318,6 +318,7 @@ jobs:
           CPU="apple-m1"
           extra_configure=$(cat <<VAREOF
           -DCROSS_COMPILE_ARM64=ON
+          -DENABLE_ASSEMBLY=0
           -DCMAKE_APPLE_SILICON_PROCESSOR=arm64
           -DCMAKE_SYSTEM_PROCESSOR=arm64
           -DCMAKE_OSX_ARCHITECTURES=arm64
