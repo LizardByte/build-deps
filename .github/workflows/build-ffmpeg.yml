@@ -248,8 +248,7 @@ jobs:
           if [[ ${{ matrix.os_type }} == 'linux' ]]; then
           echo "CCPREFIX=/usr/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
           else
-          CFLAGS="-arch arm64 -target ${{ matrix.host }} -march=armv8"
-          echo "CFLAGS=${CFLAGS}" >> $GITHUB_OUTPUT
+          echo "CFLAGS=-arch arm64 -target ${{ matrix.host }} -march=armv8" >> $GITHUB_OUTPUT
           fi
 
       - name: amf
@@ -278,8 +277,8 @@ jobs:
           VAREOF
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          export CC="clang"
-          export CFLAGS=${{ steps.cross.outputs.CFLAGS }}
+          CC="clang"
+          CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
           extra_configure=$(cat <<VAREOF
           --host=${{ matrix.arch }}-darwin
           VAREOF
@@ -320,8 +319,8 @@ jobs:
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
           extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          export CFLAGS=${{ steps.cross.outputs.CFLAGS }}
-          export CXXFLAGS="-std=c++11 ${CFLAGS}"
+          CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
+          CXXFLAGS="-std=c++11 ${CFLAGS}"
           extra_configure=$(cat <<VAREOF
           -DCROSS_COMPILE_ARM64=ON
           -DENABLE_ASSEMBLY=0
@@ -397,9 +396,9 @@ jobs:
           VAREOF
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          export CFLAGS=${{ steps.cross.outputs.CFLAGS }}
-          export CXXFLAGS="-std=c++11 ${CFLAGS}"
-          export LDFLAGS="${CFLAGS} -lc++"
+          CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
+          CXXFLAGS="-std=c++11 ${CFLAGS}"
+          LDFLAGS="${CFLAGS} -lc++"
           extra_configure=$(cat <<VAREOF
           --arch=aarch64
           --cc=clang
