@@ -121,7 +121,7 @@ jobs:
           fi
 
           mirror="http://ports.ubuntu.com/ubuntu-ports"
-          extra_sources=$(cat <<-VAREOF
+          extra_sources=$(cat <<- VAREOF
             deb [arch=$package_arch] $mirror $dist main restricted
             deb [arch=$package_arch] $mirror $dist-updates main restricted
             deb [arch=$package_arch] $mirror $dist universe
@@ -271,7 +271,7 @@ jobs:
           echo "::group::configure extra flags for cross compilation"
           extra_configure=""
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
-            extra_configure=$(cat <<-VAREOF
+            extra_configure=$(cat <<- VAREOF
               --host=${{ matrix.arch }}-${{ matrix.os_type }}
               --cross-prefix=${CCPREFIX}
               VAREOF
@@ -279,7 +279,7 @@ jobs:
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
             export CC="clang"
             export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
-            extra_configure=$(cat <<-VAREOF
+            extra_configure=$(cat <<- VAREOF
               --host=${{ matrix.arch }}-darwin
               VAREOF
             )
@@ -321,7 +321,7 @@ jobs:
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
             export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
             export CXXFLAGS="-std=c++11 ${CFLAGS}"
-            extra_configure=$(cat <<-VAREOF
+            extra_configure=$(cat <<- VAREOF
               -DCROSS_COMPILE_ARM64=ON
               -DENABLE_ASSEMBLY=0
               -DCMAKE_SYSTEM_PROCESSOR=arm64
@@ -388,7 +388,7 @@ jobs:
           extra_configure=""
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
             CCPREFIX=${{ steps.cross.outputs.CCPREFIX }}
-            extra_configure=$(cat <<-VAREOF
+            extra_configure=$(cat <<- VAREOF
               --arch=${{ matrix.arch }}
               --cross-prefix=${CCPREFIX}
               --enable-cross-compile
@@ -399,7 +399,7 @@ jobs:
             export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
             export CXXFLAGS="-std=c++11 ${CFLAGS}"
             export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target ${{ matrix.host }} -lc++"
-            extra_configure=$(cat <<-VAREOF
+            extra_configure=$(cat <<- VAREOF
               --arch=${{ matrix.arch }}
               --cc=clang
               --cxx=clang++
