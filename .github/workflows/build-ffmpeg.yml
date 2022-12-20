@@ -121,18 +121,18 @@ jobs:
           fi
 
           mirror="http://ports.ubuntu.com/ubuntu-ports"
-          extra_sources=$(cat <<VAREOF
-          deb [arch=$package_arch] $mirror $dist main restricted
-          deb [arch=$package_arch] $mirror $dist-updates main restricted
-          deb [arch=$package_arch] $mirror $dist universe
-          deb [arch=$package_arch] $mirror $dist-updates universe
-          deb [arch=$package_arch] $mirror $dist multiverse
-          deb [arch=$package_arch] $mirror $dist-updates multiverse
-          deb [arch=$package_arch] $mirror $dist-backports main restricted universe multiverse
-          deb [arch=$package_arch] $mirror $dist-security main restricted
-          deb [arch=$package_arch] $mirror $dist-security universe
-          deb [arch=$package_arch] $mirror $dist-security multiverse
-          VAREOF
+          extra_sources=$(cat <<-VAREOF
+            deb [arch=$package_arch] $mirror $dist main restricted
+            deb [arch=$package_arch] $mirror $dist-updates main restricted
+            deb [arch=$package_arch] $mirror $dist universe
+            deb [arch=$package_arch] $mirror $dist-updates universe
+            deb [arch=$package_arch] $mirror $dist multiverse
+            deb [arch=$package_arch] $mirror $dist-updates multiverse
+            deb [arch=$package_arch] $mirror $dist-backports main restricted universe multiverse
+            deb [arch=$package_arch] $mirror $dist-security main restricted
+            deb [arch=$package_arch] $mirror $dist-security universe
+            deb [arch=$package_arch] $mirror $dist-security multiverse
+            VAREOF
           )
           echo "::endgroup::"
 
@@ -246,9 +246,9 @@ jobs:
         if: ${{ matrix.arch == 'aarch64' }}
         run: |
           if [[ ${{ matrix.os_type }} == 'linux' ]]; then
-          echo "CCPREFIX=/usr/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
+            echo "CCPREFIX=/usr/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
           else
-          echo "CFLAGS=-arch arm64 -target ${{ matrix.host }} -march=armv8-a -mcpu=generic" >> $GITHUB_OUTPUT
+            echo "CFLAGS=-arch arm64 -target ${{ matrix.host }} -march=armv8-a -mcpu=generic" >> $GITHUB_OUTPUT
           fi
 
       - name: amf
@@ -271,18 +271,18 @@ jobs:
           echo "::group::configure extra flags for cross compilation"
           extra_configure=""
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
-          extra_configure=$(cat <<VAREOF
-          --host=${{ matrix.arch }}-${{ matrix.os_type }}
-          --cross-prefix=${CCPREFIX}
-          VAREOF
-          )
+            extra_configure=$(cat <<-VAREOF
+              --host=${{ matrix.arch }}-${{ matrix.os_type }}
+              --cross-prefix=${CCPREFIX}
+              VAREOF
+            )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          export CC="clang"
-          export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
-          extra_configure=$(cat <<VAREOF
-          --host=${{ matrix.arch }}-darwin
-          VAREOF
-          )
+            export CC="clang"
+            export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
+            extra_configure=$(cat <<-VAREOF
+              --host=${{ matrix.arch }}-darwin
+              VAREOF
+            )
           fi
           echo "$extra_configure"
           echo "::endgroup::"
@@ -317,21 +317,21 @@ jobs:
           # not currently supported in `aarch64`
           extra_configure="-DENABLE_HDR10_PLUS=1"
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
-          extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
+            extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
-          export CXXFLAGS="-std=c++11 ${CFLAGS}"
-          extra_configure=$(cat <<VAREOF
-          -DCROSS_COMPILE_ARM64=ON
-          -DENABLE_ASSEMBLY=0
-          -DCMAKE_SYSTEM_PROCESSOR=arm64
-          -DCMAKE_OSX_ARCHITECTURES=arm64
-          -DCMAKE_C_COMPILER=clang
-          -DCMAKE_C_COMPILER_TARGET=${{ matrix.host }}
-          -DCMAKE_CXX_COMPILER=clang++
-          -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.host }}
-          VAREOF
-          )
+            export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
+            export CXXFLAGS="-std=c++11 ${CFLAGS}"
+            extra_configure=$(cat <<-VAREOF
+              -DCROSS_COMPILE_ARM64=ON
+              -DENABLE_ASSEMBLY=0
+              -DCMAKE_SYSTEM_PROCESSOR=arm64
+              -DCMAKE_OSX_ARCHITECTURES=arm64
+              -DCMAKE_C_COMPILER=clang
+              -DCMAKE_C_COMPILER_TARGET=${{ matrix.host }}
+              -DCMAKE_CXX_COMPILER=clang++
+              -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.host }}
+              VAREOF
+            )
           fi
           echo "$extra_configure"
           echo "::endgroup::"
@@ -387,27 +387,27 @@ jobs:
           echo "::group::configure extra flags for cross compilation"
           extra_configure=""
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
-          CCPREFIX=${{ steps.cross.outputs.CCPREFIX }}
-          extra_configure=$(cat <<VAREOF
-          --arch=${{ matrix.arch }}
-          --cross-prefix=${CCPREFIX}
-          --enable-cross-compile
-          --target-os=${{ matrix.os_type }}
-          VAREOF
-          )
+            CCPREFIX=${{ steps.cross.outputs.CCPREFIX }}
+            extra_configure=$(cat <<-VAREOF
+              --arch=${{ matrix.arch }}
+              --cross-prefix=${CCPREFIX}
+              --enable-cross-compile
+              --target-os=${{ matrix.os_type }}
+              VAREOF
+            )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
-          export CXXFLAGS="-std=c++11 ${CFLAGS}"
-          export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target ${{ matrix.host }} -lc++"
-          extra_configure=$(cat <<VAREOF
-          --arch=${{ matrix.arch }}
-          --cc=clang
-          --cxx=clang++
-          --target-os=darwin
-          --enable-cross-compile
-          --disable-neon
-          VAREOF
-          )
+            export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
+            export CXXFLAGS="-std=c++11 ${CFLAGS}"
+            export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target ${{ matrix.host }} -lc++"
+            extra_configure=$(cat <<-VAREOF
+              --arch=${{ matrix.arch }}
+              --cc=clang
+              --cxx=clang++
+              --target-os=darwin
+              --enable-cross-compile
+              --disable-neon
+              VAREOF
+            )
           fi
           echo "$extra_configure"
           echo "::endgroup::"
