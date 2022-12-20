@@ -18,7 +18,7 @@ diff --git a/libavcodec/amfenc.c b/libavcodec/amfenc.c
 index fb23ed738c..c452a0fd5b 100644
 --- a/libavcodec/amfenc.c
 +++ b/libavcodec/amfenc.c
-@@ -219,7 +219,7 @@ static int amf_init_context(AVCodecContext *avctx)
+@@ -272,7 +272,7 @@ static int amf_init_context(AVCodecContext *avctx)
      av_unused int ret;
  
      ctx->hwsurfaces_in_queue = 0;
@@ -27,7 +27,7 @@ index fb23ed738c..c452a0fd5b 100644
  
      // configure AMF logger
      // the return of these functions indicates old state and do not affect behaviour
-@@ -769,7 +769,9 @@ int ff_amf_receive_packet(AVCodecContext *avctx, AVPacket *avpkt)
+@@ -906,7 +906,9 @@ int ff_amf_receive_packet(AVCodecContext *avctx, AVPacket *avpkt)
              }
          } else if (ctx->delayed_surface != NULL || ctx->delayed_drain || (ctx->eof && res_query != AMF_EOF) || (ctx->hwsurfaces_in_queue >= ctx->hwsurfaces_in_queue_max)) {
              block_and_wait = 1;
