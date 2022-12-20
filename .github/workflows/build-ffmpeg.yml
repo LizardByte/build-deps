@@ -315,6 +315,11 @@ jobs:
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
           extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
+          curl -LO https://github.com/arthenica/gas-preprocessor/raw/v20210917/gas-preprocessor.pl
+          chmod +x ./gas-preprocessor.pl
+          export AS="./gas-preprocessor.pl"
+          export AS_ARGUMENTS="-arch aarch64"
+          export ASM_FLAGS="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           export CFLAGS="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           export CXXFLAGS="-std=c++11 -arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           extra_configure=$(cat <<VAREOF
@@ -394,6 +399,9 @@ jobs:
           VAREOF
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
+          curl -LO https://github.com/arthenica/gas-preprocessor/raw/v20210917/gas-preprocessor.pl
+          chmod +x ./gas-preprocessor.pl
+          export AS="./gas-preprocessor.pl -arch aarch64 -- clang -arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           export CFLAGS="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           export CXXFLAGS="-std=c++11 -arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target arm64-apple-macosx -lc++"
