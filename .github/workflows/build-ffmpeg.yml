@@ -241,11 +241,15 @@ jobs:
           git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/02-idr-on-amf.patch
           git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/03-amfenc-disable-buffering.patch
 
-      - name: Setup linux cross compilation
+      - name: Setup cross compilation
         id: cross
-        if: ${{ matrix.os_type == 'linux' && matrix.arch == 'aarch64' }}
+        if: ${{ matrix.arch == 'aarch64' }}
         run: |
+          if [[ matrix.os_type == 'linux' ]]; then
           echo "CCPREFIX=/usr/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
+          else
+          echo "CFLAGS=-arch arm64 -target arm64-apple-macosx -march=armv8" >> $GITHUB_OUTPUT
+          fi
 
       - name: amf
         if: ${{ matrix.os_type != 'macos' }}
@@ -273,11 +277,8 @@ jobs:
           VAREOF
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          curl -LO https://github.com/arthenica/gas-preprocessor/raw/v20210917/gas-preprocessor.pl
-          chmod +x ./gas-preprocessor.pl
-          export AS="./gas-preprocessor.pl -arch aarch64 -- clang -arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           export CC="clang"
-          export CFLAGS="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
+          export CFLAGS=${{ steps.cross.outputs.CFLAGS }}
           extra_configure=$(cat <<VAREOF
           --host=${{ matrix.arch }}-darwin
           VAREOF
@@ -318,13 +319,8 @@ jobs:
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
           extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          curl -LO https://github.com/arthenica/gas-preprocessor/raw/v20210917/gas-preprocessor.pl
-          chmod +x ./gas-preprocessor.pl
-          export AS="./gas-preprocessor.pl"
-          export AS_ARGUMENTS="-arch aarch64"
-          export ASM_FLAGS="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
-          export CFLAGS="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
-          export CXXFLAGS="-std=c++11 -arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
+          export CFLAGS=${{ steps.cross.outputs.CFLAGS }}
+          export CXXFLAGS="-std=c++11 ${CFLAGS}"
           extra_configure=$(cat <<VAREOF
           -DCROSS_COMPILE_ARM64=ON
           -DENABLE_ASSEMBLY=0
@@ -382,9 +378,9 @@ jobs:
         env:
           nvenc_path: ${{ steps.nvenc.outputs.nvenc_path }}
           root_path: ${{ steps.root.outputs.root_path }}
+          CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
         working-directory: ffmpeg_sources/ffmpeg
         run: |
-          set -x
           echo "::group::configure options"
           ./configure --help || true  # this command has a non zero exit status, but we should continue anyway
           echo "::endgroup::"
@@ -392,7 +388,6 @@ jobs:
           echo "::group::configure extra flags for cross compilation"
           extra_configure=""
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
-          CCPREFIX=${{ steps.cross.outputs.CCPREFIX }}
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
           --cross-prefix=${CCPREFIX}
@@ -401,20 +396,16 @@ jobs:
           VAREOF
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          curl -LO https://github.com/arthenica/gas-preprocessor/raw/v20210917/gas-preprocessor.pl
-          chmod +x ./gas-preprocessor.pl
-          sudo mv ./gas-preprocessor.pl /usr/local/bin
-          export AS="gas-preprocessor.pl -arch aarch64 -- clang -arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
-          export CFLAGS="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
-          export CXXFLAGS="-std=c++11 -arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
-          export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target arm64-apple-macosx -lc++"
+          export CFLAGS=${{ steps.cross.outputs.CFLAGS }}
+          export CXXFLAGS="-std=c++11 ${CFLAGS}"
+          export LDFLAGS="${CFLAGS} -lc++"
           extra_configure=$(cat <<VAREOF
           --arch=aarch64
-          --cpu=armv8
           --cc=clang
           --cxx=clang++
           --target-os=darwin
           --enable-cross-compile
+          --disable-neon
           VAREOF
           )
           fi
@@ -465,7 +456,6 @@ jobs:
           echo "::group::make install"
           make install
           echo "::endgroup::"
-          set +x
 
           echo "::group::copy license"
           cp ./COPYING.GPLv2 $root_path/ffmpeg_build/LICENSE
