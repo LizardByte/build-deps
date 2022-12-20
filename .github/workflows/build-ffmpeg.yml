@@ -398,7 +398,7 @@ jobs:
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
           CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
           CXXFLAGS="-std=c++11 ${CFLAGS}"
-          LDFLAGS="${CFLAGS} -lc++"
+          LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target arm64-apple-macosx -lc++"
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
           --cc=clang
