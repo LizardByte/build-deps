@@ -396,8 +396,8 @@ jobs:
           export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target arm64-apple-macosx"
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
-          --cc="clang"
-          --cxx="clang++"
+          --cc=clang
+          --cxx=clang++
           --enable-cross-compile
           --enable-pic
           VAREOF
