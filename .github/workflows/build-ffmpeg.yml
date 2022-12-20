@@ -322,7 +322,7 @@ jobs:
           -DCMAKE_OSX_ARCHITECTURES=arm64
           -DCMAKE_C_COMPILER=clang
           -DCMAKE_C_COMPILER_TARGET="${{ matrix.host }}"
-          -DCMAKE_CXX_COMPILER=clang
+          -DCMAKE_CXX_COMPILER=clang++
           -DCMAKE_CXX_COMPILER_TARGET="${{ matrix.host }}"
           VAREOF
           )
@@ -374,6 +374,7 @@ jobs:
           root_path: ${{ steps.root.outputs.root_path }}
         working-directory: ffmpeg_sources/ffmpeg
         run: |
+          set -x
           echo "::group::configure options"
           ./configure --help || true  # this command has a non zero exit status, but we should continue anyway
           echo "::endgroup::"
@@ -393,8 +394,10 @@ jobs:
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
           --cc=clang
+          --extra-cflags="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           --cxx=clang++
           --extra-cxxflags="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
+          --extra-ldflags="-arch arm64 -march=armv8-a+crc+crypto -target arm64-apple-macosx"
           --enable-cross-compile
           --enable-pic
           VAREOF
@@ -411,8 +414,8 @@ jobs:
             $extra_configure \
             --prefix="$root_path/ffmpeg_build" \
             --pkg-config-flags="--static" \
-            --extra-cflags="-I$root_path/ffmpeg_build/include -arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic" \
-            --extra-ldflags="-L$root_path/ffmpeg_build/lib -arch arm64 -march=armv8-a+crc+crypto -target arm64-apple-macosx" \
+            --extra-cflags="-I$root_path/ffmpeg_build/include" \
+            --extra-ldflags="-L$root_path/ffmpeg_build/lib" \
             --extra-libs="-lpthread -lm" \
             --bindir="$root_path/bin" \
             --disable-all \
@@ -447,6 +450,7 @@ jobs:
           echo "::group::make install"
           make install
           echo "::endgroup::"
+          set +x
 
           echo "::group::copy license"
           cp ./COPYING.GPLv2 $root_path/ffmpeg_build/LICENSE
