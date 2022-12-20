@@ -410,7 +410,6 @@ jobs:
           --cc=clang
           --cxx=clang++
           --ar=ar
-          --cross-prefix=arm64-apple-darwin-
           --target-os=darwin
           --enable-cross-compile
           --enable-pic
