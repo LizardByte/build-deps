@@ -132,8 +132,7 @@ jobs:
             deb [arch=$package_arch] $mirror $dist-security main restricted
             deb [arch=$package_arch] $mirror $dist-security universe
             deb [arch=$package_arch] $mirror $dist-security multiverse
-          VAREOF
-          )
+            VAREOF)
           echo "::endgroup::"
 
           if [[ ${{ matrix.os_type }} == "linux" ]]; then
@@ -274,8 +273,7 @@ jobs:
             extra_configure=$(cat <<- VAREOF
               --host=${{ matrix.arch }}-${{ matrix.os_type }}
               --cross-prefix=${CCPREFIX}
-            VAREOF
-            )
+            VAREOF)
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
             export CC="clang"
             export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
@@ -329,8 +327,7 @@ jobs:
               -DCMAKE_C_COMPILER_TARGET=${{ matrix.host }}
               -DCMAKE_CXX_COMPILER=clang++
               -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.host }}
-            VAREOF
-            )
+            VAREOF)
           fi
           echo "$extra_configure"
           echo "::endgroup::"
@@ -392,8 +389,7 @@ jobs:
               --cross-prefix=${CCPREFIX}
               --enable-cross-compile
               --target-os=${{ matrix.os_type }}
-            VAREOF
-            )
+            VAREOF)
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
             export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
             export CXXFLAGS="-std=c++11 ${CFLAGS}"
@@ -405,8 +401,7 @@ jobs:
               --target-os=darwin
               --enable-cross-compile
               --disable-neon
-            VAREOF
-            )
+            VAREOF)
           fi
           echo "$extra_configure"
           echo "::endgroup::"
