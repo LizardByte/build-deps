@@ -334,7 +334,6 @@ jobs:
           -DCMAKE_C_COMPILER_TARGET=arm64-apple-macosx
           -DCMAKE_CXX_COMPILER=clang++
           -DCMAKE_CXX_COMPILER_TARGET=arm64-apple-macosx
-          -DENABLE_PIC=1
           VAREOF
           )
           fi
@@ -410,11 +409,11 @@ jobs:
           export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target arm64-apple-macosx -lc++"
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
+          --cpu=armv8
           --cc=clang
           --cxx=clang++
           --target-os=darwin
           --enable-cross-compile
-          --enable-pic
           VAREOF
           )
           fi
