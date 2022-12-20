@@ -413,6 +413,7 @@ jobs:
           --target-os=darwin
           --enable-cross-compile
           --enable-pic
+          --disable-neon
           VAREOF
           )
           fi
