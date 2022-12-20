@@ -315,15 +315,18 @@ jobs:
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
           extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
+          export CFLAGS="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
+          export CXXFLAGS="-std=c++11 -arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           extra_configure=$(cat <<VAREOF
           -DCROSS_COMPILE_ARM64=ON
           -DENABLE_ASSEMBLY=0
           -DCMAKE_SYSTEM_PROCESSOR=arm64
           -DCMAKE_OSX_ARCHITECTURES=arm64
           -DCMAKE_C_COMPILER=clang
-          -DCMAKE_C_COMPILER_TARGET="${{ matrix.host }}"
+          -DCMAKE_C_COMPILER_TARGET=arm64-apple-macosx
           -DCMAKE_CXX_COMPILER=clang++
-          -DCMAKE_CXX_COMPILER_TARGET="${{ matrix.host }}"
+          -DCMAKE_CXX_COMPILER_TARGET=arm64-apple-macosx
+          -DENABLE_PIC=1
           VAREOF
           )
           fi
@@ -393,11 +396,13 @@ jobs:
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
           export CFLAGS="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           export CXXFLAGS="-std=c++11 -arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
-          export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target arm64-apple-macosx"
+          export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target arm64-apple-macosx -lc++"
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
           --cc=clang
           --cxx=clang++
+          --cross-prefix=arm64-apple-darwin-
+          --target-os=darwin
           --enable-cross-compile
           --enable-pic
           VAREOF
