@@ -398,12 +398,11 @@ jobs:
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
           export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
           export CXXFLAGS="-std=c++11 ${CFLAGS}"
-          export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target arm64-apple-macosx -lc++"
+          export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target ${{ matrix.host }} -lc++"
           extra_configure=$(cat <<VAREOF
           --arch=${{ matrix.arch }}
           --cc=clang
           --cxx=clang++
-          --ar=ar
           --target-os=darwin
           --enable-cross-compile
           --disable-neon
