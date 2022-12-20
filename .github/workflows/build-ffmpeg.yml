@@ -409,7 +409,8 @@ jobs:
           --arch=${{ matrix.arch }}
           --cc=clang
           --cxx=clang++
-          --cross-prefix=arm64-apple-darwin-
+          --as=$AS
+          --ar=ar
           --target-os=darwin
           --enable-cross-compile
           --enable-pic
