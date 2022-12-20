@@ -132,7 +132,7 @@ jobs:
             deb [arch=$package_arch] $mirror $dist-security main restricted
             deb [arch=$package_arch] $mirror $dist-security universe
             deb [arch=$package_arch] $mirror $dist-security multiverse
-            VAREOF)
+          VAREOF)
           echo "::endgroup::"
 
           if [[ ${{ matrix.os_type }} == "linux" ]]; then
