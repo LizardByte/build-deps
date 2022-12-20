@@ -62,6 +62,15 @@ jobs:
             ffmpeg_extras: >-
               --enable-encoder=h264_videotoolbox,hevc_videotoolbox
               --enable-videotoolbox
+          - os_type: macos
+            os: macos-12
+            arch: aarch64
+            shell: bash
+            cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
+            host: arm64-apple-macosx
+            ffmpeg_extras: >-
+              --enable-encoder=h264_videotoolbox,hevc_videotoolbox
+              --enable-videotoolbox
           - os_type: windows
             os: windows-2022
             arch: x86_64
@@ -97,7 +106,7 @@ jobs:
       - name: Setup Dependencies Unix
         if: ${{ matrix.os_type != 'windows' }}
         run: |
-          echo "::group::${{ matrix.os_type }} dependencies"
+          echo "::group::dependencies prep"
           if [[ ${{ matrix.os }} == "ubuntu-18.04" ]]; then
             dist="bionic"
           elif [[ ${{ matrix.os }} == "ubuntu-20.04" ]]; then
@@ -112,32 +121,34 @@ jobs:
           fi
 
           mirror="http://ports.ubuntu.com/ubuntu-ports"
-          extra_sources=$(cat <<VAREOF
-          deb [arch=$package_arch] $mirror $dist main restricted
-          deb [arch=$package_arch] $mirror $dist-updates main restricted
-          deb [arch=$package_arch] $mirror $dist universe
-          deb [arch=$package_arch] $mirror $dist-updates universe
-          deb [arch=$package_arch] $mirror $dist multiverse
-          deb [arch=$package_arch] $mirror $dist-updates multiverse
-          deb [arch=$package_arch] $mirror $dist-backports main restricted universe multiverse
-          deb [arch=$package_arch] $mirror $dist-security main restricted
-          deb [arch=$package_arch] $mirror $dist-security universe
-          deb [arch=$package_arch] $mirror $dist-security multiverse
+          extra_sources=$(cat <<- VAREOF
+            deb [arch=$package_arch] $mirror $dist main restricted
+            deb [arch=$package_arch] $mirror $dist-updates main restricted
+            deb [arch=$package_arch] $mirror $dist universe
+            deb [arch=$package_arch] $mirror $dist-updates universe
+            deb [arch=$package_arch] $mirror $dist multiverse
+            deb [arch=$package_arch] $mirror $dist-updates multiverse
+            deb [arch=$package_arch] $mirror $dist-backports main restricted universe multiverse
+            deb [arch=$package_arch] $mirror $dist-security main restricted
+            deb [arch=$package_arch] $mirror $dist-security universe
+            deb [arch=$package_arch] $mirror $dist-security multiverse
           VAREOF
           )
-
-          if [[ $package_arch != "amd64" ]]; then
-            # fix original sources
-            sudo sed -i -e "s#deb http#deb [arch=amd64] http#g" /etc/apt/sources.list
-
-            sudo dpkg --add-architecture $package_arch
-
-            echo "$extra_sources" | sudo tee -a /etc/apt/sources.list
-            echo "----"
-            sudo cat /etc/apt/sources.list
-          fi
+          echo "::endgroup::"
 
           if [[ ${{ matrix.os_type }} == "linux" ]]; then
+            echo "::group::linux dependencies"
+            if [[ $package_arch != "amd64" ]]; then
+              # fix original sources
+              sudo sed -i -e "s#deb http#deb [arch=amd64] http#g" /etc/apt/sources.list
+
+              sudo dpkg --add-architecture $package_arch
+
+              echo "$extra_sources" | sudo tee -a /etc/apt/sources.list
+              echo "----"
+              sudo cat /etc/apt/sources.list
+            fi
+
             sudo apt-get update -qq && sudo apt-get -y install \
               autoconf \
               automake \
@@ -166,7 +177,16 @@ jobs:
               wget \
               yasm \
               zlib1g-dev
+
+            if [[ ${{ matrix.arch }} == "aarch64" ]]; then
+              sudo apt-get -y install \
+                binutils-${{ matrix.host }} \
+                g++-${{ matrix.host }} \
+                gcc-${{ matrix.host }}
+            fi
+            echo "::endgroup::"
           elif [[ ${{ matrix.os_type }} == "macos" ]]; then
+            echo "::group::macos dependencies"
             brew install \
               automake \
               fdk-aac \
@@ -185,15 +205,6 @@ jobs:
               wget \
               yasm \
               xvid
-          fi
-          echo "::endgroup::"
-
-          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
-            echo "::group::${{ matrix.os_type }}-${{ matrix.arch }} dependencies"
-            sudo apt-get -y install \
-              binutils-${{ matrix.host }} \
-              g++-${{ matrix.host }} \
-              gcc-${{ matrix.host }}
             echo "::endgroup::"
           fi
 
@@ -234,7 +245,11 @@ jobs:
         id: cross
         if: ${{ matrix.arch == 'aarch64' }}
         run: |
-          echo "CCPREFIX=/usr/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
+          if [[ ${{ matrix.os_type }} == 'linux' ]]; then
+            echo "CCPREFIX=/usr/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
+          else
+            echo "CFLAGS=-arch arm64 -target ${{ matrix.host }} -march=armv8-a -mcpu=generic" >> $GITHUB_OUTPUT
+          fi
 
       - name: amf
         if: ${{ matrix.os_type != 'macos' }}
@@ -254,13 +269,20 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::configure extra flags for cross compilation"
-          extra_configure=$(cat <<VAREOF
-          --host=${{ matrix.arch }}-${{ matrix.os_type }}
-          --cross-prefix=${CCPREFIX}
+          extra_configure=""
+          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
+            extra_configure=$(cat <<- VAREOF
+              --host=${{ matrix.arch }}-${{ matrix.os_type }}
+              --cross-prefix=${CCPREFIX}
           VAREOF
           )
-          if [[ ${{ matrix.arch }} != "aarch64" ]]; then
-            extra_configure=""
+          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
+            export CC="clang"
+            export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
+            extra_configure=$(cat <<- VAREOF
+              --host=${{ matrix.arch }}-darwin
+          VAREOF
+          )
           fi
           echo "$extra_configure"
           echo "::endgroup::"
@@ -291,11 +313,25 @@ jobs:
         working-directory: ffmpeg_sources/x265_git
         run: |
           echo "::group::configure extra flags for cross compilation"
-          extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
 
-          if [[ ${{ matrix.arch }} != "aarch64" ]]; then
-            # not currently supported in `aarch64`
-            extra_configure="-DENABLE_HDR10_PLUS=1"
+          # not currently supported in `aarch64`
+          extra_configure="-DENABLE_HDR10_PLUS=1"
+          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
+            extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
+          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
+            export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
+            export CXXFLAGS="-std=c++11 ${CFLAGS}"
+            extra_configure=$(cat <<- VAREOF
+              -DCROSS_COMPILE_ARM64=ON
+              -DENABLE_ASSEMBLY=0
+              -DCMAKE_SYSTEM_PROCESSOR=arm64
+              -DCMAKE_OSX_ARCHITECTURES=arm64
+              -DCMAKE_C_COMPILER=clang
+              -DCMAKE_C_COMPILER_TARGET=${{ matrix.host }}
+              -DCMAKE_CXX_COMPILER=clang++
+              -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.host }}
+          VAREOF
+          )
           fi
           echo "$extra_configure"
           echo "::endgroup::"
@@ -342,7 +378,6 @@ jobs:
         env:
           nvenc_path: ${{ steps.nvenc.outputs.nvenc_path }}
           root_path: ${{ steps.root.outputs.root_path }}
-          CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
         working-directory: ffmpeg_sources/ffmpeg
         run: |
           echo "::group::configure options"
@@ -350,15 +385,29 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::configure extra flags for cross compilation"
-          extra_configure=$(cat <<VAREOF
-          --arch=${{ matrix.arch }}
-          --cross-prefix=${CCPREFIX}
-          --enable-cross-compile
-          --target-os=${{ matrix.os_type }}
+          extra_configure=""
+          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
+            CCPREFIX=${{ steps.cross.outputs.CCPREFIX }}
+            extra_configure=$(cat <<- VAREOF
+              --arch=${{ matrix.arch }}
+              --cross-prefix=${CCPREFIX}
+              --enable-cross-compile
+              --target-os=${{ matrix.os_type }}
           VAREOF
           )
-          if [[ ${{ matrix.arch }} != "aarch64" ]]; then
-            extra_configure=""
+          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
+            export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
+            export CXXFLAGS="-std=c++11 ${CFLAGS}"
+            export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target ${{ matrix.host }} -lc++"
+            extra_configure=$(cat <<- VAREOF
+              --arch=${{ matrix.arch }}
+              --cc=clang
+              --cxx=clang++
+              --target-os=darwin
+              --enable-cross-compile
+              --disable-neon
+          VAREOF
+          )
           fi
           echo "$extra_configure"
           echo "::endgroup::"
