@@ -245,10 +245,10 @@ jobs:
         id: cross
         if: ${{ matrix.arch == 'aarch64' }}
         run: |
-          if [[ matrix.os_type == 'linux' ]]; then
+          if [[ ${{ matrix.os_type }} == 'linux' ]]; then
           echo "CCPREFIX=/usr/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
           else
-          echo "CFLAGS=-arch arm64 -target arm64-apple-macosx -march=armv8" >> $GITHUB_OUTPUT
+          echo "CFLAGS=-arch arm64 -target ${{ matrix.host }} -march=armv8" >> $GITHUB_OUTPUT
           fi
 
       - name: amf
@@ -327,9 +327,9 @@ jobs:
           -DCMAKE_SYSTEM_PROCESSOR=arm64
           -DCMAKE_OSX_ARCHITECTURES=arm64
           -DCMAKE_C_COMPILER=clang
-          -DCMAKE_C_COMPILER_TARGET=arm64-apple-macosx
+          -DCMAKE_C_COMPILER_TARGET=${{ matrix.host }}
           -DCMAKE_CXX_COMPILER=clang++
-          -DCMAKE_CXX_COMPILER_TARGET=arm64-apple-macosx
+          -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.host }}
           VAREOF
           )
           fi
