@@ -273,8 +273,11 @@ jobs:
           VAREOF
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-          CC="clang"
-          CFLAGS="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
+          curl -LO https://github.com/arthenica/gas-preprocessor/raw/v20210917/gas-preprocessor.pl
+          chmod +x ./gas-preprocessor.pl
+          export AS="./gas-preprocessor.pl -arch aarch64 -- clang -arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
+          export CC="clang"
+          export CFLAGS="-arch arm64 -target arm64-apple-macosx -march=armv8-a+crc+crypto -mcpu=generic"
           extra_configure=$(cat <<VAREOF
           --host=${{ matrix.arch }}-darwin
           VAREOF
@@ -409,11 +412,9 @@ jobs:
           --arch=${{ matrix.arch }}
           --cc=clang
           --cxx=clang++
-          --ar=ar
           --target-os=darwin
           --enable-cross-compile
           --enable-pic
-          --disable-neon
           VAREOF
           )
           fi
