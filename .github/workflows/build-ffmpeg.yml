@@ -281,8 +281,7 @@ jobs:
             export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
             extra_configure=$(cat <<- VAREOF
               --host=${{ matrix.arch }}-darwin
-            VAREOF
-            )
+            VAREOF)
           fi
           echo "$extra_configure"
           echo "::endgroup::"
