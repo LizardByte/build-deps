@@ -406,26 +406,26 @@ jobs:
       - name: nvenc
         id: nvenc
         if: ${{ matrix.os_type != 'macos' }}
+        env:
+          root_path: ${{ steps.root.outputs.root_path }}
         working-directory: ffmpeg_sources/nv-codec-headers
         # https://trac.ffmpeg.org/wiki/HWAccelIntro#NVENC
         run: |
+          echo "::group::patch Makefile"
+          # allow `PREFIX` to be overridden
+          sed -i 's/PREFIX =/PREFIX ?=/g' Makefile
+          echo "::endgroup::"
+
           echo "::group::make"
-          make -j$(nproc || sysctl -n hw.logicalcpu)
+          PREFIX=$root_path/ffmpeg_build make -j$(nproc || sysctl -n hw.logicalcpu)
           echo "::endgroup::"
 
           echo "::group::make install"
-          if [[ ${{ matrix.os_type }} == "windows" ]]; then
-            make install
-          else
-            sudo make install
-          fi
+          PREFIX=$root_path/ffmpeg_build make install
           echo "::endgroup::"
-
-          echo "nvenc_path=$PWD" >> $GITHUB_OUTPUT
 
       - name: ffmpeg
         env:
-          nvenc_path: ${{ steps.nvenc.outputs.nvenc_path }}
           root_path: ${{ steps.root.outputs.root_path }}
         working-directory: ffmpeg_sources/ffmpeg
         run: |
@@ -464,7 +464,7 @@ jobs:
           echo "::group::configure"
           set +e  # do not fail
           PATH="$root_path/bin:$PATH" \
-            PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig:/usr/lib/${{ matrix.host }}/pkgconfig" \
+            PKG_CONFIG_PATH="$root_path/ffmpeg_build/lib/pkgconfig:/usr/lib/${{ matrix.host }}/pkgconfig" \
             ./configure \
             $extra_configure \
             --prefix="$root_path/ffmpeg_build" \
