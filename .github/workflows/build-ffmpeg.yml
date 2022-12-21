@@ -258,6 +258,55 @@ jobs:
           mkdir -p ./ffmpeg_build/include/AMF
           cp -av "./ffmpeg_sources/AMF/amf/public/include/." "./ffmpeg_build/include/AMF"
 
+      - name: av1
+        working-directory: ffmpeg_sources/SVT-AV1/Build
+        env:
+          root_path: ${{ steps.root.outputs.root_path }}
+          CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
+        run: |
+          echo "::group::configure extra flags for cross compilation"
+          extra_configure=""
+          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
+            extra_configure=$(cat <<- VAREOF
+              -DCMAKE_C_COMPILER=${CCPREFIX}gcc
+              -DCMAKE_CXX_COMPILER=${CCPREFIX}g++
+          VAREOF
+          )
+          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
+            export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
+            export CXXFLAGS="-std=c++11 ${CFLAGS}"
+            extra_configure=$(cat <<- VAREOF
+              -DCMAKE_SYSTEM_PROCESSOR=arm64
+              -DCMAKE_OSX_ARCHITECTURES=arm64
+              -DCMAKE_C_COMPILER=clang
+              -DCMAKE_C_COMPILER_TARGET=${{ matrix.host }}
+              -DCMAKE_CXX_COMPILER=clang++
+              -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.host }}
+          VAREOF
+          )
+          fi
+          echo "$extra_configure"
+          echo "::endgroup::"
+
+          echo "::group::configure"
+          PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
+            $extra_configure \
+            -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_APPS=OFF \
+            -DENABLE_AVX512=ON \
+            -DBUILD_SHARED_LIBS=OFF \
+            ..
+          echo "::endgroup::"
+
+          echo "::group::make"
+          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
+          echo "::endgroup::"
+
+          echo "::group::make install"
+          make install
+          echo "::endgroup::"
+
       - name: libx264
         env:
           root_path: ${{ steps.root.outputs.root_path }}
@@ -357,26 +406,26 @@ jobs:
       - name: nvenc
         id: nvenc
         if: ${{ matrix.os_type != 'macos' }}
+        env:
+          root_path: ${{ steps.root.outputs.root_path }}
         working-directory: ffmpeg_sources/nv-codec-headers
         # https://trac.ffmpeg.org/wiki/HWAccelIntro#NVENC
         run: |
+          echo "::group::patch Makefile"
+          # allow `PREFIX` to be overridden
+          sed -i 's/PREFIX =/PREFIX ?=/g' Makefile
+          echo "::endgroup::"
+
           echo "::group::make"
-          make -j$(nproc || sysctl -n hw.logicalcpu)
+          PREFIX=$root_path/ffmpeg_build make -j$(nproc || sysctl -n hw.logicalcpu)
           echo "::endgroup::"
 
           echo "::group::make install"
-          if [[ ${{ matrix.os_type }} == "windows" ]]; then
-            make install
-          else
-            sudo make install
-          fi
+          PREFIX=$root_path/ffmpeg_build make install
           echo "::endgroup::"
-
-          echo "nvenc_path=$PWD" >> $GITHUB_OUTPUT
 
       - name: ffmpeg
         env:
-          nvenc_path: ${{ steps.nvenc.outputs.nvenc_path }}
           root_path: ${{ steps.root.outputs.root_path }}
         working-directory: ffmpeg_sources/ffmpeg
         run: |
@@ -415,7 +464,7 @@ jobs:
           echo "::group::configure"
           set +e  # do not fail
           PATH="$root_path/bin:$PATH" \
-            PKG_CONFIG_PATH="$nvenc_path:$root_path/ffmpeg_build/lib/pkgconfig:/usr/lib/${{ matrix.host }}/pkgconfig" \
+            PKG_CONFIG_PATH="$root_path/ffmpeg_build/lib/pkgconfig:/usr/lib/${{ matrix.host }}/pkgconfig" \
             ./configure \
             $extra_configure \
             --prefix="$root_path/ffmpeg_build" \
@@ -428,8 +477,10 @@ jobs:
             --disable-autodetect \
             --disable-iconv \
             --enable-avcodec \
+            --enable-encoder=libsvtav1 \
             --enable-encoder=libx264,libx265 \
             --enable-gpl \
+            --enable-libsvtav1 \
             --enable-libx264 \
             --enable-libx265 \
             --enable-static \
