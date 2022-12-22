@@ -512,6 +512,53 @@ jobs:
           cp ./COPYING.GPLv2 $root_path/ffmpeg_build/LICENSE
           echo "::endgroup::"
 
+      - name: cbs
+        env:
+          root_path: ${{ steps.root.outputs.root_path }}
+        run: |
+          mkdir -p build
+          cd build
+
+          echo "::group::configure extra flags for cross compilation"
+          extra_configure=""
+          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
+            extra_configure=$(cat <<VAREOF
+              -DCMAKE_C_COMPILER=${{ matrix.host }}-gcc
+              -DCMAKE_CXX_COMPILER=${{ matrix.host }}-g++
+          VAREOF
+          )
+          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
+            export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
+            export CXXFLAGS="-std=c++11 ${CFLAGS}"
+            extra_configure=$(cat <<- VAREOF
+              -DCMAKE_SYSTEM_PROCESSOR=arm64
+              -DCMAKE_OSX_ARCHITECTURES=arm64
+              -DCMAKE_C_COMPILER=clang
+              -DCMAKE_C_COMPILER_TARGET=${{ matrix.host }}
+              -DCMAKE_CXX_COMPILER=clang++
+              -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.host }}
+          VAREOF
+          )
+          fi
+          echo "$extra_configure"
+          echo "::endgroup::"
+
+          echo "::group::configure"
+          PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
+            $extra_configure \
+            -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
+            -DFFMPEG_CBS=ON \
+            ..
+          echo "::endgroup::"
+
+          echo "::group::make"
+          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
+          echo "::endgroup::"
+
+          echo "::group::make install"
+          make install
+          echo "::endgroup::"
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:

@@ -1,2 +1,6 @@
+# Distribution / packaging
+build/
+
 # JetBrains project folder
 .idea/
+
