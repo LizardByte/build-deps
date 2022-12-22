@@ -22,16 +22,16 @@ set(CBS_INCLUDE_PATH ${CMAKE_BINARY_DIR}/include/cbs)
 
 message("Running FFmpeg configure to generate platform config")
 
+# Explicit shell otherwise Windows runs outside the mingw environment
+if (WIN32)
+    set(LEADING_SH_COMMAND sh)
+endif ()
+
 if (CROSS_COMPILE_ARM)
     set(FFMPEG_EXTRA_CONFIGURE
         --arch=aarch64
         --enable-cross-compile
     )
-endif ()
-
-# Explicit shell otherwise Windows runs outside the mingw environment
-if (WIN32)
-    set(LEADING_SH_COMMAND sh)
 endif ()
 
 # The generated config.h needs to have `CONFIG_CBS_` flags enabled (from `--enable-bsfs`)
@@ -52,6 +52,8 @@ execute_process(
 )
 
 # Headers needed to link for Sunshine
+configure_file(${AVCODEC_GENERATED_SRC_PATH}/arm/mathops.h ${CBS_INCLUDE_PATH}/arm/mathops.h COPYONLY)
+configure_file(${AVCODEC_GENERATED_SRC_PATH}/x86/mathops.h ${CBS_INCLUDE_PATH}/x86/mathops.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/av1.h ${CBS_INCLUDE_PATH}/av1.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/cbs_av1.h ${CBS_INCLUDE_PATH}/cbs_av1.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/cbs_bsf.h ${CBS_INCLUDE_PATH}/cbs_bsf.h COPYONLY)
@@ -77,31 +79,15 @@ configure_file(${AVCODEC_GENERATED_SRC_PATH}/packet.h ${CBS_INCLUDE_PATH}/packet
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/sei.h ${CBS_INCLUDE_PATH}/sei.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/vlc.h ${CBS_INCLUDE_PATH}/vlc.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/config.h ${CBS_INCLUDE_PATH}/config.h COPYONLY)
+configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/x86/asm.h ${CMAKE_BINARY_DIR}/include/libavutil/x86/asm.h COPYONLY)
+configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/x86/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/x86/intmath.h COPYONLY)
+configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/arm/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/arm/intmath.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/attributes.h ${CMAKE_BINARY_DIR}/include/libavutil/attributes.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h COPYONLY)
 
-message("Arch: ${CMAKE_SYSTEM_PROCESSOR}")
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "(aarch64)|(arm64)" OR CROSS_COMPILE_ARM)
-    message("Found aarch64 architecture")
-    configure_file(${AVCODEC_GENERATED_SRC_PATH}/arm/mathops.h ${CBS_INCLUDE_PATH}/arm/mathops.h COPYONLY)
-    configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/arm/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/arm/intmath.h COPYONLY)
-    SET(CBS_ARCH_SOURCE_FILES
-        ${CBS_INCLUDE_PATH}/arm/mathops.h
-        ${CMAKE_BINARY_DIR}/include/libavutil/arm/intmath.h
-        )
-else ()
-    message("Found x86_64 architecture")
-    configure_file(${AVCODEC_GENERATED_SRC_PATH}/x86/mathops.h ${CBS_INCLUDE_PATH}/x86/mathops.h COPYONLY)
-    configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/x86/asm.h ${CMAKE_BINARY_DIR}/include/libavutil/x86/asm.h COPYONLY)
-    configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/x86/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/x86/intmath.h COPYONLY)
-    SET(CBS_ARCH_SOURCE_FILES
-        ${CBS_INCLUDE_PATH}/x86/mathops.h
-        ${CMAKE_BINARY_DIR}/include/libavutil/x86/asm.h
-        ${CMAKE_BINARY_DIR}/include/libavutil/x86/intmath.h
-        )
-endif ()
-
 set(CBS_SOURCE_FILES
+    ${CBS_INCLUDE_PATH}/arm/mathops.h
+    ${CBS_INCLUDE_PATH}/x86/mathops.h
     ${CBS_INCLUDE_PATH}/av1.h
     ${CBS_INCLUDE_PATH}/cbs_av1.h
     ${CBS_INCLUDE_PATH}/cbs_bsf.h
@@ -126,10 +112,11 @@ set(CBS_SOURCE_FILES
     ${CBS_INCLUDE_PATH}/packet.h
     ${CBS_INCLUDE_PATH}/sei.h
     ${CBS_INCLUDE_PATH}/vlc.h
-    ${CBS_INCLUDE_PATH}/config.h
+    ${CMAKE_BINARY_DIR}/include/libavutil/x86/asm.h
+    ${CMAKE_BINARY_DIR}/include/libavutil/x86/intmath.h
+    ${CMAKE_BINARY_DIR}/include/libavutil/arm/intmath.h
     ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h
-
-    ${CBS_ARCH_SOURCE_FILES}
+    ${CBS_INCLUDE_PATH}/config.h
 
     ${AVCODEC_GENERATED_SRC_PATH}/cbs.c
     ${AVCODEC_GENERATED_SRC_PATH}/cbs_h2645.c
