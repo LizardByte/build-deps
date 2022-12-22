@@ -62,11 +62,17 @@ configure_file(${AVCODEC_GENERATED_SRC_PATH}/mathops.h ${CBS_INCLUDE_PATH}/matho
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/packet.h ${CBS_INCLUDE_PATH}/packet.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/sei.h ${CBS_INCLUDE_PATH}/sei.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/vlc.h ${CBS_INCLUDE_PATH}/vlc.h COPYONLY)
-configure_file(${FFMPEG_GENERATED_SRC_PATH}/config.h ${CMAKE_BINARY_DIR}/include/config.h COPYONLY)
+configure_file(${FFMPEG_GENERATED_SRC_PATH}/config.h ${CMAKE_BINARY_DIR}/include/cbs/config.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h COPYONLY)
 
+message("Pointing config includes to cbs/config.h")
+execute_process(
+    COMMAND sh -c "find ${CMAKE_BINARY_DIR}/include -type f | xargs sed -i='' 's/include \"config.h\"/include \"cbs\/config.h\"/g'"
+    COMMAND_ECHO STDOUT
+)
 
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "(aarch64)|(arm64)")
+    message("Found aarch64 architecture")
     configure_file(${AVCODEC_GENERATED_SRC_PATH}/arm/mathops.h ${CBS_INCLUDE_PATH}/arm/mathops.h COPYONLY)
     configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/arm/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/arm/intmath.h COPYONLY)
     SET(CBS_ARCH_SOURCE_FILES
@@ -74,6 +80,7 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
         ${CMAKE_BINARY_DIR}/include/libavutil/arm/intmath.h
         )
 else ()
+    message("Found x86_64 architecture")
     configure_file(${AVCODEC_GENERATED_SRC_PATH}/x86/mathops.h ${CBS_INCLUDE_PATH}/x86/mathops.h COPYONLY)
     configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/x86/asm.h ${CMAKE_BINARY_DIR}/include/libavutil/x86/asm.h COPYONLY)
     configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/x86/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/x86/intmath.h COPYONLY)
@@ -109,7 +116,7 @@ set(CBS_SOURCE_FILES
     ${CBS_INCLUDE_PATH}/packet.h
     ${CBS_INCLUDE_PATH}/sei.h
     ${CBS_INCLUDE_PATH}/vlc.h
-    ${CMAKE_BINARY_DIR}/include/config.h
+    ${CBS_INCLUDE_PATH}/config.h
     ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h
 
     ${CBS_ARCH_SOURCE_FILES}
