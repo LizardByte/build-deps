@@ -63,7 +63,7 @@ configure_file(${AVCODEC_GENERATED_SRC_PATH}/mathops.h ${CBS_INCLUDE_PATH}/matho
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/packet.h ${CBS_INCLUDE_PATH}/packet.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/sei.h ${CBS_INCLUDE_PATH}/sei.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/vlc.h ${CBS_INCLUDE_PATH}/vlc.h COPYONLY)
-configure_file(${FFMPEG_GENERATED_SRC_PATH}/config.h ${CMAKE_BINARY_DIR}/include/cbs/config.h COPYONLY)
+configure_file(${FFMPEG_GENERATED_SRC_PATH}/config.h ${CBS_INCLUDE_PATH}/config.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h COPYONLY)
 
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "(aarch64)|(arm64)")

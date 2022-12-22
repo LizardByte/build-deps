@@ -524,9 +524,11 @@ jobs:
           extra_configure=""
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
             extra_configure=$(cat <<VAREOF
+              -DCROSS_COMPILE_ARM=ON
               -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }}
               -DCMAKE_C_COMPILER=${{ matrix.host }}-gcc
               -DCMAKE_CXX_COMPILER=${{ matrix.host }}-g++
+              -DCMAKE_FIND_ROOT_PATH=/usr/${{ matrix.host }}
           VAREOF
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
