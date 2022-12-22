@@ -20,20 +20,23 @@ set(FFMPEG_GENERATED_SRC_PATH ${CMAKE_GENERATED_SRC_PATH}/ffmpeg)
 set(AVCODEC_GENERATED_SRC_PATH ${CMAKE_GENERATED_SRC_PATH}/ffmpeg/libavcodec)
 set(CBS_INCLUDE_PATH ${CMAKE_BINARY_DIR}/include/cbs)
 
-# Configure FFmpeg to generate platform-specific config
-# Explicit shell otherwise Windows runs in the wrong terminal
-# The output config.h needs to have `CONFIG_CBS_` flags enabled (from `--enable-bsfs`)
-message("Running FFmpeg configure")
+message("Running FFmpeg configure to generate platform config")
 
 if (CROSS_COMPILE_ARM)
-    SET(FFMPEG_EXTRA_CONFIGURE
+    set(FFMPEG_EXTRA_CONFIGURE
         --arch=aarch64
         --enable-cross-compile
     )
 endif ()
 
+# Explicit shell otherwise Windows runs outside the mingw environment
+if (WIN32)
+    set(LEADING_SH_COMMAND sh)
+endif ()
+
+# The generated config.h needs to have `CONFIG_CBS_` flags enabled (from `--enable-bsfs`)
 execute_process(
-    COMMAND sh ./configure
+    COMMAND ${LEADING_SH_COMMAND} ./configure
         --disable-all
         --disable-autodetect
         --disable-iconv

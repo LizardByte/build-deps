@@ -527,7 +527,10 @@ jobs:
               export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
               export CXXFLAGS="-std=c++11 ${CFLAGS}"
             fi
-            extra_configure="-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
+            extra_configure=$(cat <<- VAREOF
+              -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake
+          VAREOF
+          )
           fi
           echo "$extra_configure"
           echo "::endgroup::"
