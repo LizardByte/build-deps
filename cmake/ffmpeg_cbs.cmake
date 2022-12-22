@@ -68,7 +68,7 @@ configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/attributes.h ${CMAKE_BINAR
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h COPYONLY)
 
 message("Arch: ${CMAKE_SYSTEM_PROCESSOR}")
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "(aarch64)|(arm64)")
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "(aarch64)|(arm64)" OR CROSS_COMPILE_ARM)
     message("Found aarch64 architecture")
     configure_file(${AVCODEC_GENERATED_SRC_PATH}/arm/mathops.h ${CBS_INCLUDE_PATH}/arm/mathops.h COPYONLY)
     configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/arm/intmath.h ${CMAKE_BINARY_DIR}/include/libavutil/arm/intmath.h COPYONLY)
