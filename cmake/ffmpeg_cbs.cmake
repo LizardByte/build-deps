@@ -31,7 +31,6 @@ if(NOT EXISTS ${FFMPEG_GENERATED_SRC_PATH}/config.h)
             --enable-static
             --enable-avcodec
             --enable-avutil
-            --enable-version3
         WORKING_DIRECTORY ${FFMPEG_GENERATED_SRC_PATH}
         COMMAND_ECHO STDOUT
         )
