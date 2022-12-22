@@ -24,6 +24,14 @@ set(CBS_INCLUDE_PATH ${CMAKE_BINARY_DIR}/include/cbs)
 # Explicit shell otherwise Windows runs in the wrong terminal
 # The output config.h needs to have `CONFIG_CBS_` flags enabled (from `--enable-bsfs`)
 message("Running FFmpeg configure")
+
+if (CROSS_COMPILE_ARM)
+    SET(FFMPEG_EXTRA_CONFIGURE
+        --arch=aarch64
+        --enable-cross-compile
+    )
+endif ()
+
 execute_process(
     COMMAND sh ./configure
         --disable-all
@@ -34,6 +42,7 @@ execute_process(
         --enable-bsfs
         --enable-gpl
         --enable-static
+        ${FFMPEG_EXTRA_CONFIGURE}
     WORKING_DIRECTORY ${FFMPEG_GENERATED_SRC_PATH}
     COMMAND_ECHO STDOUT
 )
