@@ -78,3 +78,17 @@ index 8a6b5ae261..e8a5b5eeee 100644
  
  #if HAVE_FAST_CLZ
  #if (defined(__INTEL_COMPILER) && (__INTEL_COMPILER>=1216)) || defined(_MSC_VER)
+diff --git a/libavutil/x86/asm.h b/libavutil/x86/asm.h
+index 9bff42d628..6977f019bc 100644
+--- a/libavutil/x86/asm.h
++++ b/libavutil/x86/asm.h
+@@ -22,7 +22,7 @@
+ #define AVUTIL_X86_ASM_H
+
+ #include <stdint.h>
+-#include "config.h"
++#include "cbs/config.h"
+
+ typedef struct xmm_reg { uint64_t a, b; } xmm_reg;
+ typedef struct ymm_reg { uint64_t a, b, c, d; } ymm_reg;
+ 
