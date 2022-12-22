@@ -48,6 +48,7 @@ execute_process(
         ${FFMPEG_EXTRA_CONFIGURE}
     WORKING_DIRECTORY ${FFMPEG_GENERATED_SRC_PATH}
     COMMAND_ECHO STDOUT
+    COMMAND_ERROR_IS_FATAL ANY
 )
 
 # Headers needed to link for Sunshine

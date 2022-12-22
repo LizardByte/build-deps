@@ -526,6 +526,7 @@ jobs:
             if [[ ${{ matrix.os_type }} == "macos" ]]; then
               export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
               export CXXFLAGS="-std=c++11 ${CFLAGS}"
+              export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target ${{ matrix.host }} -lc++"
             fi
             extra_configure=$(cat <<- VAREOF
               -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake
