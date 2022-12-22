@@ -20,23 +20,22 @@ set(AVCODEC_GENERATED_SRC_PATH ${CMAKE_GENERATED_SRC_PATH}/ffmpeg/libavcodec)
 set(CBS_INCLUDE_PATH ${CMAKE_BINARY_DIR}/include/cbs)
 
 # Configure FFmpeg to generate platform-specific config
-if(NOT EXISTS ${FFMPEG_GENERATED_SRC_PATH}/config.h)
-    message("Running FFmpeg configure")
-    # Explicit shell otherwise Windows runs in the wrong terminal
-    # The output config.h needs to have `CONFIG_CBS_` flags enabled
-    execute_process(COMMAND sh ./configure
-            --disable-autodetect
-            --disable-iconv
-            --enable-gpl
-            --enable-static
-            --enable-avcodec
-            --enable-avutil
-        WORKING_DIRECTORY ${FFMPEG_GENERATED_SRC_PATH}
-        COMMAND_ECHO STDOUT
-        )
-else()
-    message("FFmpeg config.h found, skipping")
-endif()
+# Explicit shell otherwise Windows runs in the wrong terminal
+# The output config.h needs to have `CONFIG_CBS_` flags enabled (from `--enable-bsfs`)
+message("Running FFmpeg configure")
+execute_process(
+    COMMAND sh ./configure
+        --disable-all
+        --disable-autodetect
+        --disable-iconv
+        --enable-avcodec
+        --enable-avutil
+        --enable-bsfs
+        --enable-gpl
+        --enable-static
+    WORKING_DIRECTORY ${FFMPEG_GENERATED_SRC_PATH}
+    COMMAND_ECHO STDOUT
+)
 
 # Headers needed to link for Sunshine
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/arm/mathops.h ${CBS_INCLUDE_PATH}/arm/mathops.h COPYONLY)
