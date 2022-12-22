@@ -524,6 +524,7 @@ jobs:
           extra_configure=""
           if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
             extra_configure=$(cat <<VAREOF
+              -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }}
               -DCMAKE_C_COMPILER=${{ matrix.host }}-gcc
               -DCMAKE_CXX_COMPILER=${{ matrix.host }}-g++
           VAREOF
