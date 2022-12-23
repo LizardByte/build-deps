@@ -572,7 +572,9 @@ jobs:
           echo "::endgroup::"
 
       - name: Commit build
-        if: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}  # yamllint disable-line rule:line-length
+        if: >-
+          github.ref == 'refs/heads/master' &&
+          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         uses: actions-js/push@v1.4
         with:
           github_token: ${{ secrets.GH_BOT_TOKEN }}
@@ -582,3 +584,86 @@ jobs:
           branch: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
           force: false
           message: update-${{ steps.date.outputs.date }}
+
+  update_sunshine:
+    if: >-
+      startsWith(github.repository, 'LizardByte/') &&
+      github.ref == 'refs/heads/master' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    needs: [ffmpeg]
+    env:
+      update_branch: update/ffmpeg-submodules
+      submodule_dir: third-party
+    steps:
+
+      - name: Checkout Sunshine
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.repository_owner }}/Sunshine
+          ref: nightly
+          submodules: recursive
+          persist-credentials: false  # otherwise, the token used is the GITHUB_TOKEN, instead of the personal token
+          fetch-depth: 0  # otherwise, will fail to push refs to dest repo
+
+      - name: Update submodules
+        run: |
+          # list of submodules
+          SUBMODULES=$(cat <<- VAREOF
+            ffmpeg-linux-aarch64
+            ffmpeg-linux-x86_64
+            ffmpeg-macos-aarch64
+            ffmpeg-macos-x86_64
+            ffmpeg-windows-x86_64
+          VAREOF
+          )
+
+          echo "::group::git checkout"
+          git branch -d ${{ env.update_branch }} || true
+          git checkout -b ${{ env.update_branch }}
+          echo "::endgroup::"
+
+          echo "::group::update submodules"
+          for SUBMODULE in ${SUBMODULES}; do
+            # add submodules if it doesn't exist or update it
+            git submodule add -b ${SUBMODULE} --name ${SUBMODULE} \
+              ${{ github.event.repository.svn_url }} ${{ env.submodule_dir }}/${SUBMODULE} || \
+            git submodule update --remote ${{ env.submodule_dir }}/${SUBMODULE}
+          done
+          echo "::endgroup::"
+
+      - name: git diff
+        id: git_diff
+        run: |
+          echo "git_diff=$(git diff)" >> $GITHUB_OUTPUT
+
+      - name: Commit changes
+        # this if statement is probably useless as it will not push if working tree is clean
+        if: ${{ steps.git_diff.outputs.git_diff != '' }}  # does not match nightly
+        uses: actions-js/push@v1.4
+        with:
+          repository: ${{ github.repository_owner }}/Sunshine
+          github_token: ${{ secrets.GH_BOT_TOKEN }}
+          author_email: ${{ secrets.GH_BOT_EMAIL }}
+          author_name: ${{ secrets.GH_BOT_NAME }}
+          directory: .
+          branch: ${{ env.update_branch }}
+          force: true
+          message: Bump ffmpeg
+
+      - name: Create Pull Request
+        if: ${{ steps.git_diff.outputs.git_diff != '' }}  # does not match nightly
+        # uses: repo-sync/pull-request@v2
+        # use this branch temporary to support creating PR against another repo
+        uses: m4heshd/pull-request@third-party-repos
+        with:
+          destination_repository: ${{ github.repository_owner }}/Sunshine
+          source_branch: ${{ env.update_branch }}
+          destination_branch: nightly
+          pr_title: "Bump ffmpeg"
+          pr_body: |
+            Bump ffmpeg with changes from ${{ github.repository }}
+          pr_assignee: ${{ secrets.GH_BOT_NAME }}
+          pr_draft: false
+          pr_label: "dependencies,submodules"
+          pr_allow_empty: false
+          github_token: ${{ secrets.GH_BOT_TOKEN }}
