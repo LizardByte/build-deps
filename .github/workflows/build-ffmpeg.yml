@@ -294,6 +294,7 @@ jobs:
             -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_APPS=OFF \
+            -DBUILD_DEC=OFF \
             -DENABLE_AVX512=ON \
             -DBUILD_SHARED_LIBS=OFF \
             ..
