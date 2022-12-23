@@ -245,10 +245,15 @@ jobs:
         id: cross
         if: ${{ matrix.arch == 'aarch64' }}
         run: |
+          TOOLCHAIN_DIR=${{ steps.root.outputs.root_path }}/cmake/toolchain/${{ matrix.arch }}-${{ matrix.os_type }}
+          echo "CMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_DIR/crosscompile.cmake" >> $GITHUB_OUTPUT
           if [[ ${{ matrix.os_type }} == 'linux' ]]; then
             echo "CCPREFIX=/usr/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
           else
-            echo "CFLAGS=-arch arm64 -target ${{ matrix.host }} -march=armv8-a -mcpu=generic" >> $GITHUB_OUTPUT
+            CFLAGS="-arch arm64 -target ${{ matrix.host }} -march=armv8-a+crc+crypto -mcpu=generic"
+            echo "CFLAGS=${CFLAGS}" >> $GITHUB_OUTPUT
+            echo "CXXFLAGS=-std=c++11 ${CFLAGS}" >> $GITHUB_OUTPUT
+            echo "LDFLAGS=-arch arm64 -march=armv8-a+crc+crypto -target ${{ matrix.host }} -lc++" >> $GITHUB_OUTPUT
           fi
 
       - name: amf
@@ -266,22 +271,14 @@ jobs:
         run: |
           echo "::group::configure extra flags for cross compilation"
           extra_configure=""
-          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
+          if [[ ${{ matrix.arch }} == "aarch64" ]]; then
+            if [[ ${{ matrix.os_type }} == "macos" ]]; then
+              export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
+              export CXXFLAGS="${{ steps.cross.outputs.CXXFLAGS }}"
+              export LDFLAGS="${{ steps.cross.outputs.LDFLAGS }}"
+            fi
             extra_configure=$(cat <<- VAREOF
-              -DCMAKE_C_COMPILER=${CCPREFIX}gcc
-              -DCMAKE_CXX_COMPILER=${CCPREFIX}g++
-          VAREOF
-          )
-          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
-            export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
-            export CXXFLAGS="-std=c++11 ${CFLAGS}"
-            extra_configure=$(cat <<- VAREOF
-              -DCMAKE_SYSTEM_PROCESSOR=arm64
-              -DCMAKE_OSX_ARCHITECTURES=arm64
-              -DCMAKE_C_COMPILER=clang
-              -DCMAKE_C_COMPILER_TARGET=${{ matrix.host }}
-              -DCMAKE_CXX_COMPILER=clang++
-              -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.host }}
+              -DCMAKE_TOOLCHAIN_FILE=${{ steps.cross.outputs.CMAKE_TOOLCHAIN_FILE }}
           VAREOF
           )
           fi
@@ -370,16 +367,10 @@ jobs:
             extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
             export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
-            export CXXFLAGS="-std=c++11 ${CFLAGS}"
+            export CXXFLAGS="${{ steps.cross.outputs.CXXFLAGS }}"
             extra_configure=$(cat <<- VAREOF
-              -DCROSS_COMPILE_ARM64=ON
               -DENABLE_ASSEMBLY=0
-              -DCMAKE_SYSTEM_PROCESSOR=arm64
-              -DCMAKE_OSX_ARCHITECTURES=arm64
-              -DCMAKE_C_COMPILER=clang
-              -DCMAKE_C_COMPILER_TARGET=${{ matrix.host }}
-              -DCMAKE_CXX_COMPILER=clang++
-              -DCMAKE_CXX_COMPILER_TARGET=${{ matrix.host }}
+              -DCMAKE_TOOLCHAIN_FILE=${{ steps.cross.outputs.CMAKE_TOOLCHAIN_FILE }}
           VAREOF
           )
           fi
@@ -447,8 +438,8 @@ jobs:
           )
           elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
             export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
-            export CXXFLAGS="-std=c++11 ${CFLAGS}"
-            export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target ${{ matrix.host }} -lc++"
+            export CXXFLAGS="${{ steps.cross.outputs.CXXFLAGS }}"
+            export LDFLAGS="${{ steps.cross.outputs.LDFLAGS }}"
             extra_configure=$(cat <<- VAREOF
               --arch=${{ matrix.arch }}
               --cc=clang
@@ -525,11 +516,11 @@ jobs:
           if [[ ${{ matrix.arch }} == "aarch64" ]]; then
             if [[ ${{ matrix.os_type }} == "macos" ]]; then
               export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
-              export CXXFLAGS="-std=c++11 ${CFLAGS}"
-              export LDFLAGS="-arch arm64 -march=armv8-a+crc+crypto -target ${{ matrix.host }} -lc++"
+              export CXXFLAGS="${{ steps.cross.outputs.CXXFLAGS }}"
+              export LDFLAGS="${{ steps.cross.outputs.LDFLAGS }}"
             fi
             extra_configure=$(cat <<- VAREOF
-              -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake
+              -DCMAKE_TOOLCHAIN_FILE=${{ steps.cross.outputs.CMAKE_TOOLCHAIN_FILE }}
           VAREOF
           )
           fi
