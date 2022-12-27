@@ -634,11 +634,17 @@ jobs:
       - name: git diff
         id: git_diff
         run: |
-          echo "git_diff=$(git diff)" >> $GITHUB_OUTPUT
+          git_diff=$(git diff)
+
+          if [[ ${git_diff} == "" ]]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Commit changes
         # this if statement is probably useless as it will not push if working tree is clean
-        if: ${{ steps.git_diff.outputs.git_diff != '' }}  # does not match nightly
+        if: ${{ steps.git_diff.outputs.changed == 'true' }}  # does not match nightly
         uses: actions-js/push@v1.4
         with:
           repository: ${{ github.repository_owner }}/Sunshine
@@ -651,7 +657,7 @@ jobs:
           message: Bump ffmpeg
 
       - name: Create Pull Request
-        if: ${{ steps.git_diff.outputs.git_diff != '' }}  # does not match nightly
+        if: ${{ steps.git_diff.outputs.changed == 'true' }}  # does not match nightly
         # uses: repo-sync/pull-request@v2
         # use this branch temporary to support creating PR against another repo
         uses: m4heshd/pull-request@third-party-repos
