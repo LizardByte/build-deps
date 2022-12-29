@@ -253,7 +253,7 @@ jobs:
           git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/*.patch
 
           # Intel patches
-          git apply -v --ignore-whitespace ../../ffmpeg_sources/cartwheel-ffmpeg/patches/*.patch
+          git apply -v --ignore-whitespace ../../ffmpeg_patches/cartwheel-ffmpeg/patches/*.patch
 
       - name: Setup cross compilation
         id: cross
