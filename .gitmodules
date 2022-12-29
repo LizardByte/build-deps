@@ -22,3 +22,7 @@
 	path = ffmpeg_sources/SVT-AV1
 	url = https://gitlab.com/AOMediaCodec/SVT-AV1.git
 	branch = master
+[submodule "ffmpeg_patches/cartwheel-ffmpeg"]
+	path = ffmpeg_patches/cartwheel-ffmpeg
+	url = https://github.com/intel-media-ci/cartwheel-ffmpeg
+	branch = 5.1
