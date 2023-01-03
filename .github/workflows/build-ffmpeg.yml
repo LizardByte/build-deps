@@ -244,6 +244,7 @@ jobs:
           git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/01-amf-colorspace-v2.patch
           git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/02-idr-on-amf.patch
           git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/03-amfenc-disable-buffering.patch
+          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/04-mfenc-lowlatency.patch
 
       - name: Setup cross compilation
         id: cross

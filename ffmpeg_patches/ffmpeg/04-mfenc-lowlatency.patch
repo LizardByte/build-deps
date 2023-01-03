@@ -1,0 +1,45 @@
+From bf116dd598b4c134e26d1d24b6bd65bc86687b75 Mon Sep 17 00:00:00 2001
+From: Conn O'Griofa <connogriofa@gmail.com>
+Date: Tue, 3 Jan 2023 17:20:17 +0000
+Subject: [PATCH] mfenc: add low_latency encoder parameter
+
+Implement support for CODECAPI_AVLowLatencyMode property, which is
+useful for live streaming use cases (and cannot be achieved by
+selecting any of the low latency "scenario" encoder presets alone).
+---
+ libavcodec/mfenc.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/libavcodec/mfenc.c b/libavcodec/mfenc.c
+index bbe78605a9..5f5cc262f7 100644
+--- a/libavcodec/mfenc.c
++++ b/libavcodec/mfenc.c
+@@ -54,6 +54,7 @@ typedef struct MFContext {
+     int opt_enc_quality;
+     int opt_enc_scenario;
+     int opt_enc_hw;
++    int opt_enc_lowlatency;
+ } MFContext;
+ 
+ static int mf_choose_output_type(AVCodecContext *avctx);
+@@ -704,6 +705,9 @@ static int mf_encv_output_adjust(AVCodecContext *avctx, IMFMediaType *type)
+ 
+         if (c->opt_enc_scenario >= 0)
+             ICodecAPI_SetValue(c->codec_api, &ff_CODECAPI_AVScenarioInfo, FF_VAL_VT_UI4(c->opt_enc_scenario));
++
++        if (c->opt_enc_lowlatency)
++            ICodecAPI_SetValue(c->codec_api, &ff_CODECAPI_AVLowLatencyMode, FF_VAL_VT_UI4(1));
+     }
+ 
+     return 0;
+@@ -1278,6 +1282,7 @@ static const AVOption venc_opts[] = {
+ 
+     {"quality",       "Quality", OFFSET(opt_enc_quality), AV_OPT_TYPE_INT, {.i64 = -1}, -1, 100, VE},
+     {"hw_encoding",   "Force hardware encoding", OFFSET(opt_enc_hw), AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, VE},
++    {"low_latency",   "Low latency mode", OFFSET(opt_enc_lowlatency), AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, VE},
+     {NULL}
+ };
+ 
+-- 
+2.39.0
+
