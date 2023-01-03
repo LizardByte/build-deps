@@ -244,13 +244,9 @@ jobs:
       - name: patch
         working-directory: ffmpeg_sources/ffmpeg
         run: |
-          # AMD patches
-          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/*.patch
-
-          # Intel patches
-          if [[ ${{ matrix.os_type }} == 'windows' ]]; then
-            git apply -v --ignore-whitespace ../../ffmpeg_patches/cartwheel-ffmpeg/patches/*.patch
-          fi
+          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/01-amf-colorspace-v2.patch
+          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/02-idr-on-amf.patch
+          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/03-amfenc-disable-buffering.patch
 
       - name: Setup cross compilation
         id: cross
