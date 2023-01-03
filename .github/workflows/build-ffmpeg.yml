@@ -87,7 +87,9 @@ jobs:
               --enable-encoder=h264_amf,hevc_amf
               --enable-encoder=h264_mf,hevc_mf
               --enable-encoder=h264_nvenc,hevc_nvenc
+              --enable-encoder=h264_qsv,hevc_qsv,av1_qsv
               --enable-ffnvcodec
+              --enable-libmfx
               --enable-nvenc
               --enable-mediafoundation
     runs-on: ${{ matrix.os }}
@@ -224,6 +226,7 @@ jobs:
             pkg-config
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-libmfx
             mingw-w64-x86_64-nasm
 
       - name: Initialize Submodules
