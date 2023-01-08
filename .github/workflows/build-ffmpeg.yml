@@ -24,7 +24,7 @@ jobs:
       matrix:
         include:
           - os_type: linux
-            os: ubuntu-20.04  # Pinned until all platforms moved to 22.04
+            os: ubuntu-20.04  # pinned until all platforms moved to 22.04
             arch: x86_64
             shell: bash
             cmake_generator: Unix Makefiles
@@ -41,7 +41,7 @@ jobs:
               --enable-vaapi
               --enable-vdpau
           - os_type: linux
-            os: ubuntu-22.04
+            os: ubuntu-20.04  # pinned until all platforms moved to 22.04
             arch: aarch64
             shell: bash
             cmake_generator: Unix Makefiles
@@ -67,7 +67,7 @@ jobs:
               --enable-encoder=h264_videotoolbox,hevc_videotoolbox
               --enable-videotoolbox
           - os_type: macos
-            os: macos-12
+            os: macos-11
             arch: aarch64
             shell: bash
             cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
