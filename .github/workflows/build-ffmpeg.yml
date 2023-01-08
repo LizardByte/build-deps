@@ -633,7 +633,7 @@ jobs:
           echo "::group::update submodules"
           for SUBMODULE in ${SUBMODULES}; do
             # add submodules if it doesn't exist or update it
-            git submodule add -b ${SUBMODULE} --name ${SUBMODULE} \
+            git submodule add -b ${SUBMODULE} \
               ${{ github.event.repository.svn_url }} ${{ env.submodule_dir }}/${SUBMODULE} || \
             git submodule update --remote ${{ env.submodule_dir }}/${SUBMODULE}
           done
