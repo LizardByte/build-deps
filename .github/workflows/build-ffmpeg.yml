@@ -24,7 +24,7 @@ jobs:
       matrix:
         include:
           - os_type: linux
-            os: ubuntu-20.04  # pinned until all platforms moved to 22.04
+            os: ubuntu-22.04
             arch: x86_64
             shell: bash
             cmake_generator: Unix Makefiles
@@ -43,7 +43,7 @@ jobs:
               --enable-vaapi
               --enable-vdpau
           - os_type: linux
-            os: ubuntu-20.04  # pinned until all platforms moved to 22.04
+            os: ubuntu-22.04
             arch: aarch64
             shell: bash
             cmake_generator: Unix Makefiles
