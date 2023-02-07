@@ -146,6 +146,13 @@ jobs:
 
           if [[ ${{ matrix.os_type }} == "linux" ]]; then
             echo "::group::linux dependencies"
+
+            if [[ ${{ matrix.os }} == "ubuntu-20.04" ]]; then
+              # activate mesa backport PPA to ensure ffmpeg builds with vaSyncBuffer()
+              # (via libva 2.9.0 or later)
+              sudo add-apt-repository ppa:kisak/turtle -y
+            fi
+
             if [[ $package_arch != "amd64" ]]; then
               # fix original sources
               sudo sed -i -e "s#deb http#deb [arch=amd64] http#g" /etc/apt/sources.list
