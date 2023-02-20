@@ -214,6 +214,7 @@ jobs:
               libvpx \
               nasm \
               opus \
+              pkg-config \
               sdl \
               shtool \
               texi2html \
