@@ -9,7 +9,7 @@
 [submodule "ffmpeg_sources/x265_git"]
 	path = ffmpeg_sources/x265_git
 	url = https://bitbucket.org/multicoreware/x265_git.git
-	branch = master
+	branch = Release_3.5
 [submodule "ffmpeg_sources/nv-codec-headers"]
 	path = ffmpeg_sources/nv-codec-headers
 	url = https://github.com/FFmpeg/nv-codec-headers
