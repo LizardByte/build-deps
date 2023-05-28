@@ -27,12 +27,12 @@ index 85f42b594d..26df237710 100644
  
  #if HAVE_INLINE_ASM
 diff --git a/libavcodec/mathops.h b/libavcodec/mathops.h
-index f81d21f9c4..627438ca9c 100644
+index a1dc323304..85e8872aef 100644
 --- a/libavcodec/mathops.h
 +++ b/libavcodec/mathops.h
-@@ -25,7 +25,7 @@
- #include <stdint.h>
+@@ -26,7 +26,7 @@
  
+ #include "libavutil/attributes_internal.h"
  #include "libavutil/common.h"
 -#include "config.h"
 +#include "cbs/config.h"
@@ -79,7 +79,7 @@ index 6298f5ed19..6488b39a45 100644
  #include "libavutil/common.h"
  #include "libavutil/x86/asm.h"
 diff --git a/libavutil/arm/intmath.h b/libavutil/arm/intmath.h
-index 5311a7d52b..844790a892 100644
+index f19b21e98d..96b4ad4fe3 100644
 --- a/libavutil/arm/intmath.h
 +++ b/libavutil/arm/intmath.h
 @@ -23,7 +23,7 @@
@@ -92,7 +92,7 @@ index 5311a7d52b..844790a892 100644
  
  #if HAVE_INLINE_ASM
 diff --git a/libavutil/intmath.h b/libavutil/intmath.h
-index 9573109e9d..7801129c52 100644
+index c54d23b7bf..c5ec231eb9 100644
 --- a/libavutil/intmath.h
 +++ b/libavutil/intmath.h
 @@ -23,7 +23,7 @@
