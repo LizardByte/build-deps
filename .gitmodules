@@ -21,4 +21,4 @@
 [submodule "ffmpeg_sources/SVT-AV1"]
 	path = ffmpeg_sources/SVT-AV1
 	url = https://gitlab.com/AOMediaCodec/SVT-AV1.git
-	branch = master
+	branch = v1.4.1
