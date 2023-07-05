@@ -13,7 +13,7 @@
 [submodule "ffmpeg_sources/nv-codec-headers"]
 	path = ffmpeg_sources/nv-codec-headers
 	url = https://github.com/FFmpeg/nv-codec-headers
-	branch = sdk/11.1
+	branch = sdk/12.0
 [submodule "ffmpeg_sources/ffmpeg"]
 	path = ffmpeg_sources/ffmpeg
 	url = https://github.com/FFmpeg/FFmpeg
