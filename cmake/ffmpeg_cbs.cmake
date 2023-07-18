@@ -34,6 +34,14 @@ if (CROSS_COMPILE_ARM)
     set(FFMPEG_EXTRA_CONFIGURE
             --arch=aarch64
             --enable-cross-compile)
+    set(CBS_ARCH_PATH arm)
+elseif (CROSS_COMPILE_PPC)
+    set(FFMPEG_EXTRA_CONFIGURE
+            --arch=powerpc64le
+            --enable-cross-compile)
+    set(CBS_ARCH_PATH ppc)
+else ()
+    set(CBS_ARCH_PATH x86)
 endif ()
 
 # The generated config.h needs to have `CONFIG_CBS_` flags enabled (from `--enable-bsfs`)
@@ -53,8 +61,6 @@ execute_process(
         COMMAND_ERROR_IS_FATAL ANY)
 
 # Headers needed to link for Sunshine
-configure_file(${AVCODEC_GENERATED_SRC_PATH}/arm/mathops.h ${CBS_INCLUDE_PATH}/arm/mathops.h COPYONLY)
-configure_file(${AVCODEC_GENERATED_SRC_PATH}/x86/mathops.h ${CBS_INCLUDE_PATH}/x86/mathops.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/av1.h ${CBS_INCLUDE_PATH}/av1.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/cbs_av1.h ${CBS_INCLUDE_PATH}/cbs_av1.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/cbs_bsf.h ${CBS_INCLUDE_PATH}/cbs_bsf.h COPYONLY)
@@ -80,20 +86,12 @@ configure_file(${AVCODEC_GENERATED_SRC_PATH}/packet.h ${CBS_INCLUDE_PATH}/packet
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/sei.h ${CBS_INCLUDE_PATH}/sei.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/vlc.h ${CBS_INCLUDE_PATH}/vlc.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/config.h ${CBS_INCLUDE_PATH}/config.h COPYONLY)
-configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/x86/asm.h
-        ${CMAKE_BINARY_DIR}/include/libavutil/x86/asm.h COPYONLY)
-configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/x86/intmath.h
-        ${CMAKE_BINARY_DIR}/include/libavutil/x86/intmath.h COPYONLY)
-configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/arm/intmath.h
-        ${CMAKE_BINARY_DIR}/include/libavutil/arm/intmath.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/attributes.h
         ${CMAKE_BINARY_DIR}/include/libavutil/attributes.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/intmath.h
         ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h COPYONLY)
 
 set(CBS_SOURCE_FILES
-        ${CBS_INCLUDE_PATH}/arm/mathops.h
-        ${CBS_INCLUDE_PATH}/x86/mathops.h
         ${CBS_INCLUDE_PATH}/av1.h
         ${CBS_INCLUDE_PATH}/cbs_av1.h
         ${CBS_INCLUDE_PATH}/cbs_bsf.h
@@ -118,9 +116,6 @@ set(CBS_SOURCE_FILES
         ${CBS_INCLUDE_PATH}/packet.h
         ${CBS_INCLUDE_PATH}/sei.h
         ${CBS_INCLUDE_PATH}/vlc.h
-        ${CMAKE_BINARY_DIR}/include/libavutil/x86/asm.h
-        ${CMAKE_BINARY_DIR}/include/libavutil/x86/intmath.h
-        ${CMAKE_BINARY_DIR}/include/libavutil/arm/intmath.h
         ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h
         ${CBS_INCLUDE_PATH}/config.h
 
@@ -134,6 +129,23 @@ set(CBS_SOURCE_FILES
         ${AVCODEC_GENERATED_SRC_PATH}/h264_levels.c
         ${AVCODEC_GENERATED_SRC_PATH}/h2645_parse.c
         ${FFMPEG_GENERATED_SRC_PATH}/libavutil/intmath.c)
+
+# conditional headers based on architecture
+if (EXISTS ${AVCODEC_GENERATED_SRC_PATH}/${CBS_ARCH_PATH}/mathops.h)
+    configure_file(${AVCODEC_GENERATED_SRC_PATH}/${CBS_ARCH_PATH}/mathops.h
+            ${CBS_INCLUDE_PATH}/${CBS_ARCH_PATH}/mathops.h COPYONLY)
+    list(APPEND CBS_SOURCE_FILES ${CBS_INCLUDE_PATH}/${CBS_ARCH_PATH}/mathops.h)
+endif()
+if (EXISTS ${FFMPEG_GENERATED_SRC_PATH}/libavutil/${CBS_ARCH_PATH}/asm.h)
+    configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/${CBS_ARCH_PATH}/asm.h
+            ${CMAKE_BINARY_DIR}/include/libavutil/${CBS_ARCH_PATH}/asm.h COPYONLY)
+    list(APPEND CBS_SOURCE_FILES ${CMAKE_BINARY_DIR}/include/libavutil/${CBS_ARCH_PATH}/asm.h)
+endif()
+if (EXISTS ${FFMPEG_GENERATED_SRC_PATH}/libavutil/${CBS_ARCH_PATH}/intmath.h)
+    configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/${CBS_ARCH_PATH}/intmath.h
+            ${CMAKE_BINARY_DIR}/include/libavutil/${CBS_ARCH_PATH}/intmath.h COPYONLY)
+    list(APPEND CBS_SOURCE_FILES ${CMAKE_BINARY_DIR}/include/libavutil/${CBS_ARCH_PATH}/intmath.h)
+endif()
 
 include_directories(
         ${CMAKE_BINARY_DIR}/include
