@@ -13,6 +13,19 @@ index dc57c5571c..972fcb101f 100644
  #include "libavutil/common.h"
  
  #if HAVE_INLINE_ASM
+diff --git a/libavcodec/avr32/mathops.h b/libavcodec/avr32/mathops.h
+index 85f42b594d..26df237710 100644
+--- a/libavcodec/avr32/mathops.h
++++ b/libavcodec/avr32/mathops.h
+@@ -23,7 +23,7 @@
+ #define AVCODEC_AVR32_MATHOPS_H
+ 
+ #include <stdint.h>
+-#include "config.h"
++#include "cbs/config.h"
+ #include "libavutil/common.h"
+ 
+ #if HAVE_INLINE_ASM
 diff --git a/libavcodec/mathops.h b/libavcodec/mathops.h
 index f81d21f9c4..627438ca9c 100644
 --- a/libavcodec/mathops.h
@@ -26,6 +39,32 @@ index f81d21f9c4..627438ca9c 100644
  
  #define MAX_NEG_CROP 1024
  
+diff --git a/libavcodec/mips/mathops.h b/libavcodec/mips/mathops.h
+index bb9dc8375a..eaf8a7b035 100644
+--- a/libavcodec/mips/mathops.h
++++ b/libavcodec/mips/mathops.h
+@@ -23,7 +23,7 @@
+ #define AVCODEC_MIPS_MATHOPS_H
+ 
+ #include <stdint.h>
+-#include "config.h"
++#include "cbs/config.h"
+ #include "libavutil/common.h"
+ 
+ #if HAVE_INLINE_ASM
+diff --git a/libavcodec/ppc/mathops.h b/libavcodec/ppc/mathops.h
+index dbd714fcd4..3bdea7cd8f 100644
+--- a/libavcodec/ppc/mathops.h
++++ b/libavcodec/ppc/mathops.h
+@@ -24,7 +24,7 @@
+ #define AVCODEC_PPC_MATHOPS_H
+ 
+ #include <stdint.h>
+-#include "config.h"
++#include "cbs/config.h"
+ #include "libavutil/common.h"
+ 
+ #if HAVE_PPC4XX
 diff --git a/libavcodec/x86/mathops.h b/libavcodec/x86/mathops.h
 index 6298f5ed19..6488b39a45 100644
 --- a/libavcodec/x86/mathops.h
