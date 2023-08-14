@@ -35,6 +35,7 @@ jobs:
               --enable-encoder=h264_amf,hevc_amf
               --enable-encoder=h264_nvenc,hevc_nvenc
               --enable-encoder=h264_vaapi,hevc_vaapi
+              --enable-encoder=h264_v4l2m2m
               --enable-encoder=h264_qsv,hevc_qsv,av1_qsv
               --enable-ffnvcodec
               --enable-libmfx
@@ -55,6 +56,27 @@ jobs:
               --enable-encoder=h264_amf,hevc_amf
               --enable-encoder=h264_nvenc,hevc_nvenc
               --enable-encoder=h264_vaapi,hevc_vaapi
+              --enable-encoder=h264_v4l2m2m
+              --enable-ffnvcodec
+              --enable-nvenc
+              --enable-v4l2_m2m
+              --enable-vaapi
+              --enable-vdpau
+          - os_type: linux
+            os: ubuntu-20.04  # pinned until all platforms moved to 22.04
+            arch: powerpc64le
+            shell: bash
+            cmake_generator: Unix Makefiles
+            host: powerpc64le-linux-gnu
+            ffmpeg_extras: >-
+              --enable-amf
+              --enable-cuda
+              --enable-cuda_llvm
+              --enable-encoder=h264_amf,hevc_amf
+              --enable-encoder=h264_nvenc,hevc_nvenc
+              --enable-encoder=h264_vaapi,hevc_vaapi
+              --enable-encoder=h264_v4l2m2m
+              --enable-encoder=h264_qsv,hevc_qsv,av1_qsv
               --enable-ffnvcodec
               --enable-nvenc
               --enable-v4l2_m2m
@@ -126,6 +148,8 @@ jobs:
           package_arch="amd64"
           if [[ ${{ matrix.arch }} == "aarch64" ]]; then
             package_arch="arm64"
+          elif [[ ${{ matrix.arch }} == "powerpc64le" ]]; then
+            package_arch="ppc64el"
           fi
 
           mirror="http://ports.ubuntu.com/ubuntu-ports"
@@ -164,7 +188,7 @@ jobs:
               sudo cat /etc/apt/sources.list
             fi
 
-            sudo apt-get update -qq && sudo apt-get -y install \
+            sudo apt-get update -q && sudo apt-get -y install \
               autoconf \
               automake \
               build-essential \
@@ -174,12 +198,12 @@ jobs:
               libfreetype6-dev \
               libgnutls28-dev \
               libmfx-dev \
+              libmfx1 \
               libmp3lame-dev \
               libnuma-dev \
               libopus-dev \
               libsdl2-dev \
               libtool \
-              libva-dev:$package_arch \
               libvdpau-dev \
               libvorbis-dev \
               libxcb1-dev \
@@ -194,7 +218,29 @@ jobs:
               yasm \
               zlib1g-dev
 
-            if [[ ${{ matrix.arch }} == "aarch64" ]]; then
+            if [[ ${{ matrix.arch }} == "powerpc64le" ]]; then
+              sudo apt-get -y install \
+                libva-dev:$package_arch \
+                libva2:$package_arch \
+                libva-drm2:$package_arch \
+                libdrm2:$package_arch \
+                libva-glx2:$package_arch \
+                libgl1:$package_arch \
+                libglx0:$package_arch \
+                libglx-mesa0:$package_arch \
+                libglapi-mesa:$package_arch \
+                libgl1-mesa-dri:$package_arch \
+                libdrm-amdgpu1:$package_arch \
+                libdrm-nouveau2:$package_arch \
+                libdrm-radeon1:$package_arch \
+                libva-wayland2:$package_arch \
+                libva-x11-2:$package_arch
+            else
+              sudo apt-get -y install \
+                libva-dev:$package_arch
+            fi
+
+            if [[ ${{ matrix.arch }} != "x86_64" ]]; then
               sudo apt-get -y install \
                 binutils-${{ matrix.host }} \
                 g++-${{ matrix.host }} \
@@ -231,13 +277,25 @@ jobs:
         with:
           update: true
           install: >-
-            diffutils
-            git
-            make
-            pkg-config
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-libmfx
+            wget
+
+      - name: Update Windows dependencies
+        if: ${{ matrix.os_type == 'windows' }}
+        shell: msys2 {0}
+        run: |
+          # download working binutils
+          wget https://repo.msys2.org/mingw/x86_64/mingw-w64-x86_64-binutils-2.40-4-any.pkg.tar.zst
+
+          # install dependencies
+          pacman -U --noconfirm mingw-w64-x86_64-binutils-2.40-4-any.pkg.tar.zst
+          pacman -Syu --noconfirm --ignore=mingw-w64-x86_64-binutils \
+            diffutils \
+            git \
+            make \
+            pkg-config \
+            mingw-w64-x86_64-cmake \
+            mingw-w64-x86_64-gcc \
+            mingw-w64-x86_64-libmfx \
             mingw-w64-x86_64-nasm
 
       - name: Initialize Submodules
@@ -263,7 +321,7 @@ jobs:
 
       - name: Setup cross compilation
         id: cross
-        if: ${{ matrix.arch == 'aarch64' }}
+        if: ${{ matrix.arch != 'x86_64' }}
         run: |
           TOOLCHAIN_DIR=${{ steps.root.outputs.root_path }}/cmake/toolchain/${{ matrix.arch }}-${{ matrix.os_type }}
           echo "CMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_DIR/crosscompile.cmake" >> $GITHUB_OUTPUT
@@ -291,7 +349,7 @@ jobs:
         run: |
           echo "::group::configure extra flags for cross compilation"
           extra_configure=""
-          if [[ ${{ matrix.arch }} == "aarch64" ]]; then
+          if [[ ${{ matrix.arch }} != "x86_64" ]]; then
             if [[ ${{ matrix.os_type }} == "macos" ]]; then
               export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
               export CXXFLAGS="${{ steps.cross.outputs.CXXFLAGS }}"
@@ -337,13 +395,13 @@ jobs:
 
           echo "::group::configure extra flags for cross compilation"
           extra_configure=""
-          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
+          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} != "x86_64" ]]; then
             extra_configure=$(cat <<- VAREOF
               --host=${{ matrix.arch }}-${{ matrix.os_type }}
               --cross-prefix=${CCPREFIX}
           VAREOF
           )
-          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
+          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} != "x86_64" ]]; then
             export CC="clang"
             export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
             extra_configure=$(cat <<- VAREOF
@@ -383,9 +441,13 @@ jobs:
 
           # not currently supported in `aarch64`
           extra_configure="-DENABLE_HDR10_PLUS=1"
-          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
-            extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
-          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
+          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} != "x86_64" ]]; then
+            if [[ ${{ matrix.arch }} == "powerpc64le" ]]; then
+              extra_configure="-DCMAKE_TOOLCHAIN_FILE=${{ steps.cross.outputs.CMAKE_TOOLCHAIN_FILE }}"
+            else
+              extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
+            fi
+          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} != "x86_64" ]]; then
             export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
             export CXXFLAGS="${{ steps.cross.outputs.CXXFLAGS }}"
             extra_configure=$(cat <<- VAREOF
@@ -447,7 +509,7 @@ jobs:
 
           echo "::group::configure extra flags for cross compilation"
           extra_configure=""
-          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} == "aarch64" ]]; then
+          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} != "x86_64" ]]; then
             CCPREFIX=${{ steps.cross.outputs.CCPREFIX }}
             extra_configure=$(cat <<- VAREOF
               --arch=${{ matrix.arch }}
@@ -456,7 +518,7 @@ jobs:
               --target-os=${{ matrix.os_type }}
           VAREOF
           )
-          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} == "aarch64" ]]; then
+          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} != "x86_64" ]]; then
             export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
             export CXXFLAGS="${{ steps.cross.outputs.CXXFLAGS }}"
             export LDFLAGS="${{ steps.cross.outputs.LDFLAGS }}"
@@ -533,7 +595,7 @@ jobs:
 
           echo "::group::configure extra flags for cross compilation"
           extra_configure=""
-          if [[ ${{ matrix.arch }} == "aarch64" ]]; then
+          if [[ ${{ matrix.arch }} != "x86_64" ]]; then
             if [[ ${{ matrix.os_type }} == "macos" ]]; then
               export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
               export CXXFLAGS="${{ steps.cross.outputs.CXXFLAGS }}"
@@ -630,6 +692,7 @@ jobs:
           # list of submodules
           SUBMODULES=$(cat <<- VAREOF
             ffmpeg-linux-aarch64
+            ffmpeg-linux-powerpc64le
             ffmpeg-linux-x86_64
             ffmpeg-macos-aarch64
             ffmpeg-macos-x86_64
