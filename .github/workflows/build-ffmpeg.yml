@@ -277,13 +277,25 @@ jobs:
         with:
           update: true
           install: >-
-            diffutils
-            git
-            make
-            pkg-config
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-libmfx
+            wget
+
+      - name: Update Windows dependencies
+        if: ${{ matrix.os_type == 'windows' }}
+        shell: msys2 {0}
+        run: |
+          # download working binutils
+          wget https://repo.msys2.org/mingw/x86_64/mingw-w64-x86_64-binutils-2.40-4-any.pkg.tar.zst
+
+          # install dependencies
+          pacman -U --noconfirm mingw-w64-x86_64-binutils-2.40-4-any.pkg.tar.zst
+          pacman -Syu --noconfirm --ignore=mingw-w64-x86_64-binutils \
+            diffutils \
+            git \
+            make \
+            pkg-config \
+            mingw-w64-x86_64-cmake \
+            mingw-w64-x86_64-gcc \
+            mingw-w64-x86_64-libmfx \
             mingw-w64-x86_64-nasm
 
       - name: Initialize Submodules
