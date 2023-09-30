@@ -40,7 +40,6 @@ jobs:
               --enable-nvenc
               --enable-v4l2_m2m
               --enable-vaapi
-              --enable-vdpau
           - os_type: linux
             os: ubuntu-20.04  # pinned until all platforms moved to 22.04
             arch: aarch64
@@ -59,7 +58,6 @@ jobs:
               --enable-nvenc
               --enable-v4l2_m2m
               --enable-vaapi
-              --enable-vdpau
           - os_type: linux
             os: ubuntu-20.04  # pinned until all platforms moved to 22.04
             arch: powerpc64le
@@ -78,7 +76,6 @@ jobs:
               --enable-nvenc
               --enable-v4l2_m2m
               --enable-vaapi
-              --enable-vdpau
           - os_type: macos
             os: macos-11
             arch: x86_64
@@ -199,7 +196,6 @@ jobs:
               libopus-dev \
               libsdl2-dev \
               libtool \
-              libvdpau-dev \
               libvorbis-dev \
               libxcb1-dev \
               libxcb-shm0-dev \
