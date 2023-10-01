@@ -19,13 +19,15 @@ Signed-off-by: Michael Fabian 'Xaymar' Dirks <info@xaymar.com>
 Modified by: TheElixZammuto (GitHub)
 original: https://github.com/TheElixZammuto/sunshine-prebuilt/blob/main/build/0001-patch-idr-on-amf.patch
 context: https://github.com/loki-47-6F-64/sunshine/pull/62#issuecomment-811590070
+
+AV1 support and AV_FRAME_FLAG_KEY added by cgutman (GitHub)
 ---
 
 diff --git a/libavcodec/amfenc.c b/libavcodec/amfenc.c
-index fb23ed738c..015be7d628 100644
+index 5d71653780..4a80c3511d 100644
 --- a/libavcodec/amfenc.c
 +++ b/libavcodec/amfenc.c
-@@ -758,6 +758,58 @@ int ff_amf_receive_packet(AVCodecContext *avctx, AVPacket *avpkt)
+@@ -754,6 +754,76 @@ int ff_amf_receive_packet(AVCodecContext *avctx, AVPacket *avpkt)
              }
          }
  
@@ -49,7 +51,7 @@ index fb23ed738c..015be7d628 100644
 +                break;
 +            }
 +            // Keyframe overrides previous assignment.
-+            if (frame->key_frame) {
++            if (frame->flags & AV_FRAME_FLAG_KEY) {
 +                av_log(ctx, AV_LOG_DEBUG, "IDR,AUD,PPS and SPS set - h264\n");
 +                AMF_ASSIGN_PROPERTY_INT64(res, surface, AMF_VIDEO_ENCODER_INSERT_SPS, 1);
 +                AMF_ASSIGN_PROPERTY_INT64(res, surface, AMF_VIDEO_ENCODER_INSERT_PPS, 1);
@@ -74,10 +76,28 @@ index fb23ed738c..015be7d628 100644
 +                break;
 +            }
 +            // Keyframe overrides previous assignment.
-+            if (frame->key_frame) {
++            if (frame->flags & AV_FRAME_FLAG_KEY) {
 +                av_log(ctx, AV_LOG_DEBUG, "IDR,PPS and SPS set - h265\n");
 +                AMF_ASSIGN_PROPERTY_INT64(res, surface, AMF_VIDEO_ENCODER_HEVC_INSERT_HEADER, 1);
 +                AMF_ASSIGN_PROPERTY_INT64(res, surface, AMF_VIDEO_ENCODER_HEVC_FORCE_PICTURE_TYPE, AMF_VIDEO_ENCODER_HEVC_PICTURE_TYPE_IDR);
++            }
++        } else if (avctx->codec->id == AV_CODEC_ID_AV1) {
++            switch (frame->pict_type) {
++            case AV_PICTURE_TYPE_I:
++                AMF_ASSIGN_PROPERTY_INT64(res, surface, AMF_VIDEO_ENCODER_AV1_FORCE_FRAME_TYPE, AMF_VIDEO_ENCODER_AV1_FORCE_FRAME_TYPE_INTRA_ONLY);
++                break;
++            case AV_PICTURE_TYPE_SP:
++                AMF_ASSIGN_PROPERTY_INT64(res, surface, AMF_VIDEO_ENCODER_AV1_FORCE_FRAME_TYPE, AMF_VIDEO_ENCODER_AV1_FORCE_FRAME_TYPE_SWITCH);
++                break;
++            default:
++                AMF_ASSIGN_PROPERTY_INT64(res, surface, AMF_VIDEO_ENCODER_AV1_FORCE_FRAME_TYPE, AMF_VIDEO_ENCODER_AV1_FORCE_FRAME_TYPE_NONE);
++                break;
++            }
++            // Keyframe overrides previous assignment.
++            if (frame->flags & AV_FRAME_FLAG_KEY) {
++                av_log(ctx, AV_LOG_DEBUG, "Sequence header set - AV1\n");
++                AMF_ASSIGN_PROPERTY_INT64(res, surface, AMF_VIDEO_ENCODER_AV1_FORCE_INSERT_SEQUENCE_HEADER, 1);
++                AMF_ASSIGN_PROPERTY_INT64(res, surface, AMF_VIDEO_ENCODER_AV1_FORCE_FRAME_TYPE, AMF_VIDEO_ENCODER_AV1_FORCE_FRAME_TYPE_KEY);
 +            }
 +        }
 +

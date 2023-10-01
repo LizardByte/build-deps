@@ -84,10 +84,13 @@ configure_file(${AVCODEC_GENERATED_SRC_PATH}/hevc.h ${CBS_INCLUDE_PATH}/hevc.h C
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/mathops.h ${CBS_INCLUDE_PATH}/mathops.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/packet.h ${CBS_INCLUDE_PATH}/packet.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/sei.h ${CBS_INCLUDE_PATH}/sei.h COPYONLY)
+configure_file(${AVCODEC_GENERATED_SRC_PATH}/version_major.h ${CBS_INCLUDE_PATH}/version_major.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/vlc.h ${CBS_INCLUDE_PATH}/vlc.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/config.h ${CBS_INCLUDE_PATH}/config.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/attributes.h
         ${CMAKE_BINARY_DIR}/include/libavutil/attributes.h COPYONLY)
+configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/attributes_internal.h
+        ${CMAKE_BINARY_DIR}/include/libavutil/attributes_internal.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/intmath.h
         ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h COPYONLY)
 
@@ -115,6 +118,7 @@ set(CBS_SOURCE_FILES
         ${CBS_INCLUDE_PATH}/mathops.h
         ${CBS_INCLUDE_PATH}/packet.h
         ${CBS_INCLUDE_PATH}/sei.h
+        ${CBS_INCLUDE_PATH}/version_major.h
         ${CBS_INCLUDE_PATH}/vlc.h
         ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h
         ${CBS_INCLUDE_PATH}/config.h
