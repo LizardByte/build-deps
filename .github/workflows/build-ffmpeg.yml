@@ -117,10 +117,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Checkout destination branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
           path: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
@@ -670,7 +670,7 @@ jobs:
     steps:
 
       - name: Checkout Sunshine
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ github.repository_owner }}/Sunshine
           ref: nightly
