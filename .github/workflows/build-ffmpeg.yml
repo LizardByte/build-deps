@@ -3,7 +3,7 @@ name: Build ffmpeg
 
 on:
   pull_request:
-    branches: [master, nightly]
+    branches: [master]
     types: [opened, synchronize, reopened]
   push:
     branches: [master]
@@ -673,7 +673,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository_owner }}/Sunshine
-          ref: nightly
           submodules: recursive
           persist-credentials: false  # otherwise, the token used is the GITHUB_TOKEN, instead of the personal token
           fetch-depth: 0  # otherwise, will fail to push refs to dest repo
@@ -718,7 +717,7 @@ jobs:
 
       - name: Commit changes
         # this if statement is probably useless as it will not push if working tree is clean
-        if: ${{ steps.git_diff.outputs.changed == 'true' }}  # does not match nightly
+        if: ${{ steps.git_diff.outputs.changed == 'true' }}
         uses: actions-js/push@v1.4
         with:
           repository: ${{ github.repository_owner }}/Sunshine
@@ -730,13 +729,14 @@ jobs:
           force: true
           message: Bump ffmpeg
 
+      # todo - this action is archived, they recommend using gh cli
       - name: Create Pull Request
-        if: ${{ steps.git_diff.outputs.changed == 'true' }}  # does not match nightly
+        if: ${{ steps.git_diff.outputs.changed == 'true' }}
         uses: repo-sync/pull-request@v2
         with:
           destination_repository: ${{ github.repository_owner }}/Sunshine
           source_branch: ${{ env.update_branch }}
-          destination_branch: nightly
+          destination_branch: nightly  # todo - change to master after default branch is changed in Sunshine
           pr_title: "Bump ffmpeg"
           pr_body: |
             Bump ffmpeg with changes from ${{ github.repository }}
