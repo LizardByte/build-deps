@@ -617,7 +617,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
           path: |
