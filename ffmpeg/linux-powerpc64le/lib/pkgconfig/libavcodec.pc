@@ -1,0 +1,14 @@
+prefix=/home/runner/work/build-deps/build-deps/ffmpeg_build
+exec_prefix=${prefix}
+libdir=/home/runner/work/build-deps/build-deps/ffmpeg_build/lib
+includedir=/home/runner/work/build-deps/build-deps/ffmpeg_build/include
+
+Name: libavcodec
+Description: FFmpeg codec library
+Version: 60.31.102
+Requires: libavutil >= 58.29.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavcodec -pthread -lm -latomic -L/home/runner/work/build-deps/build-deps/ffmpeg_build/lib -lSvtAv1Enc -lpthread -lm -L/home/runner/work/build-deps/build-deps/ffmpeg_build/lib -lx264 -lpthread -lm -ldl -L/home/runner/work/build-deps/build-deps/ffmpeg_build/lib -lx265 -lstdc++ -lm -lgcc_s -lgcc -lgcc_s -lgcc -lrt -ldl -L/usr/lib/powerpc64le-linux-gnu -lva -ldl
+Libs.private: 
+Cflags: -I${includedir}
