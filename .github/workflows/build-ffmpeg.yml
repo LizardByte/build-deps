@@ -224,6 +224,11 @@ jobs:
                 libdrm-amdgpu1:$package_arch \
                 libdrm-nouveau2:$package_arch \
                 libdrm-radeon1:$package_arch \
+                libwayland-client0:$package_arch \
+                libwayland-cursor0:$package_arch \
+                libwayland-dev:$package_arch \
+                libwayland-egl1:$package_arch \
+                libwayland-server0:$package_arch \
                 libva-wayland2:$package_arch \
                 libva-x11-2:$package_arch
             else
