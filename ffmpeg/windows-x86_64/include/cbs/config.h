@@ -6,7 +6,7 @@
 #define CONFIG_THIS_YEAR 2023
 #define FFMPEG_DATADIR "/usr/local/share/ffmpeg"
 #define AVCONV_DATADIR "/usr/local/share/ffmpeg"
-#define CC_IDENT "gcc 13.2.0 (Rev3, Built by MSYS2 project)"
+#define CC_IDENT "gcc 13.2.0 (Rev5, Built by MSYS2 project)"
 #define OS_NAME mingw32
 #define av_restrict restrict
 #define EXTERN_PREFIX ""
