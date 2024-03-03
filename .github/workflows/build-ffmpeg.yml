@@ -340,24 +340,18 @@ jobs:
           CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
         run: |
           echo "::group::configure extra flags for cross compilation"
-          extra_configure=""
           if [[ ${{ matrix.arch }} != "x86_64" ]]; then
             if [[ ${{ matrix.os_type }} == "macos" ]]; then
               export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
               export CXXFLAGS="${{ steps.cross.outputs.CXXFLAGS }}"
               export LDFLAGS="${{ steps.cross.outputs.LDFLAGS }}"
             fi
-            extra_configure=$(cat <<- VAREOF
-              -DCMAKE_TOOLCHAIN_FILE=${{ steps.cross.outputs.CMAKE_TOOLCHAIN_FILE }}
-          VAREOF
-          )
           fi
-          echo "$extra_configure"
           echo "::endgroup::"
 
           echo "::group::configure"
           PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
-            $extra_configure \
+            -DCMAKE_TOOLCHAIN_FILE=${{ steps.cross.outputs.CMAKE_TOOLCHAIN_FILE }} \
             -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_APPS=OFF \
@@ -430,21 +424,15 @@ jobs:
         working-directory: ffmpeg_sources/x265_git
         run: |
           echo "::group::configure extra flags for cross compilation"
-
-          # not currently supported in `aarch64`
-          extra_configure="-DENABLE_HDR10_PLUS=1"
-          if [[ ${{ matrix.os_type }} == "linux" && ${{ matrix.arch }} != "x86_64" ]]; then
-            if [[ ${{ matrix.arch }} == "powerpc64le" ]]; then
-              extra_configure="-DCMAKE_TOOLCHAIN_FILE=${{ steps.cross.outputs.CMAKE_TOOLCHAIN_FILE }}"
-            else
-              extra_configure="-DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.arch }}-${{ matrix.os_type }}/crosscompile.cmake"
-            fi
-          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} != "x86_64" ]]; then
+          extra_configure=""
+          if [[ ${{ matrix.arch }} == "x86_64" ]]; then
+            # not currently supported in `aarch64`
+            extra_configure="-DENABLE_HDR10_PLUS=1"
+          elif [[ ${{ matrix.os_type }} == "macos" ]]; then
             export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
             export CXXFLAGS="${{ steps.cross.outputs.CXXFLAGS }}"
             extra_configure=$(cat <<- VAREOF
               -DENABLE_ASSEMBLY=0
-              -DCMAKE_TOOLCHAIN_FILE=${{ steps.cross.outputs.CMAKE_TOOLCHAIN_FILE }}
           VAREOF
           )
           fi
@@ -454,6 +442,7 @@ jobs:
           echo "::group::configure"
           PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
             $extra_configure \
+            -DCMAKE_TOOLCHAIN_FILE=${{ steps.cross.outputs.CMAKE_TOOLCHAIN_FILE }} \
             -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
             -DENABLE_CLI=OFF \
             -DENABLE_SHARED=OFF \
@@ -586,24 +575,21 @@ jobs:
           cd build
 
           echo "::group::configure extra flags for cross compilation"
-          extra_configure=""
-          if [[ ${{ matrix.arch }} != "x86_64" ]]; then
-            if [[ ${{ matrix.os_type }} == "macos" ]]; then
+          if [[ ${{ matrix.os_type }} == "macos" ]]; then
+            if [[ ${{ matrix.arch }} == "x86_64" ]]; then
+              export CC="gcc"
+              export CXX="g++"
+            else
               export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
               export CXXFLAGS="${{ steps.cross.outputs.CXXFLAGS }}"
               export LDFLAGS="${{ steps.cross.outputs.LDFLAGS }}"
             fi
-            extra_configure=$(cat <<- VAREOF
-              -DCMAKE_TOOLCHAIN_FILE=${{ steps.cross.outputs.CMAKE_TOOLCHAIN_FILE }}
-          VAREOF
-          )
           fi
-          echo "$extra_configure"
           echo "::endgroup::"
 
           echo "::group::configure"
           PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
-            $extra_configure \
+            -DCMAKE_TOOLCHAIN_FILE=${{ steps.cross.outputs.CMAKE_TOOLCHAIN_FILE }} \
             -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
             -DFFMPEG_CBS=ON \
             ..
