@@ -30,23 +30,30 @@ if (WIN32)
     set(LEADING_SH_COMMAND sh)
 endif ()
 
-if (CROSS_COMPILE_ARM)
-    set(FFMPEG_EXTRA_CONFIGURE
-            --arch=aarch64
-            --enable-cross-compile)
+string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} arch)
+
+if (${arch} STREQUAL "aarch64" OR ${arch} STREQUAL "arm64")
     set(CBS_ARCH_PATH arm)
-elseif (CROSS_COMPILE_PPC)
-    set(FFMPEG_EXTRA_CONFIGURE
-            --arch=powerpc64le
-            --enable-cross-compile)
+elseif (${arch} STREQUAL "ppc64le")
     set(CBS_ARCH_PATH ppc)
-else ()
+elseif (${arch} STREQUAL "amd64" OR ${arch} STREQUAL "x86_64")
     set(CBS_ARCH_PATH x86)
+else ()
+    message(FATAL_ERROR "Unsupported system processor:" ${CMAKE_SYSTEM_PROCESSOR})
+endif ()
+
+if (CMAKE_CROSSCOMPILING)
+    set(FFMPEG_EXTRA_CONFIGURE --arch=${arch} --enable-cross-compile)
 endif ()
 
 # The generated config.h needs to have `CONFIG_CBS_` flags enabled (from `--enable-bsfs`)
 execute_process(
         COMMAND ${LEADING_SH_COMMAND} ./configure
+            --cc=${CMAKE_C_COMPILER}
+            --cxx=${CMAKE_CXX_COMPILER}
+            --ar=${CMAKE_AR}
+            --ranlib=${CMAKE_RANLIB}
+            --optflags=${CMAKE_C_FLAGS}
             --disable-all
             --disable-autodetect
             --disable-iconv
