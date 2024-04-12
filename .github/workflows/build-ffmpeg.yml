@@ -547,6 +547,7 @@ jobs:
             --disable-autodetect \
             --disable-iconv \
             --enable-avcodec \
+            --enable-encoder=ac3,eac3 \
             --enable-encoder=libsvtav1 \
             --enable-encoder=libx264,libx265 \
             --enable-gpl \
@@ -555,6 +556,7 @@ jobs:
             --enable-libx265 \
             --enable-static \
             --enable-swscale \
+            --enable-swresample \
             --pkg-config=pkg-config \
             ${{ matrix.ffmpeg_extras }} \
             || config_error=true
