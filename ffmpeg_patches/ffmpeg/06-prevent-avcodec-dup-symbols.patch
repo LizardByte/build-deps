@@ -1,0 +1,31 @@
+Subject: [PATCH] trying to patch ffmpeg
+---
+Index: libavcodec/mf_utils.h
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/libavcodec/mf_utils.h b/libavcodec/mf_utils.h
+--- a/libavcodec/mf_utils.h	(revision 41f32f0bc42490c007920cf7b844f7a84852b201)
++++ b/libavcodec/mf_utils.h	(date 1712917933957)
+@@ -21,20 +21,7 @@
+ 
+ #include <windows.h>
+ #include <initguid.h>
+-#ifdef _MSC_VER
+-// The official way of including codecapi (via dshow.h) makes the ICodecAPI
+-// interface unavailable in UWP mode, but including icodecapi.h + codecapi.h
+-// seems to be equivalent. (These headers conflict with the official way
+-// of including it though, through strmif.h via dshow.h. And on mingw, the
+-// mf*.h headers below indirectly include strmif.h.)
+ #include <icodecapi.h>
+-#else
+-#define NO_DSHOW_STRSAFE
+-#include <dshow.h>
+-// Older versions of mingw-w64 need codecapi.h explicitly included, while newer
+-// ones include it implicitly from dshow.h (via uuids.h).
+-#include <codecapi.h>
+-#endif
+ #include <mfapi.h>
+ #include <mferror.h>
+ #include <mfobjects.h>
