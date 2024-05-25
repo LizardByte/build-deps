@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   ffmpeg:
-    name: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
+    name: ffmpeg (${{ matrix.name }})
     # https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
     # https://trac.ffmpeg.org/wiki/CompilationGuide/macOS
     # https://trac.ffmpeg.org/wiki/CompilationGuide/MinGW
@@ -23,7 +23,8 @@ jobs:
       fail-fast: false  # false to test all, true to fail entire job if any fail
       matrix:
         include:
-          - os_type: linux
+          - name: Linux-x86_64  # ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}
+            os_type: linux
             os: ubuntu-20.04  # pinned until all platforms moved to 22.04
             arch: x86_64
             shell: bash
@@ -40,7 +41,8 @@ jobs:
               --enable-nvenc
               --enable-v4l2_m2m
               --enable-vaapi
-          - os_type: linux
+          - name: Linux-aarch64
+            os_type: linux
             os: ubuntu-20.04  # pinned until all platforms moved to 22.04
             arch: aarch64
             shell: bash
@@ -58,7 +60,8 @@ jobs:
               --enable-nvenc
               --enable-v4l2_m2m
               --enable-vaapi
-          - os_type: linux
+          - name: Linux-ppc64le
+            os_type: linux
             os: ubuntu-20.04  # pinned until all platforms moved to 22.04
             arch: powerpc64le
             shell: bash
@@ -76,7 +79,8 @@ jobs:
               --enable-nvenc
               --enable-v4l2_m2m
               --enable-vaapi
-          - os_type: macos
+          - name: Darwin-x86_64
+            os_type: macos
             os: macos-11
             arch: x86_64
             shell: bash
@@ -84,7 +88,8 @@ jobs:
             ffmpeg_extras: >-
               --enable-encoder=h264_videotoolbox,hevc_videotoolbox
               --enable-videotoolbox
-          - os_type: macos
+          - name: Darwin-arm64
+            os_type: macos
             os: macos-11
             arch: aarch64
             shell: bash
@@ -93,7 +98,8 @@ jobs:
             ffmpeg_extras: >-
               --enable-encoder=h264_videotoolbox,hevc_videotoolbox
               --enable-videotoolbox
-          - os_type: windows
+          - name: Windows-AMD64
+            os_type: windows
             os: windows-2022
             arch: x86_64
             shell: msys2 {0}
@@ -630,7 +636,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: "${{ matrix.os_type }}-${{ matrix.arch }}"
+          name: ${{ matrix.name }}
           path: ./ffmpeg_build/
 
   update_dist:
