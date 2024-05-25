@@ -648,6 +648,11 @@ jobs:
           persist-credentials: false  # otherwise, the token used is the GITHUB_TOKEN, instead of the personal token
           fetch-depth: 0  # otherwise, will fail to push refs to dest repo
 
+      - name: Cleanup
+        run: |
+          rm -f -r dist/ffmpeg/*/share
+          rm -f -r dist/ffmpeg/*/lib/pkgconfig
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
