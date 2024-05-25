@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
@@ -622,51 +622,19 @@ jobs:
           make install
           echo "::endgroup::"
 
+      - name: Cleanup
+        run: |
+          rm -f -r ./ffmpeg_build/share
+          rm -f -r ./ffmpeg_build/lib/pkgconfig
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os_type }}-${{ matrix.arch }}
-          path: |
-            ./ffmpeg_build/
-
-      - name: Get current date
-        id: date
-        run: |
-          echo "date=$(date +'%Y-%m-%d')"
-          echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
-
-      - name: Prepare dependency branch
-        run: |
-          echo "::group::cleanup build"
-          rm -f -r ./ffmpeg_build/share
-          rm -f -r ./ffmpeg_build/lib/pkgconfig
-          echo "::endgroup::"
-
-          echo "::group::empty contents"
-          rm -f -r ./ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}/*
-          echo "::endgroup::"
-
-          echo "::group::copy build back to dependency branch"
-          cp -f -r ./ffmpeg_build/. ./ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}/
-          echo "::endgroup::"
-
-      - name: Commit build
-        if: >-
-          startsWith(github.repository, 'LizardByte/') &&
-          github.ref == 'refs/heads/master' &&
-          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-        uses: actions-js/push@v1.5
-        with:
-          github_token: ${{ secrets.GH_BOT_TOKEN }}
-          author_email: ${{ secrets.GH_BOT_EMAIL }}
-          author_name: ${{ secrets.GH_BOT_NAME }}
-          directory: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
-          branch: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
-          force: false
-          message: update-${{ steps.date.outputs.date }}
+          name: "${{ matrix.os_type }}-${{ matrix.arch }}"
+          path: ./ffmpeg_build/
 
   update_dist:
-    # only make the commit conditional, so the rest of the job can be verified on PRs
+    # only the commit is conditional, so the rest of the job can be verified on PRs
     name: Update dist
     needs: ffmpeg
     runs-on: ubuntu-latest
