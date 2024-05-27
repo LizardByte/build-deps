@@ -274,31 +274,21 @@ jobs:
           fi
 
       - name: Setup Dependencies Windows
+        # if a dependency needs to be pinned, see https://github.com/LizardByte/build-deps/pull/186
         if: ${{ matrix.os_type == 'windows' }}
         uses: msys2/setup-msys2@v2
         with:
           msystem: ucrt64
           update: true
           install: >-
-            wget
-
-      - name: Update Windows dependencies
-        if: ${{ matrix.os_type == 'windows' }}
-        shell: msys2 {0}
-        run: |
-          # download working binutils
-          wget https://repo.msys2.org/mingw/ucrt64/mingw-w64-ucrt-x86_64-binutils-2.40-4-any.pkg.tar.zst
-
-          # install dependencies
-          pacman -U --noconfirm mingw-w64-ucrt-x86_64-binutils-2.40-4-any.pkg.tar.zst
-          pacman -Syu --noconfirm --ignore=mingw-w64-ucrt-x86_64-binutils \
-            diffutils \
-            git \
-            make \
-            pkg-config \
-            mingw-w64-ucrt-x86_64-cmake \
-            mingw-w64-ucrt-x86_64-gcc \
-            mingw-w64-ucrt-x86_64-onevpl \
+            diffutils
+            git
+            make
+            pkg-config
+            mingw-w64-ucrt-x86_64-binutils
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-onevpl
             mingw-w64-ucrt-x86_64-nasm
 
       - name: Initialize Submodules
