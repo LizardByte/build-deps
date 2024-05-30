@@ -125,14 +125,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Checkout destination branch
-        uses: actions/checkout@v4
-        with:
-          ref: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
-          path: ffmpeg-${{ matrix.os_type }}-${{ matrix.arch }}
-          persist-credentials: false  # otherwise, the token used is the GITHUB_TOKEN, instead of the personal token
-          fetch-depth: 0  # otherwise, will fail to push refs to dest repo
-
       - name: Setup Dependencies Unix
         if: ${{ matrix.os_type != 'windows' }}
         run: |
@@ -239,7 +231,10 @@ jobs:
                 libva-x11-2:$package_arch
             else
               sudo apt-get -y install \
-                libva-dev:$package_arch
+                libva-dev:$package_arch \
+                libva-glx2:$package_arch \
+                libgl1:$package_arch \
+                libglx0:$package_arch
             fi
 
             if [[ ${{ matrix.arch }} != "x86_64" ]]; then
