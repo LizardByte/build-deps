@@ -477,6 +477,13 @@ typedef struct AVHWFramesConstraints {
      */
     int max_width;
     int max_height;
+
+    /**
+     * The frame width/height log2 alignment when available
+     * the lower 4 bits, width; another 4 bits, height
+     * (Zero is not applied, use the default value)
+     */
+    int log2_alignment;
 } AVHWFramesConstraints;
 
 /**
