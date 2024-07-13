@@ -6,7 +6,7 @@
 #define CONFIG_THIS_YEAR 2023
 #define FFMPEG_DATADIR "/usr/local/share/ffmpeg"
 #define AVCONV_DATADIR "/usr/local/share/ffmpeg"
-#define CC_IDENT "gcc 9 (Ubuntu 9.4.0-1ubuntu1~20.04.2)"
+#define CC_IDENT "gcc 11 (Ubuntu 11.4.0-1ubuntu1~22.04)"
 #define OS_NAME linux
 #define av_restrict restrict
 #define EXTERN_PREFIX ""
@@ -343,7 +343,7 @@
 #define HAVE_SLEEP 0
 #define HAVE_STRERROR_R 1
 #define HAVE_SYSCONF 1
-#define HAVE_SYSCTL 1
+#define HAVE_SYSCTL 0
 #define HAVE_SYSCTLBYNAME 0
 #define HAVE_USLEEP 1
 #define HAVE_UTGETOSTYPEFROMSTRING 0

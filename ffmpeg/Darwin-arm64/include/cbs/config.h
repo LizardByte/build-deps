@@ -6,7 +6,7 @@
 #define CONFIG_THIS_YEAR 2023
 #define FFMPEG_DATADIR "/usr/local/share/ffmpeg"
 #define AVCONV_DATADIR "/usr/local/share/ffmpeg"
-#define CC_IDENT "Apple clang version 13.0.0 (clang-1300.0.29.30)"
+#define CC_IDENT "Apple clang version 14.0.0 (clang-1400.0.29.202)"
 #define OS_NAME darwin
 #define av_restrict restrict
 #define EXTERN_PREFIX "_"
