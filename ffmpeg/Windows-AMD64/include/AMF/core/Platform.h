@@ -86,6 +86,12 @@ typedef signed int HRESULT;
 #include <stdint.h>
 #include <string.h>
 
+#if defined(_MSC_VER)
+    #define AMF_NO_VTABLE           __declspec(novtable)
+#else
+    #define AMF_NO_VTABLE
+#endif
+
 #if defined(_WIN32)
 
 
@@ -102,7 +108,6 @@ typedef signed int HRESULT;
     #define AMF_INLINE              __inline
     #define AMF_FORCEINLINE         __forceinline
 #endif
-    #define AMF_NO_VTABLE           __declspec(novtable)
 
     #define AMFPRId64   "I64d"
     #define LPRId64    L"I64d"
@@ -125,9 +130,17 @@ typedef signed int HRESULT;
     #define AMF_INLINE              __inline__
     #define AMF_FORCEINLINE         __inline__
 #endif
-    #define AMF_NO_VTABLE
 
-    #if !defined(AMFPRId64)
+    #if defined(__x86_64__) || defined(__aarch64__)
+        #define AMFPRId64    "ld"
+        #define LPRId64     L"ld"
+
+        #define AMFPRIud64    "uld"
+        #define LPRIud64     L"uld"
+
+        #define AMFPRIx64    "lx"
+        #define LPRIx64     L"lx"
+    #else
         #define AMFPRId64    "lld"
         #define LPRId64     L"lld"
 
