@@ -1,0 +1,13 @@
+diff --git a/libavutil/vulkan.c b/libavutil/vulkan.c
+index e9f094261d..7558c1f0f8 100644
+--- a/libavutil/vulkan.c
++++ b/libavutil/vulkan.c
+@@ -724,6 +724,8 @@ int ff_vk_exec_submit(FFVulkanContext *s, FFVkExecContext *e)
+         return AVERROR_EXTERNAL;
+     }
+ 
++    vk->WaitForFences(s->hwctx->act_dev, 1, &e->fence, VK_TRUE, UINT64_MAX);
++
+     for (int i = 0; i < e->sem_sig_val_dst_cnt; i++)
+         *e->sem_sig_val_dst[i] += 1;
+ 
