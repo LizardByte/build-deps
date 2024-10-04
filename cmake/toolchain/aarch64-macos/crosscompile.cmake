@@ -1,6 +1,5 @@
 # CMake toolchain file for cross compiling to linux aarch64
 
-set(CROSS_COMPILE_ARM 1)
 set(CMAKE_SYSTEM_NAME Darwin)
 set(CMAKE_SYSTEM_PROCESSOR arm64)
 set(CMAKE_OSX_ARCHITECTURES arm64)
