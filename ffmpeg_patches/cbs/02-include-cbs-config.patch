@@ -13,21 +13,8 @@ index dc57c5571c..972fcb101f 100644
  #include "libavutil/common.h"
  
  #if HAVE_INLINE_ASM
-diff --git a/libavcodec/avr32/mathops.h b/libavcodec/avr32/mathops.h
-index 85f42b594d..26df237710 100644
---- a/libavcodec/avr32/mathops.h
-+++ b/libavcodec/avr32/mathops.h
-@@ -23,7 +23,7 @@
- #define AVCODEC_AVR32_MATHOPS_H
- 
- #include <stdint.h>
--#include "config.h"
-+#include "cbs/config.h"
- #include "libavutil/common.h"
- 
- #if HAVE_INLINE_ASM
 diff --git a/libavcodec/mathops.h b/libavcodec/mathops.h
-index a1dc323304..85e8872aef 100644
+index 84a924f31b..b21a1852b1 100644
 --- a/libavcodec/mathops.h
 +++ b/libavcodec/mathops.h
 @@ -26,7 +26,7 @@
@@ -66,7 +53,7 @@ index dbd714fcd4..3bdea7cd8f 100644
  
  #if HAVE_PPC4XX
 diff --git a/libavcodec/x86/mathops.h b/libavcodec/x86/mathops.h
-index 6298f5ed19..6488b39a45 100644
+index ca7e2dffc1..f5cf8e1d70 100644
 --- a/libavcodec/x86/mathops.h
 +++ b/libavcodec/x86/mathops.h
 @@ -22,7 +22,7 @@
@@ -92,7 +79,7 @@ index f19b21e98d..96b4ad4fe3 100644
  
  #if HAVE_INLINE_ASM
 diff --git a/libavutil/intmath.h b/libavutil/intmath.h
-index c54d23b7bf..c5ec231eb9 100644
+index 52e11a8d5f..ae69932edf 100644
 --- a/libavutil/intmath.h
 +++ b/libavutil/intmath.h
 @@ -23,7 +23,7 @@
@@ -104,6 +91,19 @@ index c54d23b7bf..c5ec231eb9 100644
  #include "attributes.h"
  
  #if ARCH_ARM
+diff --git a/libavutil/riscv/intmath.h b/libavutil/riscv/intmath.h
+index a09248f903..a93c646594 100644
+--- a/libavutil/riscv/intmath.h
++++ b/libavutil/riscv/intmath.h
+@@ -24,7 +24,7 @@
+ #include <stdint.h>
+ #include <math.h>
+ 
+-#include "config.h"
++#include "cbs/config.h"
+ #include "libavutil/attributes.h"
+ #include "libavutil/riscv/cpu.h"
+ 
 diff --git a/libavutil/x86/asm.h b/libavutil/x86/asm.h
 index 9bff42d628..6977f019bc 100644
 --- a/libavutil/x86/asm.h
@@ -118,7 +118,7 @@ index 9bff42d628..6977f019bc 100644
  typedef struct xmm_reg { uint64_t a, b; } xmm_reg;
  typedef struct ymm_reg { uint64_t a, b, c, d; } ymm_reg;
 diff --git a/libavutil/x86/intmath.h b/libavutil/x86/intmath.h
-index 8a6b5ae261..e8a5b5eeee 100644
+index 4893a1f1b4..ac259e6335 100644
 --- a/libavutil/x86/intmath.h
 +++ b/libavutil/x86/intmath.h
 @@ -30,7 +30,7 @@

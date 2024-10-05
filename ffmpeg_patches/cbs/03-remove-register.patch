@@ -1,10 +1,10 @@
 Register storage specifier is an error for modern compiler and generally ignored anyway.
 
 diff --git a/libavcodec/get_bits.h b/libavcodec/get_bits.h
-index 65dc080ddb..7cf7650efe 100644
+index fe2f6378b4..477bd11746 100644
 --- a/libavcodec/get_bits.h
 +++ b/libavcodec/get_bits.h
-@@ -281,8 +281,8 @@ static inline void skip_bits_long(GetBitContext *s, int n)
+@@ -291,8 +291,8 @@ static inline void skip_bits_long(GetBitContext *s, int n)
   */
  static inline int get_xbits(GetBitContext *s, int n)
  {
@@ -15,7 +15,7 @@ index 65dc080ddb..7cf7650efe 100644
      OPEN_READER(re, s);
      av_assert2(n>0 && n<=25);
      UPDATE_CACHE(re, s);
-@@ -295,8 +295,8 @@ static inline int get_xbits(GetBitContext *s, int n)
+@@ -305,8 +305,8 @@ static inline int get_xbits(GetBitContext *s, int n)
  
  static inline int get_xbits_le(GetBitContext *s, int n)
  {
@@ -26,7 +26,7 @@ index 65dc080ddb..7cf7650efe 100644
      OPEN_READER(re, s);
      av_assert2(n>0 && n<=25);
      UPDATE_CACHE_LE(re, s);
-@@ -309,7 +309,7 @@ static inline int get_xbits_le(GetBitContext *s, int n)
+@@ -319,7 +319,7 @@ static inline int get_xbits_le(GetBitContext *s, int n)
  
  static inline int get_sbits(GetBitContext *s, int n)
  {
@@ -35,7 +35,7 @@ index 65dc080ddb..7cf7650efe 100644
      OPEN_READER(re, s);
      av_assert2(n>0 && n<=25);
      UPDATE_CACHE(re, s);
-@@ -324,7 +324,7 @@ static inline int get_sbits(GetBitContext *s, int n)
+@@ -334,7 +334,7 @@ static inline int get_sbits(GetBitContext *s, int n)
   */
  static inline unsigned int get_bits(GetBitContext *s, int n)
  {
@@ -44,7 +44,7 @@ index 65dc080ddb..7cf7650efe 100644
      OPEN_READER(re, s);
      av_assert2(n>0 && n<=25);
      UPDATE_CACHE(re, s);
-@@ -345,7 +345,7 @@ static av_always_inline int get_bitsz(GetBitContext *s, int n)
+@@ -355,7 +355,7 @@ static av_always_inline int get_bitsz(GetBitContext *s, int n)
  
  static inline unsigned int get_bits_le(GetBitContext *s, int n)
  {
@@ -53,7 +53,7 @@ index 65dc080ddb..7cf7650efe 100644
      OPEN_READER(re, s);
      av_assert2(n>0 && n<=25);
      UPDATE_CACHE_LE(re, s);
-@@ -360,7 +360,7 @@ static inline unsigned int get_bits_le(GetBitContext *s, int n)
+@@ -370,7 +370,7 @@ static inline unsigned int get_bits_le(GetBitContext *s, int n)
   */
  static inline unsigned int show_bits(GetBitContext *s, int n)
  {
