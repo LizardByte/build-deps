@@ -1,7 +1,7 @@
-From df5d0203200337f9472b729dfb9a1eb9442971c3 Mon Sep 17 00:00:00 2001
+From e2ebe91219c06b1272c870144448437227d32cf1 Mon Sep 17 00:00:00 2001
 From: Cameron Gutman <aicommander@gmail.com>
 Date: Mon, 2 Sep 2024 16:57:36 -0500
-Subject: [PATCH] amfenc: Use QUERY_TIMEOUT feature to avoid busy looping
+Subject: [PATCH 4/4] amfenc: Use QUERY_TIMEOUT feature to avoid busy looping
 
 ---
  libavcodec/amfenc_av1.c  | 2 ++
@@ -10,10 +10,10 @@ Subject: [PATCH] amfenc: Use QUERY_TIMEOUT feature to avoid busy looping
  3 files changed, 6 insertions(+)
 
 diff --git a/libavcodec/amfenc_av1.c b/libavcodec/amfenc_av1.c
-index c4e9f45e87..5102db2068 100644
+index 59b097edef..ef000d57f0 100644
 --- a/libavcodec/amfenc_av1.c
 +++ b/libavcodec/amfenc_av1.c
-@@ -196,6 +196,8 @@ FF_ENABLE_DEPRECATION_WARNINGS
+@@ -221,6 +221,8 @@ FF_ENABLE_DEPRECATION_WARNINGS
  
      AMF_ASSIGN_PROPERTY_RATE(res, ctx->encoder, AMF_VIDEO_ENCODER_AV1_FRAMERATE, framerate);
  
@@ -23,10 +23,10 @@ index c4e9f45e87..5102db2068 100644
      case AV_PROFILE_AV1_MAIN:
          profile = AMF_VIDEO_ENCODER_AV1_PROFILE_MAIN;
 diff --git a/libavcodec/amfenc_h264.c b/libavcodec/amfenc_h264.c
-index d3c6f6a10b..d94644bd85 100644
+index 959be9eab6..b4989874ea 100644
 --- a/libavcodec/amfenc_h264.c
 +++ b/libavcodec/amfenc_h264.c
-@@ -225,6 +225,8 @@ FF_ENABLE_DEPRECATION_WARNINGS
+@@ -229,6 +229,8 @@ FF_ENABLE_DEPRECATION_WARNINGS
  
      AMF_ASSIGN_PROPERTY_RATE(res, ctx->encoder, AMF_VIDEO_ENCODER_FRAMERATE, framerate);
  
@@ -36,18 +36,18 @@ index d3c6f6a10b..d94644bd85 100644
      case AV_PROFILE_H264_BASELINE:
          profile = AMF_VIDEO_ENCODER_PROFILE_BASELINE;
 diff --git a/libavcodec/amfenc_hevc.c b/libavcodec/amfenc_hevc.c
-index c0da0f08b2..4b9e419b74 100644
+index bdd2f273a9..0d35ff455c 100644
 --- a/libavcodec/amfenc_hevc.c
 +++ b/libavcodec/amfenc_hevc.c
-@@ -187,6 +187,8 @@ FF_ENABLE_DEPRECATION_WARNINGS
+@@ -195,6 +195,8 @@ FF_ENABLE_DEPRECATION_WARNINGS
  
      AMF_ASSIGN_PROPERTY_RATE(res, ctx->encoder, AMF_VIDEO_ENCODER_HEVC_FRAMERATE, framerate);
  
 +    AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_HEVC_QUERY_TIMEOUT, 50);
 +
-     color_depth = AMF_COLOR_BIT_DEPTH_8;
      switch (avctx->profile) {
      case AV_PROFILE_HEVC_MAIN:
+         profile = AMF_VIDEO_ENCODER_HEVC_PROFILE_MAIN;
 -- 
-2.43.0.windows.1
+2.45.2.windows.1
 

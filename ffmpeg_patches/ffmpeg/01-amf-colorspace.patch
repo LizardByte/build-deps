@@ -1,0 +1,189 @@
+From patchwork Sun Sep  8 20:02:09 2024
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Patchwork-Submitter: Cameron Gutman <aicommander@gmail.com>
+X-Patchwork-Id: 51399
+Delivered-To: ffmpegpatchwork2@gmail.com
+Received: by 2002:a59:9c4f:0:b0:48e:c0f8:d0de with SMTP id w15csp1308472vqu;
+        Sun, 8 Sep 2024 14:59:08 -0700 (PDT)
+X-Forwarded-Encrypted: i=2;
+ AJvYcCV1duo/VR5mKxFLFjf419y105vPMXivSAWwxRG0tiy4cyS/j9QCPnmwNWrA0hiu1i6FbuefpAQYWam08EKprp2P@gmail.com
+X-Google-Smtp-Source: 
+ AGHT+IHYs9OLdaZy5rk3aGM9iu+mYOraULoO1MfPDn7CRnDUSf2ijtZFQZQmGNo7GdJML/iUc2tJ
+X-Received: by 2002:a05:6512:2391:b0:52e:fb8b:32d0 with SMTP id
+ 2adb3069b0e04-536587e0078mr3109605e87.1.1725832748562;
+        Sun, 08 Sep 2024 14:59:08 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1725832748; cv=none;
+        d=google.com; s=arc-20240605;
+        b=YKGbsHbaRfhBSyzujnA64OiTNxkG3KBjao/XXIJtuwR3jw19xe0gslmdnXESIwuMW+
+         BuTFPifJ+ZZFuBYQ1dyvfo3hQSnkiX4rF7+XHvp15x3yni4UuXwAKbZPruDSqF07m3xO
+         UJu2kak0WVHJ8ZGsrK94UKBG1U2KfxKYayi4WCB622DpJgjuZvrZFayQSJIJOJGwHMmx
+         U0NZq+Nny54BZebk67QfsXejXcZMGJwEhvRDnz2jUeo4bDV2SFWHfVy2W6gkwg3h+P+z
+         byh/stV9fBu9K+pdFB8WLt+9eOrU5BPYwSsVDbScSmyBN+gMTw0S5P3xyy8PE07xarh5
+         lBow==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com;
+ s=arc-20240605;
+        h=sender:errors-to:content-transfer-encoding:cc:reply-to
+         :list-subscribe:list-help:list-post:list-archive:list-unsubscribe
+         :list-id:precedence:subject:mime-version:message-id:date:to:from
+         :dkim-signature:delivered-to;
+        bh=8nUMYfrq83MxpQNA0jUrQXW6/kepJmaLcQ/ED+tE6/s=;
+        fh=ojNBnpj0zpT76yL3ht0RJoGb7zeeIrfYAfgAXalD5xc=;
+        b=RWBoYUFICzzugKQHXRjy8f5OjgYBlcwIQagvOvtPhmcFcBj/5IAa0DoP+czQ3lnCBL
+         4EC90Ep4H/tfjC4RMe0pv7cF3k7uv3PywyJpeQujjGLKKyhwWg4uI3YiTNtuo1D0sOLi
+         Z/Wp/Dew6Ylu4yOy1e9wh/6Gw8VWaV/FB0Qcj67stwI19DgTiX20AsqxkWc4C6vFtqtj
+         7CbVs5j0c7fprmm7exebC24g7JVLrCyhBSMamkvzFek8IiAwP1OUPMPsUVdIMsFyIqLV
+         zo3gZyf0z2CpCAxdF8cbtUGN4YnjCMKSWoBw/uBLtzJNomM1CR/mncm6G3tuv7QrqPk1
+         rbBw==;
+        dara=google.com
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=neutral (body hash did not verify) header.i=@gmail.com
+ header.s=20230601 header.b=BVFZwiFm;
+       spf=pass (google.com: domain of ffmpeg-devel-bounces@ffmpeg.org
+ designates 79.124.17.100 as permitted sender)
+ smtp.mailfrom=ffmpeg-devel-bounces@ffmpeg.org;
+       dmarc=fail (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;
+       dara=fail header.i=@gmail.com
+Return-Path: <ffmpeg-devel-bounces@ffmpeg.org>
+Received: from ffbox0-bg.mplayerhq.hu (ffbox0-bg.ffmpeg.org. [79.124.17.100])
+        by mx.google.com with ESMTP id
+ 2adb3069b0e04-5365f9066a9si1197734e87.516.2024.09.08.14.59.08;
+        Sun, 08 Sep 2024 14:59:08 -0700 (PDT)
+Received-SPF: pass (google.com: domain of ffmpeg-devel-bounces@ffmpeg.org
+ designates 79.124.17.100 as permitted sender) client-ip=79.124.17.100;
+Authentication-Results: mx.google.com;
+       dkim=neutral (body hash did not verify) header.i=@gmail.com
+ header.s=20230601 header.b=BVFZwiFm;
+       spf=pass (google.com: domain of ffmpeg-devel-bounces@ffmpeg.org
+ designates 79.124.17.100 as permitted sender)
+ smtp.mailfrom=ffmpeg-devel-bounces@ffmpeg.org;
+       dmarc=fail (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;
+       dara=fail header.i=@gmail.com
+Received: from [127.0.1.1] (localhost [127.0.0.1])
+	by ffbox0-bg.mplayerhq.hu (Postfix) with ESMTP id F2A0668DAC8;
+	Sun,  8 Sep 2024 23:04:11 +0300 (EEST)
+X-Original-To: ffmpeg-devel@ffmpeg.org
+Delivered-To: ffmpeg-devel@ffmpeg.org
+Received: from mail-ot1-f44.google.com (mail-ot1-f44.google.com
+ [209.85.210.44])
+ by ffbox0-bg.mplayerhq.hu (Postfix) with ESMTPS id C894568D950
+ for <ffmpeg-devel@ffmpeg.org>; Sun,  8 Sep 2024 23:04:04 +0300 (EEST)
+Received: by mail-ot1-f44.google.com with SMTP id
+ 46e09a7af769-70f670eb827so1756249a34.0
+ for <ffmpeg-devel@ffmpeg.org>; Sun, 08 Sep 2024 13:04:04 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=gmail.com; s=20230601; t=1725825843; x=1726430643; darn=ffmpeg.org;
+ h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+ :to:from:from:to:cc:subject:date:message-id:reply-to;
+ bh=+l5ZDmyIsr6hkONNnQ2LfyuCqSk6j94jky6prkBG9Xo=;
+ b=BVFZwiFmY2YMBwUNprUbGbczTZWoQ7lZrObXNbrRpacr1SCrw6yuOqlkCxQoZCN5VA
+ A6HLXslEYYRDLJsGl/12WjT6utfpvEMAnROyxn3lqy2fvks+Lg+jGLSP8W8n81wX6aJZ
+ Q5o3zBMleWkWmaYlmefqO1SAluu9Ucl+Xq9alu1muwhIJ8LPc3irv/6sWfFOvKJSrLGA
+ RBWSotmgmeJPs+ZkPTVPMHt8u3RoYA4lg/sjEDQGS9sb622lqNjx5v9Rn9yTuxv1HAh2
+ ggYPATJDgklAqFYXfpEloTemLGWJXfTQAQ8M0VqClkm02e4Z+DnVNX+UD0lOyMvFK2Ss
+ XYBA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20230601; t=1725825843; x=1726430643;
+ h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+ :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=+l5ZDmyIsr6hkONNnQ2LfyuCqSk6j94jky6prkBG9Xo=;
+ b=IWWHiEtgyaGb3l2G7bA7mNFnPDLKLua4tVdggFeob2a5aFDxnypV/ri6fq7Qkl6IAi
+ jOMjDV17mSy62EUYlfw9y+TyCAciNYWpIWf2TF9AHE+FZDGmZcQ4lxehyxIrMgL3Qu1T
+ Jg04iCdG5o6WiXs8O8ZZ9mjc9dasJKDwFLiigw4g6HIv7Q8SNpvW9oQ3ZCk9flYbBhML
+ dewP7B+Y0O5s0H5XI/9jbPbecwC3nMA8PEBS17RCGZ8bdbFYep9z6VIH4pPCd/Dbgnkc
+ 1dvgoKG3to5MGiyuf1znWQeVOvH4kyxCrKD47hgojHjpmkVRfX64FpMIZe109GGuzDUY
+ nvrA==
+X-Gm-Message-State: AOJu0YxKv3POyncQIhFCJgPIuibyY+4mBUBoWJzc/0KKdzaQ+CXRO5ZN
+ vA9hAXHYzcLvPODS441dzDNuAiusSLof78ea9/MjlxMOhRT2GiTLJIOk9w==
+X-Received: by 2002:a05:6830:dc4:b0:703:68d0:a266 with SMTP id
+ 46e09a7af769-710cbb3f33cmr3750438a34.4.1725825842616;
+ Sun, 08 Sep 2024 13:04:02 -0700 (PDT)
+Received: from localhost.localdomain
+ ([2600:1702:50c6:cf1f:9548:4dc9:5394:e50d])
+ by smtp.gmail.com with ESMTPSA id
+ 46e09a7af769-710eeac556asm29618a34.55.2024.09.08.13.04.01
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Sun, 08 Sep 2024 13:04:01 -0700 (PDT)
+From: Cameron Gutman <aicommander@gmail.com>
+To: ffmpeg-devel@ffmpeg.org
+Date: Sun,  8 Sep 2024 15:02:09 -0500
+Message-ID: <20240908200351.196-1-aicommander@gmail.com>
+X-Mailer: git-send-email 2.43.0.windows.1
+MIME-Version: 1.0
+Subject: [FFmpeg-devel] [PATCH] avcodec/amfenc: Fix HEVC/AV1 colorspace
+ assumptions
+X-BeenThere: ffmpeg-devel@ffmpeg.org
+X-Mailman-Version: 2.1.29
+Precedence: list
+List-Id: FFmpeg development discussions and patches <ffmpeg-devel.ffmpeg.org>
+List-Unsubscribe: <https://ffmpeg.org/mailman/options/ffmpeg-devel>,
+ <mailto:ffmpeg-devel-request@ffmpeg.org?subject=unsubscribe>
+List-Archive: <https://ffmpeg.org/pipermail/ffmpeg-devel>
+List-Post: <mailto:ffmpeg-devel@ffmpeg.org>
+List-Help: <mailto:ffmpeg-devel-request@ffmpeg.org?subject=help>
+List-Subscribe: <https://ffmpeg.org/mailman/listinfo/ffmpeg-devel>,
+ <mailto:ffmpeg-devel-request@ffmpeg.org?subject=subscribe>
+Reply-To: FFmpeg development discussions and patches <ffmpeg-devel@ffmpeg.org>
+Cc: lucenticus@gmail.com, ovchinnikov.dmitrii@gmail.com, primeadvice@gmail.com
+Errors-To: ffmpeg-devel-bounces@ffmpeg.org
+Sender: "ffmpeg-devel" <ffmpeg-devel-bounces@ffmpeg.org>
+X-TUID: 4wkqHmzxK9ql
+
+Fixes incorrect colors in AMF encoding of 10-bit SDR content in HEVC and AV1.
+
+Signed-off-by: Cameron Gutman <aicommander@gmail.com>
+---
+ libavcodec/amfenc_av1.c  | 13 ++++---------
+ libavcodec/amfenc_hevc.c | 13 ++++---------
+ 2 files changed, 8 insertions(+), 18 deletions(-)
+
+diff --git a/libavcodec/amfenc_av1.c b/libavcodec/amfenc_av1.c
+index b40d54f70c..59b097edef 100644
+--- a/libavcodec/amfenc_av1.c
++++ b/libavcodec/amfenc_av1.c
+@@ -252,15 +252,10 @@ FF_ENABLE_DEPRECATION_WARNINGS
+ 
+     AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_AV1_COLOR_BIT_DEPTH, color_depth);
+     AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_AV1_OUTPUT_COLOR_PROFILE, color_profile);
+-    if (color_depth == AMF_COLOR_BIT_DEPTH_8) {
+-        /// Color Transfer Characteristics (AMF matches ISO/IEC)
+-        AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_AV1_OUTPUT_TRANSFER_CHARACTERISTIC, AMF_COLOR_TRANSFER_CHARACTERISTIC_BT709);
+-        /// Color Primaries (AMF matches ISO/IEC)
+-        AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_AV1_OUTPUT_COLOR_PRIMARIES, AMF_COLOR_PRIMARIES_BT709);
+-    } else {
+-        AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_AV1_OUTPUT_TRANSFER_CHARACTERISTIC, AMF_COLOR_TRANSFER_CHARACTERISTIC_SMPTE2084);
+-        AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_AV1_OUTPUT_COLOR_PRIMARIES, AMF_COLOR_PRIMARIES_BT2020);
+-    }
++    /// Color Transfer Characteristics (AMF matches ISO/IEC)
++    AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_AV1_OUTPUT_TRANSFER_CHARACTERISTIC, (amf_int64)avctx->color_trc);
++    /// Color Primaries (AMF matches ISO/IEC)
++    AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_AV1_OUTPUT_COLOR_PRIMARIES, (amf_int64)avctx->color_primaries);
+ 
+     profile_level = avctx->level;
+     if (profile_level == AV_LEVEL_UNKNOWN) {
+diff --git a/libavcodec/amfenc_hevc.c b/libavcodec/amfenc_hevc.c
+index fc25dcec1a..bdd2f273a9 100644
+--- a/libavcodec/amfenc_hevc.c
++++ b/libavcodec/amfenc_hevc.c
+@@ -254,15 +254,10 @@ FF_ENABLE_DEPRECATION_WARNINGS
+         color_depth = AMF_COLOR_BIT_DEPTH_10;
+     }
+     AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_HEVC_COLOR_BIT_DEPTH, color_depth);
+-    if (color_depth == AMF_COLOR_BIT_DEPTH_8) {
+-        /// Color Transfer Characteristics (AMF matches ISO/IEC)
+-        AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_HEVC_OUTPUT_TRANSFER_CHARACTERISTIC, AMF_COLOR_TRANSFER_CHARACTERISTIC_BT709);
+-        /// Color Primaries (AMF matches ISO/IEC)
+-        AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_HEVC_OUTPUT_COLOR_PRIMARIES, AMF_COLOR_PRIMARIES_BT709);
+-    } else {
+-        AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_HEVC_OUTPUT_TRANSFER_CHARACTERISTIC, AMF_COLOR_TRANSFER_CHARACTERISTIC_SMPTE2084);
+-        AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_HEVC_OUTPUT_COLOR_PRIMARIES, AMF_COLOR_PRIMARIES_BT2020);
+-    }
++    /// Color Transfer Characteristics (AMF matches ISO/IEC)
++    AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_HEVC_OUTPUT_TRANSFER_CHARACTERISTIC, (amf_int64)avctx->color_trc);
++    /// Color Primaries (AMF matches ISO/IEC)
++    AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_HEVC_OUTPUT_COLOR_PRIMARIES, (amf_int64)avctx->color_primaries);
+ 
+     // Picture control properties
+     AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_HEVC_NUM_GOPS_PER_IDR, ctx->gops_per_idr);
