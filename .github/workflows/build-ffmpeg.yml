@@ -13,6 +13,9 @@ concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
 
+env:
+  MACOSX_DEPLOYMENT_TARGET: 13.0
+
 jobs:
   ffmpeg:
     name: ffmpeg (${{ matrix.name }})
@@ -81,7 +84,7 @@ jobs:
               --enable-vaapi
           - name: Darwin-x86_64
             os_type: macos
-            os: macos-12
+            os: macos-13
             arch: x86_64
             shell: bash
             cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
@@ -90,11 +93,10 @@ jobs:
               --enable-videotoolbox
           - name: Darwin-arm64
             os_type: macos
-            os: macos-12
+            os: macos-14
             arch: aarch64
             shell: bash
             cmake_generator: Unix Makefiles  # should be `Xcode` but that fails
-            host: arm64-apple-macosx
             ffmpeg_extras: >-
               --enable-encoder=h264_videotoolbox,hevc_videotoolbox
               --enable-videotoolbox
@@ -318,11 +320,6 @@ jobs:
           echo "CMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_DIR/crosscompile.cmake" >> $GITHUB_OUTPUT
           if [[ ${{ matrix.os_type }} == 'linux' ]]; then
             echo "CCPREFIX=/usr/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
-          else
-            CFLAGS="-arch arm64 -target ${{ matrix.host }} -march=armv8-a+crc+crypto -mcpu=generic"
-            echo "CFLAGS=${CFLAGS}" >> $GITHUB_OUTPUT
-            echo "CXXFLAGS=-std=c++11 ${CFLAGS}" >> $GITHUB_OUTPUT
-            echo "LDFLAGS=-arch arm64 -march=armv8-a+crc+crypto -target ${{ matrix.host }} -lc++" >> $GITHUB_OUTPUT
           fi
 
       - name: amf
@@ -338,16 +335,6 @@ jobs:
           root_path: ${{ steps.root.outputs.root_path }}
           CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
         run: |
-          echo "::group::configure extra flags for cross compilation"
-          if [[ ${{ matrix.arch }} != "x86_64" ]]; then
-            if [[ ${{ matrix.os_type }} == "macos" ]]; then
-              export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
-              export CXXFLAGS="${{ steps.cross.outputs.CXXFLAGS }}"
-              export LDFLAGS="${{ steps.cross.outputs.LDFLAGS }}"
-            fi
-          fi
-          echo "::endgroup::"
-
           echo "::group::configure"
           PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
             -DCMAKE_TOOLCHAIN_FILE=${{ steps.cross.outputs.CMAKE_TOOLCHAIN_FILE }} \
@@ -386,13 +373,6 @@ jobs:
               --cross-prefix=${CCPREFIX}
           VAREOF
           )
-          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} != "x86_64" ]]; then
-            export CC="clang"
-            export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
-            extra_configure=$(cat <<- VAREOF
-              --host=${{ matrix.arch }}-darwin
-          VAREOF
-          )
           fi
           echo "$extra_configure"
           echo "::endgroup::"
@@ -427,13 +407,6 @@ jobs:
           if [[ ${{ matrix.arch }} == "x86_64" ]]; then
             # not currently supported in `aarch64`
             extra_configure="-DENABLE_HDR10_PLUS=1"
-          elif [[ ${{ matrix.os_type }} == "macos" ]]; then
-            export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
-            export CXXFLAGS="${{ steps.cross.outputs.CXXFLAGS }}"
-            extra_configure=$(cat <<- VAREOF
-              -DENABLE_ASSEMBLY=0
-          VAREOF
-          )
           fi
           echo "$extra_configure"
           echo "::endgroup::"
@@ -496,19 +469,6 @@ jobs:
               --cross-prefix=${CCPREFIX}
               --enable-cross-compile
               --target-os=${{ matrix.os_type }}
-          VAREOF
-          )
-          elif [[ ${{ matrix.os_type }} == "macos" && ${{ matrix.arch }} != "x86_64" ]]; then
-            export CFLAGS="${{ steps.cross.outputs.CFLAGS }}"
-            export CXXFLAGS="${{ steps.cross.outputs.CXXFLAGS }}"
-            export LDFLAGS="${{ steps.cross.outputs.LDFLAGS }}"
-            extra_configure=$(cat <<- VAREOF
-              --arch=${{ matrix.arch }}
-              --cc=clang
-              --cxx=clang++
-              --target-os=darwin
-              --enable-cross-compile
-              --disable-neon
           VAREOF
           )
           fi
