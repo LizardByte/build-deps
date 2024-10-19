@@ -311,6 +311,7 @@ jobs:
           git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/04-mfenc-lowlatency.patch
           git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/05-vaapi-customized-surface-alignment.patch
           git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/06-amfenc-query-timeout.patch
+          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/07-vaapi-leak.patch
 
       - name: Setup cross compilation
         id: cross
