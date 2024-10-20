@@ -2,7 +2,7 @@
 
 [![GitHub Workflow Status (FFmpeg)](https://img.shields.io/github/actions/workflow/status/lizardbyte/build-deps/build-ffmpeg.yml.svg?branch=master&label=ffmpeg%20build&logo=github&style=for-the-badge)](https://github.com/LizardByte/build-deps/actions/workflows/build-ffmpeg.yml?query=branch%3Amaster)
 
-This is a common set of pre-compiled dependencies for LizardByte/Sunshine.
+This is a common set of pre-compiled dependencies for [LizardByte/Sunshine](https://github.com/LizardByte/Sunshine).
 
 - [FFmpeg](https://ffmpeg.org)
 
@@ -19,7 +19,6 @@ This is a common set of pre-compiled dependencies for LizardByte/Sunshine.
 
 ## Plans
 
-- [ ] Convert to a cmake project
 - [ ] Add more dependencies
   - [ ] boost
   - [ ] cuda (developer toolkit)
@@ -29,3 +28,15 @@ This is a common set of pre-compiled dependencies for LizardByte/Sunshine.
 
 This repo is licensed under the MIT License, but this does not cover submodules or patches.
 Please see the individual projects for their respective licenses.
+
+
+## Build
+
+On Windows, you must copy the `.gitattributes` file to `.git/modules/third-party/FFmpeg/x264/info/attributes`,
+see https://stackoverflow.com/a/23671157/11214013 for more info.
+
+Then
+```bash
+cd third-party/FFmpeg/x264
+git checkout HEAD -- .
+```
