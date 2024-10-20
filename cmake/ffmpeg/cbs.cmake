@@ -1,54 +1,34 @@
-cmake_minimum_required(VERSION 3.2)
+if(BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_CBS_PATCHES)
+    file(GLOB FFMPEG_CBS_PATCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/cbs/*.patch)
 
-project(cbs
-        DESCRIPTION "FFmpeg code subset to expose coded bitstream (CBS) internal APIs for Sunshine"
-        VERSION 0.1)
+    foreach(patch_file ${FFMPEG_CBS_PATCH_FILES})
+        APPLY_GIT_PATCH(${FFMPEG_GENERATED_SRC_PATH} ${patch_file})
+    endforeach()
+endif()
 
-set(CMAKE_GENERATED_SRC_PATH ${CMAKE_BINARY_DIR}/generated-src)
-
-# Apply patches
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/apply_git_patch.cmake)
-APPLY_GIT_PATCH(${CMAKE_SOURCE_DIR}/ffmpeg_sources/ffmpeg
-        ${CMAKE_SOURCE_DIR}/ffmpeg_patches/cbs/01-explicit-intmath.patch)
-APPLY_GIT_PATCH(${CMAKE_SOURCE_DIR}/ffmpeg_sources/ffmpeg
-        ${CMAKE_SOURCE_DIR}/ffmpeg_patches/cbs/02-include-cbs-config.patch)
-APPLY_GIT_PATCH(${CMAKE_SOURCE_DIR}/ffmpeg_sources/ffmpeg
-        ${CMAKE_SOURCE_DIR}/ffmpeg_patches/cbs/03-remove-register.patch)
-APPLY_GIT_PATCH(${CMAKE_SOURCE_DIR}/ffmpeg_sources/ffmpeg
-        ${CMAKE_SOURCE_DIR}/ffmpeg_patches/cbs/04-size-specifier.patch)
-
-file(COPY ${CMAKE_SOURCE_DIR}/ffmpeg_sources/ffmpeg DESTINATION ${CMAKE_GENERATED_SRC_PATH})
-
-set(FFMPEG_GENERATED_SRC_PATH ${CMAKE_GENERATED_SRC_PATH}/ffmpeg)
-set(AVCODEC_GENERATED_SRC_PATH ${CMAKE_GENERATED_SRC_PATH}/ffmpeg/libavcodec)
-set(CBS_INCLUDE_PATH ${CMAKE_BINARY_DIR}/include/cbs)
-
-message("Running FFmpeg configure to generate platform config")
-
-# Explicit shell otherwise Windows runs outside the mingw environment
-if (WIN32)
-    set(LEADING_SH_COMMAND sh)
-endif ()
+set(CBS_INCLUDE_PATH ${CMAKE_CURRENT_BINARY_DIR}/include/cbs)
 
 string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} arch)
 
-if (${arch} STREQUAL "aarch64" OR ${arch} STREQUAL "arm64")
+if(${arch} STREQUAL "aarch64" OR ${arch} STREQUAL "arm64")
     set(CBS_ARCH_PATH arm)
 elseif (${arch} STREQUAL "ppc64le")
     set(CBS_ARCH_PATH ppc)
 elseif (${arch} STREQUAL "amd64" OR ${arch} STREQUAL "x86_64")
     set(CBS_ARCH_PATH x86)
-else ()
+elseif (${arch} STREQUAL "mips")
+    set(CBS_ARCH_PATH mips)
+else()
     message(FATAL_ERROR "Unsupported system processor:" ${CMAKE_SYSTEM_PROCESSOR})
-endif ()
+endif()
 
 if (CMAKE_CROSSCOMPILING)
     set(FFMPEG_EXTRA_CONFIGURE --arch=${arch} --enable-cross-compile)
 endif ()
 
-# The generated config.h needs to have `CONFIG_CBS_` flags enabled (from `--enable-bsfs`)
-execute_process(
-        COMMAND ${LEADING_SH_COMMAND} ./configure
+add_custom_target(cbs_configure
+        # run `sed -i 's/PREFIX =/PREFIX ?=/g' Makefile`
+        COMMAND ${CMAKE_COMMAND} -E ./configure
             --cc=${CMAKE_C_COMPILER}
             --cxx=${CMAKE_CXX_COMPILER}
             --ar=${CMAKE_AR}
@@ -59,13 +39,13 @@ execute_process(
             --disable-iconv
             --enable-avcodec
             --enable-avutil
-            --enable-bsfs
+            --enable-bsfs  # ensure config.h will have CONFIG_CBS_ flags
             --enable-gpl
             --enable-static
             ${FFMPEG_EXTRA_CONFIGURE}
         WORKING_DIRECTORY ${FFMPEG_GENERATED_SRC_PATH}
-        COMMAND_ECHO STDOUT
-        COMMAND_ERROR_IS_FATAL ANY)
+)
+add_dependencies(${CMAKE_PROJECT_NAME} cbs_configure)
 
 # Headers needed to link for Sunshine
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/av1.h ${CBS_INCLUDE_PATH}/av1.h COPYONLY)
@@ -94,13 +74,13 @@ configure_file(${AVCODEC_GENERATED_SRC_PATH}/packet.h ${CBS_INCLUDE_PATH}/packet
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/sei.h ${CBS_INCLUDE_PATH}/sei.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/version_major.h ${CBS_INCLUDE_PATH}/version_major.h COPYONLY)
 configure_file(${AVCODEC_GENERATED_SRC_PATH}/vlc.h ${CBS_INCLUDE_PATH}/vlc.h COPYONLY)
-configure_file(${FFMPEG_GENERATED_SRC_PATH}/config.h ${CBS_INCLUDE_PATH}/config.h COPYONLY)
+#configure_file(${FFMPEG_GENERATED_SRC_PATH}/config.h ${CBS_INCLUDE_PATH}/config.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/attributes.h
-        ${CMAKE_BINARY_DIR}/include/libavutil/attributes.h COPYONLY)
+        ${CMAKE_CURRENT_BINARY_DIR}/include/libavutil/attributes.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/attributes_internal.h
-        ${CMAKE_BINARY_DIR}/include/libavutil/attributes_internal.h COPYONLY)
+        ${CMAKE_CURRENT_BINARY_DIR}/include/libavutil/attributes_internal.h COPYONLY)
 configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/intmath.h
-        ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h COPYONLY)
+        ${CMAKE_CURRENT_BINARY_DIR}/include/libavutil/intmath.h COPYONLY)
 
 set(CBS_SOURCE_FILES
         ${CBS_INCLUDE_PATH}/av1.h
@@ -129,8 +109,8 @@ set(CBS_SOURCE_FILES
         ${CBS_INCLUDE_PATH}/sei.h
         ${CBS_INCLUDE_PATH}/version_major.h
         ${CBS_INCLUDE_PATH}/vlc.h
-        ${CMAKE_BINARY_DIR}/include/libavutil/intmath.h
-        ${CBS_INCLUDE_PATH}/config.h
+        ${CMAKE_CURRENT_BINARY_DIR}/include/libavutil/intmath.h
+        # ${CBS_INCLUDE_PATH}/config.h
 
         ${AVCODEC_GENERATED_SRC_PATH}/cbs.c
         ${AVCODEC_GENERATED_SRC_PATH}/cbs_h2645.c
@@ -153,27 +133,29 @@ if (EXISTS ${AVCODEC_GENERATED_SRC_PATH}/${CBS_ARCH_PATH}/mathops.h)
 endif()
 if (EXISTS ${FFMPEG_GENERATED_SRC_PATH}/libavutil/${CBS_ARCH_PATH}/asm.h)
     configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/${CBS_ARCH_PATH}/asm.h
-            ${CMAKE_BINARY_DIR}/include/libavutil/${CBS_ARCH_PATH}/asm.h COPYONLY)
-    list(APPEND CBS_SOURCE_FILES ${CMAKE_BINARY_DIR}/include/libavutil/${CBS_ARCH_PATH}/asm.h)
+            ${CMAKE_CURRENT_BINARY_DIR}/include/libavutil/${CBS_ARCH_PATH}/asm.h COPYONLY)
+    list(APPEND CBS_SOURCE_FILES ${CMAKE_CURRENT_BINARY_DIR}/include/libavutil/${CBS_ARCH_PATH}/asm.h)
 endif()
 if (EXISTS ${FFMPEG_GENERATED_SRC_PATH}/libavutil/${CBS_ARCH_PATH}/intmath.h)
     configure_file(${FFMPEG_GENERATED_SRC_PATH}/libavutil/${CBS_ARCH_PATH}/intmath.h
-            ${CMAKE_BINARY_DIR}/include/libavutil/${CBS_ARCH_PATH}/intmath.h COPYONLY)
-    list(APPEND CBS_SOURCE_FILES ${CMAKE_BINARY_DIR}/include/libavutil/${CBS_ARCH_PATH}/intmath.h)
+            ${CMAKE_CURRENT_BINARY_DIR}/include/libavutil/${CBS_ARCH_PATH}/intmath.h COPYONLY)
+    list(APPEND CBS_SOURCE_FILES ${CMAKE_CURRENT_BINARY_DIR}/include/libavutil/${CBS_ARCH_PATH}/intmath.h)
 endif()
 
 include_directories(
-        ${CMAKE_BINARY_DIR}/include
+        ${CMAKE_CURRENT_BINARY_DIR}/include
         ${FFMPEG_GENERATED_SRC_PATH})
 
 add_library(cbs ${CBS_SOURCE_FILES})
 target_compile_options(cbs PRIVATE -Wall -Wno-incompatible-pointer-types -Wno-format -Wno-format-extra-args)
+add_dependencies(cbs cbs_configure)
+add_dependencies(${CMAKE_PROJECT_NAME} cbs)
 
-install(DIRECTORY ${CMAKE_BINARY_DIR}/include
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include
         DESTINATION ${CMAKE_INSTALL_PREFIX})
-install(FILES ${CMAKE_BINARY_DIR}/libcbs.a
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libcbs.a
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/libcbs.pc.in
-        ${CMAKE_BINARY_DIR}/libcbs.pc @ONLY)
-install(FILES ${CMAKE_BINARY_DIR}/libcbs.pc
+        ${CMAKE_CURRENT_BINARY_DIR}/libcbs.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libcbs.pc
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
