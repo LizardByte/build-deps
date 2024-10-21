@@ -1,5 +1,5 @@
 ---
-name: Build ffmpeg
+name: CI
 
 on:
   pull_request:
@@ -17,8 +17,8 @@ env:
   MACOSX_DEPLOYMENT_TARGET: 13.0
 
 jobs:
-  ffmpeg:
-    name: ffmpeg (${{ matrix.name }})
+  build:
+    name: Build (${{ matrix.name }})
     # https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
     # https://trac.ffmpeg.org/wiki/CompilationGuide/macOS
     # https://trac.ffmpeg.org/wiki/CompilationGuide/MinGW
@@ -302,59 +302,15 @@ jobs:
           echo "root_path=$PWD" >> $GITHUB_OUTPUT
           mkdir -p ./bin ./ffmpeg_build ./ffmpeg_sources
 
-      - name: patch
-        working-directory: ffmpeg_sources/ffmpeg
-        run: |
-          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/01-amf-colorspace.patch
-          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/02-idr-on-amf.patch
-          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/03-amfenc-disable-buffering.patch
-          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/04-mfenc-lowlatency.patch
-          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/05-vaapi-customized-surface-alignment.patch
-          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/06-amfenc-query-timeout.patch
-          git apply -v --ignore-whitespace ../../ffmpeg_patches/ffmpeg/07-vaapi-leak.patch
-
       - name: Setup cross compilation
         id: cross
         if: ${{ matrix.arch != 'x86_64' }}
         run: |
-          TOOLCHAIN_DIR=${{ steps.root.outputs.root_path }}/cmake/toolchain/${{ matrix.arch }}-${{ matrix.os_type }}
+          TOOLCHAIN_DIR=${{ steps.root.outputs.root_path }}/cmake/toolchains/${{ matrix.arch }}-${{ matrix.os_type }}
           echo "CMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_DIR/crosscompile.cmake" >> $GITHUB_OUTPUT
           if [[ ${{ matrix.os_type }} == 'linux' ]]; then
             echo "CCPREFIX=/usr/bin/${{ matrix.host }}-" >> $GITHUB_OUTPUT
           fi
-
-      - name: amf
-        if: ${{ matrix.os_type != 'macos' }}
-        # https://ffmpeg.org/general.html#AMD-AMF_002fVCE
-        run: |
-          mkdir -p ./ffmpeg_build/include/AMF
-          cp -av "./ffmpeg_sources/AMF/amf/public/include/." "./ffmpeg_build/include/AMF"
-
-      - name: av1
-        working-directory: ffmpeg_sources/SVT-AV1/Build
-        env:
-          root_path: ${{ steps.root.outputs.root_path }}
-          CCPREFIX: ${{ steps.cross.outputs.CCPREFIX }}
-        run: |
-          echo "::group::configure"
-          PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
-            -DCMAKE_TOOLCHAIN_FILE=${{ steps.cross.outputs.CMAKE_TOOLCHAIN_FILE }} \
-            -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_APPS=OFF \
-            -DBUILD_DEC=OFF \
-            -DENABLE_AVX512=ON \
-            -DBUILD_SHARED_LIBS=OFF \
-            ..
-          echo "::endgroup::"
-
-          echo "::group::make"
-          PATH="$root_path/bin:$PATH" make -j$(nproc || sysctl -n hw.logicalcpu)
-          echo "::endgroup::"
-
-          echo "::group::make install"
-          make install
-          echo "::endgroup::"
 
       - name: libx264
         env:
@@ -429,27 +385,6 @@ jobs:
 
           echo "::group::make install"
           make install
-          echo "::endgroup::"
-
-      - name: nvenc
-        id: nvenc
-        if: ${{ matrix.os_type != 'macos' }}
-        env:
-          root_path: ${{ steps.root.outputs.root_path }}
-        working-directory: ffmpeg_sources/nv-codec-headers
-        # https://trac.ffmpeg.org/wiki/HWAccelIntro#NVENC
-        run: |
-          echo "::group::patch Makefile"
-          # allow `PREFIX` to be overridden
-          sed -i 's/PREFIX =/PREFIX ?=/g' Makefile
-          echo "::endgroup::"
-
-          echo "::group::make"
-          PREFIX=$root_path/ffmpeg_build make -j$(nproc || sysctl -n hw.logicalcpu)
-          echo "::endgroup::"
-
-          echo "::group::make install"
-          PREFIX=$root_path/ffmpeg_build make install
           echo "::endgroup::"
 
       - name: ffmpeg
@@ -551,7 +486,7 @@ jobs:
           PATH="$root_path/bin:$PATH" cmake -G "${{ matrix.cmake_generator }}" \
             -DCMAKE_TOOLCHAIN_FILE=${{ steps.cross.outputs.CMAKE_TOOLCHAIN_FILE }} \
             -DCMAKE_INSTALL_PREFIX="$root_path/ffmpeg_build" \
-            -DFFMPEG_CBS=ON \
+            -DBUILD_FFMPEG_CBS=ON \
             ..
           echo "::endgroup::"
 
