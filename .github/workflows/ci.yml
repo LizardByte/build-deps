@@ -342,13 +342,14 @@ jobs:
       - name: Cleanup
         run: |
           rm -rf dist/*
+          mkdir -p dist/dist
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: dist
+          path: dist/dist
 
-      - name: Debug
+      - name: Debug dist directory
         run: |
           ls -R dist
 
