@@ -1,0 +1,12 @@
+# Based on https://www.scivision.dev/cmake-generate-pkg-config/
+
+prefix=D:/a/build-deps/build-deps/build/dist
+exec_prefix="${prefix}"
+libdir="${prefix}/lib"
+includedir="${prefix}/include"
+
+Name: build-deps
+Description: Pre-built dependencies for LizardByte projects.
+Version: 0.0.0
+Cflags: -I"${includedir}"
+Libs: -L"${libdir}" -lcbs

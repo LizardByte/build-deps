@@ -1,0 +1,12 @@
+prefix=/home/runner/work/build-deps/build-deps/build/dist
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+
+Name: SvtAv1Enc
+Description: SVT (Scalable Video Technology) for AV1 encoder library
+Version: 1.6.0
+Libs: -L${libdir} -lSvtAv1Enc
+Libs.private: -lpthread -lm
+Cflags: -I${includedir}/svt-av1
+Cflags.private: -UEB_DLL

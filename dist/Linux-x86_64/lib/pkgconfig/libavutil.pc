@@ -1,0 +1,14 @@
+prefix=/home/runner/work/build-deps/build-deps/build/FFmpeg
+exec_prefix=${prefix}
+libdir=/home/runner/work/build-deps/build-deps/build/FFmpeg/lib
+includedir=/home/runner/work/build-deps/build-deps/build/FFmpeg/include
+
+Name: libavutil
+Description: FFmpeg utility library
+Version: 59.39.100
+Requires: 
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavutil -pthread -lva-drm -lva -lm -lva -latomic
+Libs.private: 
+Cflags: -I${includedir}
