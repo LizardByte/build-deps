@@ -1,10 +1,158 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.25)
 
 project(build-deps
-        DESCRIPTION "Pre-build dependencies for LizardByte projects")
+        DESCRIPTION "Pre-built dependencies for LizardByte projects."
+        VERSION 0.0.0
+)
 
-option(FFMPEG_CBS "Enable CBS library configuration" ON)
+# Main options
+option(BUILD_ALL "Build all dependencies" ON)
+option(BUILD_ALL_SUNSHINE "Build all Sunshine dependencies" ON)
 
-if(FFMPEG_CBS)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg_cbs.cmake)
+# FFmpeg options
+option(BUILD_FFMPEG "Build FFmpeg" ON)
+option(BUILD_FFMPEG_ALL_PATCHES "Apply FFmpeg patches" ON)
+option(BUILD_FFMPEG_AMF "Build FFmpeg AMF" ON)
+option(BUILD_FFMPEG_AMF_PATCHES "Apply FFmpeg AMF patches" ON)
+option(BUILD_FFMPEG_CBS "Build FFmpeg CBS" ON)
+option(BUILD_FFMPEG_CBS_PATCHES "Apply FFmpeg CBS patches" ON)
+option(BUILD_FFMPEG_MF "Build FFmpeg Media Foundation" ON)
+option(BUILD_FFMPEG_MF_PATCHES "Apply FFmpeg Media Foundation patches" ON)
+option(BUILD_FFMPEG_NV_CODEC_HEADERS "Build FFmpeg NV Codec Headers" ON)
+option(BUILD_FFMPEG_NV_CODEC_HEADERS_PATCHES "Apply FFmpeg NV Codec Headers patches" ON)
+option(BUILD_FFMPEG_SVT_AV1 "Build FFmpeg SVT-AV1" ON)
+option(BUILD_FFMPEG_SVT_AV1_PATCHES "Apply FFmpeg SVT-AV1 patches" ON)
+option(BUILD_FFMPEG_VAAPI "Build FFmpeg with VAAPI support" ON)
+option(BUILD_FFMPEG_VAAPI_PATCHES "Apply FFmpeg VAAPI patches" ON)
+option(BUILD_FFMPEG_X264 "Build FFmpeg x264" ON)
+option(BUILD_FFMPEG_X264_PATCHES "Apply FFmpeg x264 patches" ON)
+option(BUILD_FFMPEG_X265 "Build FFmpeg x265" ON)
+option(BUILD_FFMPEG_X265_PATCHES "Apply FFmpeg x265 patches" ON)
+
+# common includes
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/apply_git_patch.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/unix_path.cmake)
+
+if(UNIX AND NOT APPLE)
+    include(GNUInstallDirs)
+endif()
+
+# if PARALLEL_BUILDS is not defined, set it to the number of processors
+if(NOT DEFINED PARALLEL_BUILDS)
+    include(ProcessorCount)
+    ProcessorCount(N_PROC)
+else()
+    set(N_PROC ${PARALLEL_BUILDS})
+endif()
+if(N EQUAL 0)
+    set(N_PROC 1)
+elseif(NOT N MATCHES "^[0-9]+$")
+    # if not a number, set it to 1
+    set(N_PROC 1)
+endif()
+
+if(NOT DEFINED BASH_EXECUTABLE)
+    find_program(BASH_EXECUTABLE
+            NAMES zsh bash
+            REQUIRED
+            HINTS D:/a/_temp/msys64/usr/bin C:/msys64/usr/bin /bin /usr/bin /usr/local/bin)
+    message(STATUS "Found bash: ${BASH_EXECUTABLE}")
+endif()
+
+find_program(MAKE_EXECUTABLE
+        NAMES mingw32-make make gmake
+        NAMES_PER_DIR
+        DOC "GNU Make"
+        REQUIRED)
+message(STATUS "Found make: ${MAKE_EXECUTABLE}")
+
+if(WIN32)
+    set(MAKE_EXECUTABLE "make")
+    message(STATUS "Detected Windows, falling back to using make: ${MAKE_EXECUTABLE}")
+
+    set(MSYSTEM "UCRT64")
+    find_file(MSYS2_EXECUTABLE NAMES msys2_shell.cmd REQUIRED HINTS D:/a/_temp/msys64 C:/msys64)
+    message(STATUS "Found MSYS2: ${MSYS2_EXECUTABLE}")
+
+    if(NOT DEFINED MSYS2_OPTION OR MSYS2_OPTION STREQUAL "1" OR MSYS2_OPTION STREQUAL "")
+        set(SHELL_CMD ${MSYS2_EXECUTABLE} -ucrt64 -defterm -here -no-start -shell bash -c)
+    elseif(MSYS2_OPTION STREQUAL "2")
+        # Theoretically, this is equivalent to the above
+        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/msys2.cmd.in ${CMAKE_CURRENT_BINARY_DIR}/msys2.cmd @ONLY)
+        set(SHELL_CMD ${CMAKE_CURRENT_BINARY_DIR}/msys2.cmd)
+    elseif(MSYS2_OPTION STREQUAL "3")
+        # This one works okayish in CI, locally the PATH does not seem to be defined correctly
+        set(SHELL_CMD ${CMAKE_COMMAND} -E env MSYSTEM=${MSYSTEM} ${BASH_EXECUTABLE} -c)
+    endif()
+else()
+    set(SHELL_CMD ${BASH_EXECUTABLE} -c)
+endif()
+
+message(STATUS "Using shell command: ${SHELL_CMD}")
+
+if(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
+    # Ninja can handle the conversion automatically, but MSYS Makefiles cannot
+    UNIX_PATH(MAKE_EXECUTABLE ${MAKE_EXECUTABLE})
+endif()
+
+UNIX_PATH(CMAKE_CURRENT_BINARY_DIR_UNIX ${CMAKE_CURRENT_BINARY_DIR})
+UNIX_PATH(CMAKE_INSTALL_PREFIX_UNIX ${CMAKE_INSTALL_PREFIX})
+
+# setup pkg-config path
+if(CMAKE_CROSSCOMPILING AND UNIX AND NOT APPLE)
+    set(PKG_CONFIG_PATH /usr/lib/${CMAKE_C_COMPILER_TARGET}/pkgconfig)
+else()
+    set(PKG_CONFIG_PATH $ENV{PKG_CONFIG_PATH})
+    message(STATUS "env PKG_CONFIG_PATH: ${PKG_CONFIG_PATH}")
+
+    # The ENV variable is not populated when running from CLion
+    if(NOT PKG_CONFIG_PATH)
+        # call a command to get the path
+        execute_process(COMMAND ${SHELL_CMD} "echo \$PKG_CONFIG_PATH"
+                OUTPUT_VARIABLE PKG_CONFIG_PATH
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+        message(STATUS "PKG_CONFIG_PATH from CLI command: ${PKG_CONFIG_PATH}")
+    endif()
+
+    if(WIN32)
+        # normalize the path
+
+        # TODO: try this, instead of the below code
+        # cmake_path(CONVERT "${PKG_CONFIG_PATH}" TO_CMAKE_PATH_LIST PKG_CONFIG_PATH)
+        # message(STATUS "Converted PKG_CONFIG_PATH: ${PKG_CONFIG_PATH}")
+
+        file(TO_CMAKE_PATH "${PKG_CONFIG_PATH}" PKG_CONFIG_PATH)
+        foreach(path ${PKG_CONFIG_PATH})
+            UNIX_PATH(path ${path})
+            list(APPEND PKG_CONFIG_PATH_UNIX ${path})
+        endforeach()
+        string(REPLACE ";" ":" PKG_CONFIG_PATH "${PKG_CONFIG_PATH_UNIX}")
+    endif()
+endif()
+set(PKG_CONFIG_PATH "${CMAKE_INSTALL_PREFIX_UNIX}/lib/pkgconfig:${PKG_CONFIG_PATH}")
+message(STATUS "Initial PKG_CONFIG_PATH: ${PKG_CONFIG_PATH}")
+
+find_program(PKG_CONFIG_EXECUTABLE
+        NAMES pkg-config
+        REQUIRED
+        HINTS D:/a/_temp/msys64/usr/bin C:/msys64/usr/bin /bin /usr/bin /usr/local/bin)
+UNIX_PATH(PKG_CONFIG_EXECUTABLE ${PKG_CONFIG_EXECUTABLE})
+message(STATUS "Found pkg-config: ${PKG_CONFIG_EXECUTABLE}")
+
+# set target os for ffmpeg build
+string(TOLOWER ${CMAKE_SYSTEM_NAME} TARGET_OS)
+
+# Custom target to use to ensure all dependencies are built
+add_custom_target(${CMAKE_PROJECT_NAME}
+        COMMENT "Completed build-deps"
+)
+
+# set architecture
+string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} arch)
+
+# set generated source path
+set(CMAKE_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/generated-src)
+
+if(BUILD_ALL OR BUILD_ALL_SUNSHINE OR BUILD_FFMPEG)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/_main.cmake)
 endif()
