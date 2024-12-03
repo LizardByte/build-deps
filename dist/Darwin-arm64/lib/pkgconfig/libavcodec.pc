@@ -5,7 +5,7 @@ includedir=/Users/runner/work/build-deps/build-deps/build/FFmpeg/include
 
 Name: libavcodec
 Description: FFmpeg codec library
-Version: 61.19.100
+Version: 61.19.101
 Requires: libavutil >= 59.39.100
 Requires.private: 
 Conflicts:
