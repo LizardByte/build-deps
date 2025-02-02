@@ -69,149 +69,195 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Dependencies Linux
-        if: ${{ runner.os == 'Linux' }}
+      - name: Setup cross compiling Linux
+        id: cross_compile
+        if: contains(matrix.os, 'ubuntu')
         run: |
-          echo "::group::dependencies prep"
-          if [[ ${{ matrix.os }} == "ubuntu-18.04" ]]; then
-            dist="bionic"
-          elif [[ ${{ matrix.os }} == "ubuntu-20.04" ]]; then
-            dist="focal"
-          elif [[ ${{ matrix.os }} == "ubuntu-22.04" ]]; then
-            dist="jammy"
-          elif [[ ${{ matrix.os }} == "ubuntu-24.04" ]]; then
-            dist="noble"
-          fi
-
-          package_arch="amd64"
-          if [[ ${{ matrix.arch }} == "aarch64" ]]; then
-            package_arch="arm64"
-          elif [[ ${{ matrix.arch }} == "powerpc64le" ]]; then
-            package_arch="ppc64el"
-          fi
-
-          mirror="http://ports.ubuntu.com/ubuntu-ports"
-          extra_sources=$(cat <<- VAREOF
-            deb [arch=$package_arch] $mirror $dist main restricted
-            deb [arch=$package_arch] $mirror $dist-updates main restricted
-            deb [arch=$package_arch] $mirror $dist universe
-            deb [arch=$package_arch] $mirror $dist-updates universe
-            deb [arch=$package_arch] $mirror $dist multiverse
-            deb [arch=$package_arch] $mirror $dist-updates multiverse
-            deb [arch=$package_arch] $mirror $dist-backports main restricted universe multiverse
-            deb [arch=$package_arch] $mirror $dist-security main restricted
-            deb [arch=$package_arch] $mirror $dist-security universe
-            deb [arch=$package_arch] $mirror $dist-security multiverse
-          VAREOF
-          )
+          echo "::group::distro detection"
+          # detect dist name like bionic, focal, etc
+          dist_name=$(lsb_release -cs)
+          ubuntu_version=$(lsb_release -rs)
+          ubuntu_major_version=${ubuntu_version%%.*}
+          echo "detected dist name: $dist_name"
+          echo "detected ubuntu version: $ubuntu_version"
+          echo "detected ubuntu major version: $ubuntu_major_version"
           echo "::endgroup::"
 
-          echo "::group::linux dependencies"
+          echo "::group::install aptitude"
+          sudo apt-get update  # must run before changing sources file
+          sudo apt-get install -y \
+            aptitude
+          echo "::endgroup::"
 
-          if [[ ${{ matrix.os }} == "ubuntu-20.04" ]]; then
+          if [[ $ubuntu_major_version -le 20 ]]; then
             # activate mesa backport PPA to ensure ffmpeg builds with vaSyncBuffer()
             # (via libva 2.9.0 or later)
             sudo add-apt-repository ppa:kisak/turtle -y
           fi
 
-          if [[ $package_arch != "amd64" ]]; then
-            # fix original sources
-            sudo sed -i -e "s#deb http#deb [arch=amd64] http#g" /etc/apt/sources.list
+          echo "::group::dependencies prep"
+          dependencies=(
+            "autoconf"
+            "automake"
+            "build-essential"
+            "cmake"
+            "git-core"
+            "libass-dev"
+            "libfreetype6-dev"
+            "libgnutls28-dev"
+            "libmp3lame-dev"
+            "libnuma-dev"
+            "libopus-dev"
+            "libsdl2-dev"
+            "libtool"
+            "libvorbis-dev"
+            "libxcb1-dev"
+            "libxcb-shm0-dev"
+            "libxcb-xfixes0-dev"
+            "make"
+            "meson"
+            "nasm"
+            "ninja-build"
+            "pkg-config"
+            "texinfo"
+            "wget"
+            "zlib1g-dev"
+          )
 
-            sudo dpkg --add-architecture $package_arch
-
-            echo "$extra_sources" | sudo tee -a /etc/apt/sources.list
-            echo "----"
-            sudo cat /etc/apt/sources.list
+          package_arch="amd64"
+          cross_compile=false
+          package_arch=$(dpkg --print-architecture)
+          if [[ ${{ matrix.arch }} == "aarch64" ]]; then
+            dependencies+=("crossbuild-essential-arm64")
+            cross_compile=true
+            package_arch="arm64"
+          elif [[ ${{ matrix.arch }} == "powerpc64le" ]]; then
+            dependencies+=("crossbuild-essential-ppc64el")
+            cross_compile=true
+            package_arch="ppc64el"
           fi
+          echo "cross compiling: $cross_compile"
+          echo "package architecture: $package_arch"
 
-          sudo apt-get update -q && sudo apt-get -y install \
-            autoconf \
-            automake \
-            build-essential \
-            cmake \
-            git-core \
-            libass-dev \
-            libfreetype6-dev \
-            libgnutls28-dev \
-            libmp3lame-dev \
-            libnuma-dev \
-            libopus-dev \
-            libsdl2-dev \
-            libtool \
-            libvorbis-dev \
-            libxcb1-dev \
-            libxcb-shm0-dev \
-            libxcb-xfixes0-dev \
-            make \
-            meson \
-            nasm \
-            ninja-build \
-            pkg-config \
-            texinfo \
-            wget \
-            zlib1g-dev
+          dependencies+=(
+            "libva-dev:$package_arch"
+            "libva-glx2:$package_arch"
+            "libgl1:$package_arch"
+            "libglx0:$package_arch"
+          )
 
-          if [[ ${{ matrix.arch }} == "powerpc64le" ]]; then
-            sudo apt-get -y install \
-              libva-dev:$package_arch \
-              libva2:$package_arch \
-              libva-drm2:$package_arch \
-              libdrm2:$package_arch \
-              libva-glx2:$package_arch \
-              libgl1:$package_arch \
-              libglx0:$package_arch \
-              libglx-mesa0:$package_arch \
-              libglapi-mesa:$package_arch \
-              libgl1-mesa-dri:$package_arch \
-              libdrm-amdgpu1:$package_arch \
-              libdrm-nouveau2:$package_arch \
-              libdrm-radeon1:$package_arch \
-              libwayland-client0:$package_arch \
-              libwayland-cursor0:$package_arch \
-              libwayland-dev:$package_arch \
-              libwayland-egl1:$package_arch \
-              libwayland-server0:$package_arch \
-              libva-wayland2:$package_arch \
-              libva-x11-2:$package_arch
+          echo "::group::apt sources"
+          mirror="https://ports.ubuntu.com/ubuntu-ports"
+
+          # source file changed in 24.04
+          if [[ $ubuntu_major_version -ge 24 ]]; then
+            source_file="/etc/apt/sources.list.d/ubuntu.sources"
+            extra_sources=$(cat <<- VAREOF
+          Types: deb
+          URIs: mirror+file:/etc/apt/apt-mirrors.txt
+          Suites: ${dist_name} ${dist_name}-updates ${dist_name}-backports ${dist_name}-security
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+          Architectures: $(dpkg --print-architecture)
+
+          Types: deb
+          URIs: ${mirror}
+          Suites: ${dist_name} ${dist_name}-updates ${dist_name}-backports ${dist_name}-security
+          Components: main universe restricted multiverse
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+          Architectures: ${package_arch}
+          VAREOF
+          )
           else
-            sudo apt-get -y install \
-              libva-dev:$package_arch \
-              libva-glx2:$package_arch \
-              libgl1:$package_arch \
-              libglx0:$package_arch
+            source_file="/etc/apt/sources.list"
+            extra_sources=$(cat <<- VAREOF
+          deb [arch=${package_arch}] ${mirror} ${dist_name} main restricted
+          deb [arch=${package_arch}] ${mirror} ${dist_name}-updates main restricted
+          deb [arch=${package_arch}] ${mirror} ${dist_name} universe
+          deb [arch=${package_arch}] ${mirror} ${dist_name}-updates universe
+          deb [arch=${package_arch}] ${mirror} ${dist_name} multiverse
+          deb [arch=${package_arch}] ${mirror} ${dist_name}-updates multiverse
+          deb [arch=${package_arch}] ${mirror} ${dist_name}-backports main restricted universe multiverse
+          deb [arch=${package_arch}] ${mirror} ${dist_name}-security main restricted
+          deb [arch=${package_arch}] ${mirror} ${dist_name}-security universe
+          deb [arch=${package_arch}] ${mirror} ${dist_name}-security multiverse
+          VAREOF
+          )
           fi
 
-          if [[ ${{ matrix.arch }} != "x86_64" ]]; then
-            sudo apt-get -y install \
-              binutils-${{ matrix.target }} \
-              g++-${{ matrix.target }} \
-              gcc-${{ matrix.target }}
+          if [[ ${cross_compile} == true ]]; then
+            # print original sources
+            echo "original sources:"
+            sudo cat ${source_file}
+            echo "----"
+
+            sudo dpkg --add-architecture ${package_arch}
+
+            if [[ $ubuntu_major_version -ge 24 ]]; then
+              echo "$extra_sources" | sudo tee ${source_file} > /dev/null
+            else
+              # fix original sources
+              sudo sed -i -e "s#deb mirror#deb [arch=amd64] mirror#g" ${source_file}
+
+              echo "$extra_sources" | sudo tee -a ${source_file} > /dev/null
+            fi
+            echo "----"
+            echo "new sources:"
+            sudo cat ${source_file}
+            echo "----"
           fi
+          echo "::endgroup::"
+
+          echo "::group::output"
+          echo "CROSS_COMPILE=${cross_compile}"
+          echo "CROSS_COMPILE=${cross_compile}" >> $GITHUB_OUTPUT
+
+          echo "DEPENDENCIES=${dependencies[@]}"
+          echo "DEPENDENCIES=${dependencies[@]}" >> $GITHUB_OUTPUT
+
+          echo "PKG_CONFIG_SYSROOT_DIR=${pkg_config_sysroot_dir}"
+          echo "PKG_CONFIG_SYSROOT_DIR=${pkg_config_sysroot_dir}" >> $GITHUB_ENV
+
+          echo "PKG_CONFIG_PATH=${pkg_config_sysroot_dir}/pkgconfig"
+          echo "PKG_CONFIG_PATH=${pkg_config_sysroot_dir}/pkgconfig" >> $GITHUB_ENV
+          echo "::endgroup::"
+
+      - name: Install system dependencies Linux
+        if: contains(matrix.os, 'ubuntu')
+        run: |
+          echo "::group::apt update"
+          sudo apt-get update
+          echo "::endgroup::"
+
+          echo "::group::install dependencies"
+          sudo aptitude install -y --without-recommends ${{ steps.cross_compile.outputs.DEPENDENCIES }}
           echo "::endgroup::"
 
       - name: Setup Dependencies MacOS
         if: ${{ runner.os == 'macOS' }}
         run: |
-          brew install \
-            automake \
-            fdk-aac \
-            git \
-            lame \
-            libass \
-            libtool \
-            libvorbis \
-            libvpx \
-            nasm \
-            ninja \
-            opus \
-            pkg-config \
-            sdl \
-            shtool \
-            texi2html \
-            theora \
-            wget \
-            xvid
+          dependencies=(
+            "automake"
+            "fdk-aac"
+            "git"
+            "lame"
+            "libass"
+            "libtool"
+            "libvorbis"
+            "libvpx"
+            "nasm"
+            "ninja"
+            "opus"
+            "pkg-config"
+            "sdl"
+            "shtool"
+            "texi2html"
+            "theora"
+            "wget"
+            "xvid"
+          )
+
+          brew install ${dependencies[@]}
 
       - name: Setup Dependencies Windows
         # if a dependency needs to be pinned, see https://github.com/LizardByte/build-deps/pull/186
