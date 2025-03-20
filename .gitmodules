@@ -4,11 +4,11 @@
 	branch = master
 [submodule "third-party/FFmpeg/x264"]
 	path = third-party/FFmpeg/x264
-	url = https://code.videolan.org/videolan/x264.git
+	url = https://github.com/LizardByte-infrastructure/x264.git
 	branch = stable
 [submodule "third-party/FFmpeg/x265_git"]
 	path = third-party/FFmpeg/x265_git
-	url = https://bitbucket.org/multicoreware/x265_git.git
+	url = https://github.com/LizardByte-infrastructure/x265_git.git
 	branch = Release_3.5
 [submodule "third-party/FFmpeg/nv-codec-headers"]
 	path = third-party/FFmpeg/nv-codec-headers
@@ -20,5 +20,5 @@
 	branch = release/7.1
 [submodule "third-party/FFmpeg/SVT-AV1"]
 	path = third-party/FFmpeg/SVT-AV1
-	url = https://gitlab.com/AOMediaCodec/SVT-AV1.git
+	url = https://github.com/LizardByte-infrastructure/SVT-AV1.git
 	branch = v1.6.0
