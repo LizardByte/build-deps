@@ -14,10 +14,10 @@ index b26e39eab4..c83a87e2cb 100644
          }
      }
 diff --git a/libavcodec/cbs_av1.c b/libavcodec/cbs_av1.c
-index c4a6561706..c5d8ece526 100644
+index 98d745f494..6ccc3b624e 100644
 --- a/libavcodec/cbs_av1.c
 +++ b/libavcodec/cbs_av1.c
-@@ -690,7 +690,7 @@ static int cbs_av1_split_fragment(CodedBitstreamContext *ctx,
+@@ -689,7 +689,7 @@ static int cbs_av1_split_fragment(CodedBitstreamContext *ctx,
  
      if (INT_MAX / 8 < size) {
          av_log(ctx->log_ctx, AV_LOG_ERROR, "Invalid fragment: "
@@ -26,8 +26,8 @@ index c4a6561706..c5d8ece526 100644
          err = AVERROR_INVALIDDATA;
          goto fail;
      }
-@@ -741,7 +741,7 @@ static int cbs_av1_split_fragment(CodedBitstreamContext *ctx,
-         if (header.obu_has_size_field) {
+@@ -740,7 +740,7 @@ static int cbs_av1_split_fragment(CodedBitstreamContext *ctx,
+         if (obu_header.obu_has_size_field) {
              if (get_bits_left(&gbc) < 8) {
                  av_log(ctx->log_ctx, AV_LOG_ERROR, "Invalid OBU: fragment "
 -                       "too short (%"SIZE_SPECIFIER" bytes).\n", size);
@@ -35,7 +35,7 @@ index c4a6561706..c5d8ece526 100644
                  err = AVERROR_INVALIDDATA;
                  goto fail;
              }
-@@ -758,7 +758,7 @@ static int cbs_av1_split_fragment(CodedBitstreamContext *ctx,
+@@ -757,7 +757,7 @@ static int cbs_av1_split_fragment(CodedBitstreamContext *ctx,
  
          if (size < obu_length) {
              av_log(ctx->log_ctx, AV_LOG_ERROR, "Invalid OBU length: "
@@ -44,7 +44,7 @@ index c4a6561706..c5d8ece526 100644
                     obu_length, size);
              err = AVERROR_INVALIDDATA;
              goto fail;
-@@ -837,7 +837,7 @@ static int cbs_av1_read_unit(CodedBitstreamContext *ctx,
+@@ -836,7 +836,7 @@ static int cbs_av1_read_unit(CodedBitstreamContext *ctx,
      } else {
          if (unit->data_size < 1 + obu->header.obu_extension_flag) {
              av_log(ctx->log_ctx, AV_LOG_ERROR, "Invalid OBU length: "
@@ -54,7 +54,7 @@ index c4a6561706..c5d8ece526 100644
          }
          obu->obu_size = unit->data_size - 1 - obu->header.obu_extension_flag;
 diff --git a/libavcodec/cbs_vp9.c b/libavcodec/cbs_vp9.c
-index 816d06da04..203cc83b32 100644
+index ff99fe32fb..0e94c336a5 100644
 --- a/libavcodec/cbs_vp9.c
 +++ b/libavcodec/cbs_vp9.c
 @@ -415,7 +415,7 @@ static int cbs_vp9_split_fragment(CodedBitstreamContext *ctx,
