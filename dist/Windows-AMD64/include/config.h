@@ -3,7 +3,7 @@
 #define FFMPEG_CONFIG_H
 #define FFMPEG_CONFIGURATION "--prefix=/d/a/build-deps/build-deps/build/FFmpeg --pkg-config=/d/a/_temp/msys64/usr/bin/pkg-config.exe --extra-cflags= --extra-cxxflags= --cc='D:/a/_temp/msys64/ucrt64/bin/cc.exe' --cxx='D:/a/_temp/msys64/ucrt64/bin/c++.exe' --ar='D:/a/_temp/msys64/ucrt64/bin/ar.exe' --ranlib='D:/a/_temp/msys64/ucrt64/bin/ranlib.exe' --pkg-config-flags=--static --extra-cflags=-I/d/a/build-deps/build-deps/build/usr/local/include --extra-cflags=-I/d/a/build-deps/build-deps/build/x264/include --extra-ldflags=-L/d/a/build-deps/build-deps/build/usr/local/lib --extra-ldflags=-L/d/a/build-deps/build-deps/build/x264/lib --extra-libs='-lpthread -lm' --disable-all --disable-autodetect --disable-iconv --enable-gpl --enable-static --enable-avcodec --enable-avutil --enable-bsfs --enable-encoder=libsvtav1 --enable-encoder='libx264,libx265' --enable-libsvtav1 --enable-libx264 --enable-libx265 --enable-swscale --enable-amf --enable-cuda --enable-d3d11va --enable-encoder='h264_amf,hevc_amf,av1_amf' --enable-encoder='h264_mf,hevc_mf' --enable-encoder='h264_nvenc,hevc_nvenc,av1_nvenc' --enable-encoder='h264_qsv,hevc_qsv,av1_qsv' --enable-ffnvcodec --enable-libvpl --enable-nvenc --enable-mediafoundation"
 #define FFMPEG_LICENSE "GPL version 2 or later"
-#define CONFIG_THIS_YEAR 2024
+#define CONFIG_THIS_YEAR 2025
 #define FFMPEG_DATADIR "/d/a/build-deps/build-deps/build/FFmpeg/share/ffmpeg"
 #define AVCONV_DATADIR "/d/a/build-deps/build-deps/build/FFmpeg/share/ffmpeg"
 #define CC_IDENT "gcc 14.2.0 (Rev3, Built by MSYS2 project)"
@@ -49,6 +49,7 @@
 #define HAVE_LDBRX 0
 #define HAVE_POWER8 0
 #define HAVE_PPC4XX 0
+#define HAVE_VEC_XL 0
 #define HAVE_VSX 0
 #define HAVE_RV 0
 #define HAVE_RVV 0
@@ -102,6 +103,7 @@
 #define HAVE_LDBRX_EXTERNAL 0
 #define HAVE_POWER8_EXTERNAL 0
 #define HAVE_PPC4XX_EXTERNAL 0
+#define HAVE_VEC_XL_EXTERNAL 0
 #define HAVE_VSX_EXTERNAL 0
 #define HAVE_RV_EXTERNAL 0
 #define HAVE_RVV_EXTERNAL 0
@@ -155,6 +157,7 @@
 #define HAVE_LDBRX_INLINE 0
 #define HAVE_POWER8_INLINE 0
 #define HAVE_PPC4XX_INLINE 0
+#define HAVE_VEC_XL_INLINE 0
 #define HAVE_VSX_INLINE 0
 #define HAVE_RV_INLINE 0
 #define HAVE_RVV_INLINE 0
