@@ -38,7 +38,13 @@ Please see the individual projects for their respective licenses.
 git clone --recurse-submodules https://github.com/LizardByte/build-deps.git
 ```
 
-ℹ️ If you have already clones the repository without submodules, you can initialize them with the following command:
+You can reduce the size of the repo by setting the depth to 1:
+
+```bash
+git clone --recurse-submodules --depth 1 https://github.com/LizardByte/build-deps.git
+```
+
+ℹ️ If you have already cloned the repository without submodules, you can initialize them with the following command:
 
 ```bash
 cd build-deps
