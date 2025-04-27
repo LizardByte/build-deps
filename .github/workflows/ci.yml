@@ -1,12 +1,19 @@
 ---
 name: CI
+permissions:
+  contents: read
 
 on:
   pull_request:
-    branches: [master]
-    types: [opened, synchronize, reopened]
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
+      - reopened
   push:
-    branches: [master]
+    branches:
+      - master
   workflow_dispatch:
 
 concurrency:
@@ -19,6 +26,7 @@ env:
 jobs:
   build:
     name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
     # https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
     # https://trac.ffmpeg.org/wiki/CompilationGuide/macOS
     # https://trac.ffmpeg.org/wiki/CompilationGuide/MinGW
@@ -60,11 +68,9 @@ jobs:
             arch: x86_64
             generator: "MSYS Makefiles"
             shell: msys2 {0}
-    runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: ${{ matrix.shell }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -234,7 +240,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Setup Dependencies MacOS
-        if: ${{ runner.os == 'macOS' }}
+        if: runner.os == 'macOS'
         run: |
           dependencies=(
             "automake"
@@ -261,7 +267,7 @@ jobs:
 
       - name: Setup Dependencies Windows
         # if a dependency needs to be pinned, see https://github.com/LizardByte/build-deps/pull/186
-        if: ${{ runner.os == 'Windows' }}
+        if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
           msystem: ucrt64
@@ -280,7 +286,7 @@ jobs:
             mingw-w64-ucrt-x86_64-onevpl
 
       - name: Debug msys2.CMD
-        if: ${{ runner.os == 'Windows' }}
+        if: runner.os == 'Windows'
         run: |
           cat /d/a/_temp/setup-msys2/msys2.CMD
 
@@ -297,7 +303,7 @@ jobs:
 
       - name: Setup cross compilation
         id: cross
-        if: ${{ matrix.target != '' }}
+        if: matrix.target != ''
         run: |
           TOOLCHAIN=${ROOT_PATH}/cmake/toolchains/${{ matrix.target }}.cmake
 
@@ -375,7 +381,6 @@ jobs:
     name: Update dist
     needs: build
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout dist
         uses: actions/checkout@v4
@@ -396,8 +401,7 @@ jobs:
           path: dist/dist
 
       - name: Debug dist directory
-        run: |
-          ls -R dist
+        run: ls -R dist
 
       - name: Commit dist
         if: >-
