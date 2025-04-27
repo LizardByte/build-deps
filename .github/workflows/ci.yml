@@ -34,40 +34,49 @@ jobs:
       fail-fast: false  # false to test all, true to fail entire job if any fail
       matrix:
         include:
-          - name: Linux-x86_64  # ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}
-            os: ubuntu-22.04
-            arch: x86_64
-            generator: "Unix Makefiles"
-            shell: bash
-          - name: Linux-aarch64
-            os: ubuntu-22.04
+          # - name: Linux-x86_64  # ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}
+          #   os: ubuntu-22.04
+          #   arch: x86_64
+          #   generator: "Unix Makefiles"
+          #   shell: bash
+          # - name: Linux-aarch64
+          #   os: ubuntu-22.04
+          #   arch: aarch64
+          #   generator: "Unix Makefiles"
+          #   shell: bash
+          #   target: aarch64-linux-gnu
+          # - name: Linux-ppc64le
+          #   os: ubuntu-22.04
+          #   arch: powerpc64le
+          #   generator: "Unix Makefiles"
+          #   shell: bash
+          #   target: powerpc64le-linux-gnu
+          # - name: Darwin-x86_64
+          #   os: macos-13
+          #   arch: x86_64
+          #   generator: "Unix Makefiles"
+          #   shell: bash
+          #   target: x86_64-apple-macosx
+          # - name: Darwin-arm64
+          #   os: macos-14
+          #   arch: aarch64
+          #   generator: "Unix Makefiles"
+          #   shell: bash
+          #   target: arm64-apple-macosx
+          # - name: Windows-AMD64
+          #   os: windows-2022
+          #   arch: x86_64
+          #   generator: "MSYS Makefiles"
+          #   shell: msys2 {0}
+          #   msystem: ucrt64
+          #   toolchain: ucrt-x86_64
+          - name: Windows-ARM64
+            os: windows-11-arm
             arch: aarch64
-            generator: "Unix Makefiles"
-            shell: bash
-            target: aarch64-linux-gnu
-          - name: Linux-ppc64le
-            os: ubuntu-22.04
-            arch: powerpc64le
-            generator: "Unix Makefiles"
-            shell: bash
-            target: powerpc64le-linux-gnu
-          - name: Darwin-x86_64
-            os: macos-13
-            arch: x86_64
-            generator: "Unix Makefiles"
-            shell: bash
-            target: x86_64-apple-macosx
-          - name: Darwin-arm64
-            os: macos-14
-            arch: aarch64
-            generator: "Unix Makefiles"
-            shell: bash
-            target: arm64-apple-macosx
-          - name: Windows-AMD64
-            os: windows-2022
-            arch: x86_64
             generator: "MSYS Makefiles"
             shell: msys2 {0}
+            msystem: clangarm64
+            toolchain: clang-aarch64
     defaults:
       run:
         shell: ${{ matrix.shell }}
@@ -270,25 +279,26 @@ jobs:
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
-          msystem: ucrt64
+          msystem: ${{ matrix.msystem }}
           update: true
           install: >-
             diffutils
             git
             make
             pkg-config
-            mingw-w64-ucrt-x86_64-binutils
-            mingw-w64-ucrt-x86_64-cmake
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-make
-            mingw-w64-ucrt-x86_64-nasm
-            mingw-w64-ucrt-x86_64-ninja
-            mingw-w64-ucrt-x86_64-onevpl
+            mingw-w64-${{ matrix.toolchain }}-binutils
+            mingw-w64-${{ matrix.toolchain }}-cmake
+            mingw-w64-${{ matrix.toolchain }}-gcc
+            mingw-w64-${{ matrix.toolchain }}-make
+            mingw-w64-${{ matrix.toolchain }}-nasm
+            mingw-w64-${{ matrix.toolchain }}-ninja
+            mingw-w64-${{ matrix.toolchain }}-onevpl
+            mingw-w64-${{ matrix.toolchain }}-perl
 
       - name: Debug msys2.CMD
         if: runner.os == 'Windows'
         run: |
-          cat /d/a/_temp/setup-msys2/msys2.CMD
+          cat "${{ runner.temp }}/setup-msys2/msys2.CMD"
 
       - name: Initialize Submodules
         # libx265 has issues when using the recursive method of the first checkout action
