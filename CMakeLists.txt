@@ -77,11 +77,17 @@ if(WIN32)
     message(STATUS "Detected Windows, falling back to using make: ${MAKE_EXECUTABLE}")
 
     set(MSYSTEM "UCRT64")
+    set(MSYS2_ARG "-ucrt64")
+    if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "ARM64")
+        set(MSYSTEM "CLANGARM64")
+        set(MSYS2_ARG "-clangarm64")
+    endif()
+
     find_file(MSYS2_EXECUTABLE NAMES msys2_shell.cmd REQUIRED HINTS ${MSYS2_ROOT})
     message(STATUS "Found MSYS2: ${MSYS2_EXECUTABLE}")
 
     if(NOT DEFINED MSYS2_OPTION OR MSYS2_OPTION STREQUAL "1" OR MSYS2_OPTION STREQUAL "")
-        set(SHELL_CMD ${MSYS2_EXECUTABLE} -ucrt64 -defterm -here -no-start -shell bash -c)
+        set(SHELL_CMD ${MSYS2_EXECUTABLE} ${MSYS2_ARG} -defterm -here -no-start -shell bash -c)
     elseif(MSYS2_OPTION STREQUAL "2")
         # Theoretically, this is equivalent to the above
         configure_file(${CMAKE_CURRENT_SOURCE_DIR}/msys2.cmd.in ${CMAKE_CURRENT_BINARY_DIR}/msys2.cmd @ONLY)
