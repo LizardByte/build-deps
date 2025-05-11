@@ -277,10 +277,10 @@ jobs:
       - name: Setup Dependencies Windows
         # if a dependency needs to be pinned, see https://github.com/LizardByte/build-deps/pull/186
         if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@v2.26.0
         with:
           msystem: ${{ matrix.msystem }}
-          update: true
+          # update: true
           install: >-
             diffutils
             git
