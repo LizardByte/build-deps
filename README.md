@@ -121,6 +121,12 @@ brew install \
 
 #### Windows
 
+⚠ Currently only Windows Arm64 can be used to compile for Windows Arm64 targets!
+
+> The clangarm64 environment is an arm64 native binary toolchain and cannot be run on an x86 hosts
+ 
+##### x86_64 / amd64
+
 First, install [MSYS2](https://www.msys2.org/), then open the UCRT64 shell and run the following commands:
 
 ```bash
@@ -137,6 +143,30 @@ pacman -S \
     mingw-w64-ucrt-x86_64-nasm \
     mingw-w64-ucrt-x86_64-ninja \
     mingw-w64-ucrt-x86_64-onevpl
+```
+
+##### aarch64 / arm64
+
+First, install [MSYS2](https://www.msys2.org/), then open the CLANGARM64 shell and run the following commands:
+
+> For latest MSYS2, the Installer will be hangup on Windows On Arm, You can download [2024-12-08 version](https://github.com/msys2/msys2-installer/releases/tag/2024-12-08), See [issue #96](https://github.com/msys2/msys2-installer/issues/96)
+
+> Of course you can install the latest version using the command line, like [setup-msys2 does](https://github.com/msys2/setup-msys2/blob/main/main.js#L362), but this is beyond the scope of this repository.
+
+```bash
+pacman -Syu
+pacman -S \
+    diffutils \
+    git \
+    make \
+    pkg-config \
+    mingw-w64-clang-aarch64-binutils \
+    mingw-w64-clang-aarch64-cmake \
+    mingw-w64-clang-aarch64-gcc \
+    mingw-w64-clang-aarch64-make \
+    mingw-w64-clang-aarch64-nasm \
+    mingw-w64-clang-aarch64-ninja \
+    mingw-w64-clang-aarch64-onevpl
 ```
 
 ### Configure
