@@ -288,7 +288,8 @@ jobs:
       - name: Debug msys2.CMD
         if: runner.os == 'Windows'
         run: |
-          cat /d/a/_temp/setup-msys2/msys2.CMD
+          echo "MSYS2_ROOT=${{ runner.temp }}/msys64" >> $GITHUB_ENV
+          cat "${{ runner.temp }}/setup-msys2/msys2.CMD"
 
       - name: Initialize Submodules
         # libx265 has issues when using the recursive method of the first checkout action

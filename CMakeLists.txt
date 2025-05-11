@@ -51,11 +51,17 @@ elseif(NOT N MATCHES "^[0-9]+$")
     set(N_PROC 1)
 endif()
 
+set(MSYS2_ROOT "C:/msys64")
+if(WIN32 AND DEFINED ENV{MSYS2_ROOT})
+    set(MSYS2_ROOT "$ENV{MSYS2_ROOT}")
+    message(STATUS "Detected MSYS2_ROOT, get msys2 path from environment: ${MSYS2_ROOT}")
+endif()
+
 if(NOT DEFINED BASH_EXECUTABLE)
     find_program(BASH_EXECUTABLE
             NAMES zsh bash
             REQUIRED
-            HINTS D:/a/_temp/msys64/usr/bin C:/msys64/usr/bin /bin /usr/bin /usr/local/bin)
+            HINTS "${MSYS2_ROOT}/usr/bin" /bin /usr/bin /usr/local/bin)
     message(STATUS "Found bash: ${BASH_EXECUTABLE}")
 endif()
 
@@ -71,7 +77,7 @@ if(WIN32)
     message(STATUS "Detected Windows, falling back to using make: ${MAKE_EXECUTABLE}")
 
     set(MSYSTEM "UCRT64")
-    find_file(MSYS2_EXECUTABLE NAMES msys2_shell.cmd REQUIRED HINTS D:/a/_temp/msys64 C:/msys64)
+    find_file(MSYS2_EXECUTABLE NAMES msys2_shell.cmd REQUIRED HINTS ${MSYS2_ROOT})
     message(STATUS "Found MSYS2: ${MSYS2_EXECUTABLE}")
 
     if(NOT DEFINED MSYS2_OPTION OR MSYS2_OPTION STREQUAL "1" OR MSYS2_OPTION STREQUAL "")
@@ -135,7 +141,7 @@ message(STATUS "Initial PKG_CONFIG_PATH: ${PKG_CONFIG_PATH}")
 find_program(PKG_CONFIG_EXECUTABLE
         NAMES pkg-config
         REQUIRED
-        HINTS D:/a/_temp/msys64/usr/bin C:/msys64/usr/bin /bin /usr/bin /usr/local/bin)
+        HINTS "${MSYS2_ROOT}/usr/bin" /bin /usr/bin /usr/local/bin)
 UNIX_PATH(PKG_CONFIG_EXECUTABLE ${PKG_CONFIG_EXECUTABLE})
 message(STATUS "Found pkg-config: ${PKG_CONFIG_EXECUTABLE}")
 
