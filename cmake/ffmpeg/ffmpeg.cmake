@@ -63,6 +63,17 @@ if(WIN32)
             --enable-nvenc
             --enable-mediafoundation
     )
+
+    # On Windows Arm64
+    # We must specify the arch parameter until one of the following issues is resolved
+    #
+    # https://github.com/msys2/msys2-runtime/issues/171
+    # https://github.com/FFmpeg/FFmpeg/blob/4e5523c98597a417eb43555933b1075d18ec5f8b/configure#L4161
+    if(${arch} STREQUAL "aarch64" OR ${arch} STREQUAL "arm64")
+        list(APPEND FFMPEG_EXTRA_CONFIGURE
+                --arch=${arch}
+        )
+    endif()
 elseif(APPLE)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
             --enable-encoder=h264_videotoolbox,hevc_videotoolbox
