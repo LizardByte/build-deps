@@ -68,6 +68,15 @@ jobs:
             arch: x86_64
             generator: "MSYS Makefiles"
             shell: msys2 {0}
+            msystem: ucrt64
+            toolchain: ucrt-x86_64
+          - name: Windows-ARM64
+            os: windows-11-arm
+            arch: aarch64
+            generator: "MSYS Makefiles"
+            shell: msys2 {0}
+            msystem: clangarm64
+            toolchain: clang-aarch64
     defaults:
       run:
         shell: ${{ matrix.shell }}
@@ -268,27 +277,29 @@ jobs:
       - name: Setup Dependencies Windows
         # if a dependency needs to be pinned, see https://github.com/LizardByte/build-deps/pull/186
         if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@v2.26.0
         with:
-          msystem: ucrt64
-          update: true
+          msystem: ${{ matrix.msystem }}
+          # update: true
           install: >-
             diffutils
             git
             make
             pkg-config
-            mingw-w64-ucrt-x86_64-binutils
-            mingw-w64-ucrt-x86_64-cmake
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-make
-            mingw-w64-ucrt-x86_64-nasm
-            mingw-w64-ucrt-x86_64-ninja
-            mingw-w64-ucrt-x86_64-onevpl
+            mingw-w64-${{ matrix.toolchain }}-binutils
+            mingw-w64-${{ matrix.toolchain }}-cmake
+            mingw-w64-${{ matrix.toolchain }}-gcc
+            mingw-w64-${{ matrix.toolchain }}-make
+            mingw-w64-${{ matrix.toolchain }}-nasm
+            mingw-w64-${{ matrix.toolchain }}-ninja
+            mingw-w64-${{ matrix.toolchain }}-onevpl
+            mingw-w64-${{ matrix.toolchain }}-perl
 
       - name: Debug msys2.CMD
         if: runner.os == 'Windows'
         run: |
-          cat /d/a/_temp/setup-msys2/msys2.CMD
+          echo "MSYS2_ROOT=${{ runner.temp }}/msys64" >> $GITHUB_ENV
+          cat "${{ runner.temp }}/setup-msys2/msys2.CMD"
 
       - name: Initialize Submodules
         # libx265 has issues when using the recursive method of the first checkout action
