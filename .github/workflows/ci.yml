@@ -203,7 +203,7 @@ jobs:
               echo "$extra_sources" | sudo tee ${source_file} > /dev/null
             else
               # fix original sources
-              sudo sed -i -E 's#^(deb\s+)(http.*)#\1[arch=amd64] \2#g' ${source_file}
+              sudo sed -i -e "s#deb mirror#deb [arch=amd64] mirror#g" ${source_file}
 
               echo "$extra_sources" | sudo tee -a ${source_file} > /dev/null
             fi
