@@ -334,6 +334,7 @@ jobs:
             -B build \
             -S . \
             -G "${{ matrix.generator }}" \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} \
             -DCMAKE_INSTALL_PREFIX="${ROOT_PATH}/build/dist"
 
