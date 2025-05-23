@@ -305,7 +305,6 @@ jobs:
             "mingw-w64-${TOOLCHAIN}-nasm"
             "mingw-w64-${TOOLCHAIN}-ninja"
             "mingw-w64-${TOOLCHAIN}-onevpl"
-            "mingw-w64-${TOOLCHAIN}-perl"
           )
 
           # do not modify below this line
