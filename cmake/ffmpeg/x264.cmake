@@ -19,9 +19,9 @@ else()
 endif()
 
 if(WIN32)
-    set(X264_HOST ${X264_ARCH}-windows)
+    set(X264_HOST ${X264_ARCH}-mingw64)
 elseif(APPLE)
-    set(X264_HOST ${X264_ARCH}-macos)
+    set(X264_HOST ${X264_ARCH}-darwin)
 elseif(UNIX)
     set(X264_HOST ${X264_ARCH}-linux)
 else()
@@ -35,6 +35,17 @@ if(CMAKE_CROSSCOMPILING)
                 --host=${X264_HOST}
         )
     endif()
+endif()
+
+# On Windows Arm64
+# We must specify the host parameter until one of the following issues is resolved
+#
+# https://github.com/msys2/msys2-runtime/issues/171
+# https://code.videolan.org/videolan/x264/-/tree/1ecc51ee971e0056a53bd6cf9c6f6af18b167e4b/config.guess#L809
+if(${X264_HOST} STREQUAL "aarch64-mingw64")
+    set(FFMPEG_X264_EXTRA_CONFIGURE
+            --host=${X264_HOST}
+    )
 endif()
 
 # convert list to string

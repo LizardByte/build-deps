@@ -121,7 +121,13 @@ brew install \
 
 #### Windows
 
-First, install [MSYS2](https://www.msys2.org/), then open the UCRT64 shell and run the following commands:
+ℹ️ Cross-compilation is not supported on Windows. You must build on the target architecture.
+
+First, install [MSYS2](https://www.msys2.org/).
+ 
+##### x86_64 / amd64
+
+Open the UCRT64 shell and run the following commands:
 
 ```bash
 pacman -Syu
@@ -137,6 +143,26 @@ pacman -S \
     mingw-w64-ucrt-x86_64-nasm \
     mingw-w64-ucrt-x86_64-ninja \
     mingw-w64-ucrt-x86_64-onevpl
+```
+
+##### aarch64 / arm64
+
+Open the CLANGARM64 shell and run the following commands:
+
+```bash
+pacman -Syu
+pacman -S \
+    diffutils \
+    git \
+    make \
+    pkg-config \
+    mingw-w64-clang-aarch64-binutils \
+    mingw-w64-clang-aarch64-cmake \
+    mingw-w64-clang-aarch64-gcc \
+    mingw-w64-clang-aarch64-make \
+    mingw-w64-clang-aarch64-nasm \
+    mingw-w64-clang-aarch64-ninja \
+    mingw-w64-clang-aarch64-onevpl
 ```
 
 ### Configure

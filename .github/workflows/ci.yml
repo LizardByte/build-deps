@@ -68,6 +68,15 @@ jobs:
             arch: x86_64
             generator: "MSYS Makefiles"
             shell: msys2 {0}
+            msystem: ucrt64
+            toolchain: ucrt-x86_64
+          - name: Windows-ARM64
+            os: windows-11-arm
+            arch: aarch64
+            generator: "MSYS Makefiles"
+            shell: msys2 {0}
+            msystem: clangarm64
+            toolchain: clang-aarch64
     defaults:
       run:
         shell: ${{ matrix.shell }}
@@ -269,21 +278,23 @@ jobs:
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
-          msystem: ucrt64
+          msystem: ${{ matrix.msystem }}
           update: true
 
       - name: Update Windows dependencies
         env:
-          MSYSTEM: ucrt64
-          TOOLCHAIN: ucrt-x86_64
+          MSYSTEM: ${{ matrix.msystem }}
+          TOOLCHAIN: ${{ matrix.toolchain }}
         if: runner.os == 'Windows'
         shell: msys2 {0}
         run: |
           # variables
           declare -A pinned_deps
           pinned_deps["mingw-w64-${TOOLCHAIN}-cmake"]="3.31.6-1"
-          pinned_deps["mingw-w64-${TOOLCHAIN}-gcc"]="14.2.0-3"
-          pinned_deps["mingw-w64-${TOOLCHAIN}-gcc-libs"]="14.2.0-3"
+          if [[ ${MSYSTEM} == "ucrt64" ]]; then
+            pinned_deps["mingw-w64-${TOOLCHAIN}-gcc"]="14.2.0-3"
+            pinned_deps["mingw-w64-${TOOLCHAIN}-gcc-libs"]="14.2.0-3"
+          fi
 
           dependencies=(
             "diffutils"
@@ -331,7 +342,8 @@ jobs:
       - name: Debug msys2.CMD
         if: runner.os == 'Windows'
         run: |
-          cat /d/a/_temp/setup-msys2/msys2.CMD
+          echo "MSYS2_ROOT=${{ runner.temp }}/msys64" >> $GITHUB_ENV
+          cat "${{ runner.temp }}/setup-msys2/msys2.CMD"
 
       - name: Initialize Submodules
         # libx265 has issues when using the recursive method of the first checkout action
