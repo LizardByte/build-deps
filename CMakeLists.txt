@@ -76,14 +76,16 @@ if(WIN32)
     set(MAKE_EXECUTABLE "make")
     message(STATUS "Detected Windows, falling back to using make: ${MAKE_EXECUTABLE}")
 
+    # fatal error when cross compiling
+    if(CMAKE_CROSSCOMPILING)
+        message(STATUS "System processor: ${CMAKE_SYSTEM_PROCESSOR}")
+        message(STATUS "Host system processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+        message(FATAL_ERROR "Cross-compiling is not supported on Windows")
+    endif()
+
     set(MSYSTEM "UCRT64")
     set(MSYS2_ARG "-ucrt64")
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64")
-        # MSYS2 CLANGARM64 is native arm64 binary, can not run on non-arm64 hosts.
-        if (NOT CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "ARM64")
-            message(FATAL_ERROR "Compiling for Windows ARM64 targets on non Windows ARM64 hosts is not currently supported")
-        endif()
-
         set(MSYSTEM "CLANGARM64")
         set(MSYS2_ARG "-clangarm64")
     endif()
