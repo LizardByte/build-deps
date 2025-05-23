@@ -291,8 +291,10 @@ jobs:
           # variables
           declare -A pinned_deps
           pinned_deps["mingw-w64-${TOOLCHAIN}-cmake"]="3.31.6-1"
-          pinned_deps["mingw-w64-${TOOLCHAIN}-gcc"]="14.2.0-3"
-          pinned_deps["mingw-w64-${TOOLCHAIN}-gcc-libs"]="14.2.0-3"
+          if [[ ${MSYSTEM} == "ucrt64" ]]; then
+            pinned_deps["mingw-w64-${TOOLCHAIN}-gcc"]="14.2.0-3"
+            pinned_deps["mingw-w64-${TOOLCHAIN}-gcc-libs"]="14.2.0-3"
+          fi
 
           dependencies=(
             "diffutils"
