@@ -266,24 +266,67 @@ jobs:
           brew install ${dependencies[@]}
 
       - name: Setup Dependencies Windows
-        # if a dependency needs to be pinned, see https://github.com/LizardByte/build-deps/pull/186
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
           msystem: ucrt64
           update: true
-          install: >-
-            diffutils
-            git
-            make
-            pkg-config
-            mingw-w64-ucrt-x86_64-binutils
-            mingw-w64-ucrt-x86_64-cmake
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-make
-            mingw-w64-ucrt-x86_64-nasm
-            mingw-w64-ucrt-x86_64-ninja
-            mingw-w64-ucrt-x86_64-onevpl
+
+      - name: Update Windows dependencies
+        env:
+          MSYSTEM: ucrt64
+          TOOLCHAIN: ucrt-x86_64
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          # variables
+          declare -A pinned_deps
+          pinned_deps["mingw-w64-${TOOLCHAIN}-cmake"]="3.31.6-1"
+          pinned_deps["mingw-w64-${TOOLCHAIN}-gcc"]="14.2.0-3"
+          pinned_deps["mingw-w64-${TOOLCHAIN}-gcc-libs"]="14.2.0-3"
+
+          dependencies=(
+            "diffutils"
+            "git"
+            "make"
+            "pkg-config"
+            "mingw-w64-${TOOLCHAIN}-binutils"
+            "mingw-w64-${TOOLCHAIN}-gcc"
+            "mingw-w64-${TOOLCHAIN}-make"
+            "mingw-w64-${TOOLCHAIN}-nasm"
+            "mingw-w64-${TOOLCHAIN}-ninja"
+            "mingw-w64-${TOOLCHAIN}-onevpl"
+          )
+
+          # do not modify below this line
+
+          ignore_packages=()
+          tarballs=""
+          for pkg in "${!pinned_deps[@]}"; do
+            ignore_packages+=("${pkg}")
+            version="${pinned_deps[$pkg]}"
+            tarball="${pkg}-${version}-any.pkg.tar.zst"
+
+            # download and install working version
+            wget "https://repo.msys2.org/mingw/${MSYSTEM}/${tarball}"
+
+            tarballs="${tarballs} ${tarball}"
+          done
+
+          # Create the ignore string for pacman
+          ignore_list=$(IFS=,; echo "${ignore_packages[*]}")
+
+          # install pinned dependencies
+          if [ -n "$tarballs" ]; then
+            pacman -U --noconfirm ${tarballs}
+          fi
+
+          # Only add --ignore if we have packages to ignore
+          if [ -n "$ignore_list" ]; then
+            pacman -Syu --noconfirm --ignore="${ignore_list}" "${dependencies[@]}"
+          else
+            pacman -Syu --noconfirm "${dependencies[@]}"
+          fi
 
       - name: Debug msys2.CMD
         if: runner.os == 'Windows'
