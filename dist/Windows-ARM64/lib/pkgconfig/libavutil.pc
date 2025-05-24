@@ -1,0 +1,14 @@
+prefix=/c/a/build-deps/build-deps/build/FFmpeg
+exec_prefix=${prefix}
+libdir=/c/a/build-deps/build-deps/build/FFmpeg/lib
+includedir=/c/a/build-deps/build-deps/build/FFmpeg/include
+
+Name: libavutil
+Description: FFmpeg utility library
+Version: 59.39.100
+Requires: 
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavutil -lm -lvpl -lole32 -lgdi32 -luuid -luser32 -lbcrypt
+Libs.private: 
+Cflags: -I${includedir}

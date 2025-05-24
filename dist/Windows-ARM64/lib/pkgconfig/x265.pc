@@ -1,0 +1,11 @@
+prefix=C:/a/build-deps/build-deps/build/dist
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: build-deps
+Description: H.265/HEVC video encoder
+Version: 3.6
+Libs: -L${libdir} -lx265
+Libs.private: -lc++ -lunwind -lunwind
+Cflags: -I${includedir}

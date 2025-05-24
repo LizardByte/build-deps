@@ -1,0 +1,14 @@
+prefix=/c/a/build-deps/build-deps/build/FFmpeg
+exec_prefix=${prefix}
+libdir=/c/a/build-deps/build-deps/build/FFmpeg/lib
+includedir=/c/a/build-deps/build-deps/build/FFmpeg/include
+
+Name: libavcodec
+Description: FFmpeg codec library
+Version: 61.19.101
+Requires: libavutil >= 59.39.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavcodec -lm -LC:/a/build-deps/build-deps/build/dist/lib -lSvtAv1Enc -L/c/a/build-deps/build-deps/build/x264/lib -lx264 -LC:/a/build-deps/build-deps/build/dist/lib -lx265 -lc++ -lunwind -lunwind -lmfuuid -lole32 -lstrmiids -lole32 -luser32
+Libs.private: 
+Cflags: -I${includedir}
