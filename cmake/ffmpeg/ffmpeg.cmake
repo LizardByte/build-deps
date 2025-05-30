@@ -60,20 +60,10 @@ if(WIN32)
             --enable-mediafoundation
     )
 
-    # On Windows Arm64
-    # We must specify the arch parameter until one of the following issues is resolved
-    #
-    # https://github.com/msys2/msys2-runtime/issues/171
-    # https://github.com/FFmpeg/FFmpeg/blob/4e5523c98597a417eb43555933b1075d18ec5f8b/configure#L4161
-    #
     # We must disable CUDA and NVENC until following issues is resolved
     #
     # https://github.com/FFmpeg/FFmpeg/blob/4e5523c98597a417eb43555933b1075d18ec5f8b/configure#L7443
-    if(${arch} STREQUAL "aarch64" OR ${arch} STREQUAL "arm64")
-        list(APPEND FFMPEG_EXTRA_CONFIGURE
-                --arch=${arch}
-        )
-    elseif (${arch} STREQUAL "amd64" OR ${arch} STREQUAL "x86_64")
+    if (${arch} STREQUAL "amd64" OR ${arch} STREQUAL "x86_64")
         list(APPEND FFMPEG_EXTRA_CONFIGURE
                 --enable-cuda
                 --enable-encoder=h264_nvenc,hevc_nvenc,av1_nvenc
