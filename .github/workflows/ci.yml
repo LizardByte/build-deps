@@ -292,8 +292,10 @@ jobs:
           declare -A pinned_deps
           pinned_deps["mingw-w64-${TOOLCHAIN}-cmake"]="3.31.6-1"
           if [[ ${MSYSTEM} == "ucrt64" ]]; then
+            pinned_deps["mingw-w64-${TOOLCHAIN}-curl"]="8.9.1-2"  # needed when cmake is pinned
             pinned_deps["mingw-w64-${TOOLCHAIN}-gcc"]="14.2.0-3"
             pinned_deps["mingw-w64-${TOOLCHAIN}-gcc-libs"]="14.2.0-3"
+            pinned_deps["mingw-w64-${TOOLCHAIN}-nghttp3"]="1.9.0-1"  # needed when cmake is pinned
           fi
 
           dependencies=(
