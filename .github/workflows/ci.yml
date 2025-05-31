@@ -21,6 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  LINUX_GCC_VERSION: 12
   MACOSX_DEPLOYMENT_TARGET: 13.0
 
 jobs:
@@ -84,9 +85,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup cross compiling Linux
+      - name: Prepare Dependencies Linux
         id: cross_compile
-        if: contains(matrix.os, 'ubuntu')
+        if: runner.os == 'Linux'
         run: |
           echo "::group::distro detection"
           # detect dist name like bionic, focal, etc
@@ -144,12 +145,19 @@ jobs:
           package_arch=$(dpkg --print-architecture)
           if [[ ${{ matrix.arch }} == "aarch64" ]]; then
             dependencies+=("crossbuild-essential-arm64")
+            dependencies+=("gcc-${LINUX_GCC_VERSION}-aarch64-linux-gnu")
+            dependencies+=("g++-${LINUX_GCC_VERSION}-aarch64-linux-gnu")
             cross_compile=true
             package_arch="arm64"
           elif [[ ${{ matrix.arch }} == "powerpc64le" ]]; then
             dependencies+=("crossbuild-essential-ppc64el")
+            dependencies+=("gcc-${LINUX_GCC_VERSION}-powerpc64le-linux-gnu")
+            dependencies+=("g++-${LINUX_GCC_VERSION}-powerpc64le-linux-gnu")
             cross_compile=true
             package_arch="ppc64el"
+          else
+            dependencies+=("gcc-${LINUX_GCC_VERSION}")
+            dependencies+=("g++-${LINUX_GCC_VERSION}")
           fi
           echo "cross compiling: $cross_compile"
           echo "package architecture: $package_arch"
@@ -235,10 +243,18 @@ jobs:
 
           echo "PKG_CONFIG_PATH=${pkg_config_sysroot_dir}/pkgconfig"
           echo "PKG_CONFIG_PATH=${pkg_config_sysroot_dir}/pkgconfig" >> $GITHUB_ENV
+
+          if [[ ${cross_compile} == false ]]; then
+            echo "CC=gcc-${LINUX_GCC_VERSION}"
+            echo "CC=gcc-${LINUX_GCC_VERSION}" >> $GITHUB_ENV
+
+            echo "CXX=g++-${LINUX_GCC_VERSION}"
+            echo "CXX=g++-${LINUX_GCC_VERSION}" >> $GITHUB_ENV
+          fi
           echo "::endgroup::"
 
-      - name: Install system dependencies Linux
-        if: contains(matrix.os, 'ubuntu')
+      - name: Setup Dependencies Linux
+        if: runner.os == 'Linux'
         run: |
           echo "::group::apt update"
           sudo apt-get update
@@ -274,7 +290,7 @@ jobs:
 
           brew install ${dependencies[@]}
 
-      - name: Setup Dependencies Windows
+      - name: Setup msys2 Windows
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
