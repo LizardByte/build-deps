@@ -5,7 +5,7 @@ includedir=${prefix}/include
 
 Name: build-deps
 Description: H.265/HEVC video encoder
-Version: 3.6
+Version: 4.1
 Libs: -L${libdir} -lx265
 Libs.private: -lc++ -lunwind -lunwind
 Cflags: -I${includedir}
