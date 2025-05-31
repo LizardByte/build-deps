@@ -37,17 +37,6 @@ if(CMAKE_CROSSCOMPILING)
     endif()
 endif()
 
-# On Windows Arm64
-# We must specify the host parameter until one of the following issues is resolved
-#
-# https://github.com/msys2/msys2-runtime/issues/171
-# https://code.videolan.org/videolan/x264/-/tree/1ecc51ee971e0056a53bd6cf9c6f6af18b167e4b/config.guess#L809
-if(${X264_HOST} STREQUAL "aarch64-mingw64")
-    set(FFMPEG_X264_EXTRA_CONFIGURE
-            --host=${X264_HOST}
-    )
-endif()
-
 # convert list to string
 # configure command will only take the first argument if not converted to string
 string(REPLACE ";" " " FFMPEG_X264_EXTRA_CONFIGURE "${FFMPEG_X264_EXTRA_CONFIGURE}")
