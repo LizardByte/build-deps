@@ -41,54 +41,83 @@ list(APPEND FFMPEG_EXTRA_CONFIGURE
         --enable-avcodec
         --enable-avutil
         --enable-bsfs  # ensure config.h will have CONFIG_CBS_ flags
-        --enable-encoder=libsvtav1
-        --enable-encoder=libx264,libx265
-        --enable-libsvtav1
-        --enable-libx264
-        --enable-libx265
         --enable-swscale
 )
 
-if(WIN32)
+if(BUILD_FFMPEG_AMF)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
             --enable-amf
-            --enable-d3d11va
             --enable-encoder=h264_amf,hevc_amf,av1_amf
+    )
+endif()
+if(BUILD_FFMPEG_MF)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE
             --enable-encoder=h264_mf,hevc_mf
-            --enable-encoder=h264_qsv,hevc_qsv,av1_qsv
-            --enable-libvpl
             --enable-mediafoundation
     )
-
-    # We must disable CUDA and NVENC until following issues is resolved
-    #
-    # https://github.com/FFmpeg/FFmpeg/blob/4e5523c98597a417eb43555933b1075d18ec5f8b/configure#L7443
-    if (${arch} STREQUAL "amd64" OR ${arch} STREQUAL "x86_64")
+endif()
+if(BUILD_FFMPEG_NV_CODEC_HEADERS)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE
+            --enable-cuda
+            --enable-encoder=h264_nvenc,hevc_nvenc,av1_nvenc
+            --enable-ffnvcodec
+            --enable-nvenc
+    )
+    if(UNIX AND NOT APPLE AND NOT FREEBSD)
         list(APPEND FFMPEG_EXTRA_CONFIGURE
-                --enable-cuda
-                --enable-encoder=h264_nvenc,hevc_nvenc,av1_nvenc
-                --enable-ffnvcodec
-                --enable-nvenc
+                --enable-cuda_llvm
         )
     endif()
+endif()
+if(BUILD_FFMPEG_SVT_AV1)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE
+            --enable-libsvtav1
+            --enable-encoder=libsvtav1
+    )
+endif()
+if(BUILD_FFMPEG_VAAPI)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE
+            --enable-vaapi
+            --enable-encoder=h264_vaapi,hevc_vaapi,av1_vaapi
+    )
+endif()
+if(BUILD_FFMPEG_X264)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE
+            --enable-libx264
+            --enable-encoder=libx264
+    )
+endif()
+if(BUILD_FFMPEG_X265)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE
+            --enable-libx265
+            --enable-encoder=libx265
+    )
+endif()
+
+# OS specific options not defined by the above BUILD_FFMPEG_* options
+if(WIN32)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE
+            --enable-d3d11va
+            --enable-encoder=h264_qsv,hevc_qsv,av1_qsv
+            --enable-libvpl
+    )
 elseif(APPLE)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
             --enable-encoder=h264_videotoolbox,hevc_videotoolbox
             --enable-videotoolbox
     )
+elseif(FREEBSD)
+    # FFmpeg does not build with this encoder on aarch64 FreeBSD
+    if(${arch} STREQUAL "amd64")
+        list(APPEND FFMPEG_EXTRA_CONFIGURE
+                --enable-encoder=h264_v4l2m2m
+                --enable-v4l2_m2m
+        )
+    endif()
 elseif(UNIX)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
-            --enable-amf
-            --enable-cuda
-            --enable-cuda_llvm
-            --enable-encoder=h264_amf,hevc_amf,av1_amf
-            --enable-encoder=h264_nvenc,hevc_nvenc,av1_nvenc
-            --enable-encoder=h264_vaapi,hevc_vaapi,av1_vaapi
             --enable-encoder=h264_v4l2m2m
-            --enable-ffnvcodec
-            --enable-nvenc
             --enable-v4l2_m2m
-            --enable-vaapi
     )
 endif()
 
@@ -116,7 +145,7 @@ add_custom_target(ffmpeg ALL
         COMMAND ${SHELL_CMD} "PKG_CONFIG_PATH='${PKG_CONFIG_PATH}' \
 ./configure \
 ${FFMPEG_EXTRA_CONFIGURE}"
-        COMMAND ${SHELL_CMD} "${MAKE_EXECUTABLE} -j${N_PROC}"
+        COMMAND ${SHELL_CMD} "${MAKE_EXECUTABLE} --jobs=${N_PROC}"
         COMMAND ${SHELL_CMD} "${MAKE_EXECUTABLE} install"
         WORKING_DIRECTORY ${WORKING_DIR}
         COMMENT "Target: FFmpeg"

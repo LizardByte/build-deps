@@ -64,6 +64,30 @@ git checkout HEAD -- .
 
 ### Dependencies
 
+#### FreeBSD
+
+```bash
+pkg install -y \
+  devel/autoconf \
+  devel/automake \
+  devel/cmake \
+  devel/git \
+  devel/gmake \
+  devel/nasm \
+  devel/ninja \
+  devel/pkgconf \
+  multimedia/libass \
+  multimedia/libv4l \
+  multimedia/libva \
+  multimedia/v4l_compat \
+  print/freetype2 \
+  security/gnutls \
+  shells/bash \
+  x11/libx11 \
+  x11/libxcb \
+  x11/libXfixes
+```
+
 #### Linux
 
 ```bash
@@ -204,6 +228,8 @@ are three options. If the default does not work, you can try passing in the foll
 Valid options are, 1, 2, and 3. The default is 1.
 
 ### Build
+
+ℹ️ On FreeBSD, use `gmake` instead of `make`.
 
 ```bash
 make -C build

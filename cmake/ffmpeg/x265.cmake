@@ -34,4 +34,4 @@ if(ENABLE_HDR10_PLUS)
     add_dependencies(x265 hdr10plus-static)
 endif()
 
-# PKG_CONFIG_PATH alraedy set since this is installed directly to the prefix
+# PKG_CONFIG_PATH already set since this is installed directly to the prefix

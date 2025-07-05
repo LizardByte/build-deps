@@ -33,6 +33,10 @@ option(BUILD_FFMPEG_X265_PATCHES "Apply FFmpeg x265 patches" ON)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/apply_git_patch.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/unix_path.cmake)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+    set(FREEBSD ON)
+endif()
+
 if(UNIX AND NOT APPLE)
     include(GNUInstallDirs)
 endif()
@@ -44,12 +48,13 @@ if(NOT DEFINED PARALLEL_BUILDS)
 else()
     set(N_PROC ${PARALLEL_BUILDS})
 endif()
-if(N EQUAL 0)
+if(N_PROC EQUAL 0)
     set(N_PROC 1)
-elseif(NOT N MATCHES "^[0-9]+$")
+elseif(NOT N_PROC MATCHES "^[0-9]+$")
     # if not a number, set it to 1
     set(N_PROC 1)
 endif()
+message(STATUS "parallel builds: ${N_PROC}")
 
 set(MSYS2_ROOT "C:/msys64")
 if(WIN32 AND DEFINED ENV{MSYS2_ROOT})
@@ -60,14 +65,22 @@ endif()
 if(NOT DEFINED BASH_EXECUTABLE)
     find_program(BASH_EXECUTABLE
             NAMES zsh bash
-            REQUIRED
-            HINTS "${MSYS2_ROOT}/usr/bin" /bin /usr/bin /usr/local/bin)
+            HINTS "${MSYS2_ROOT}/usr/bin" /bin /usr/bin /usr/local/bin
+            DOC "Bash shell executable"
+            REQUIRED)
     message(STATUS "Found bash: ${BASH_EXECUTABLE}")
 endif()
 
+if(FREEBSD)
+    set(MAKE_FIND_NAMES "gmake")  # We get invalid line types in nv-codec-headers Makefile if we use BSD make
+else()
+    set(MAKE_FIND_NAMES "mingw32-make;make;gmake")
+endif()
+
 find_program(MAKE_EXECUTABLE
-        NAMES mingw32-make make gmake
+        NAMES ${MAKE_FIND_NAMES}
         NAMES_PER_DIR
+        HINTS "${MSYS2_ROOT}/usr/bin" /bin /usr/bin /usr/local/bin
         DOC "GNU Make"
         REQUIRED)
 message(STATUS "Found make: ${MAKE_EXECUTABLE}")
@@ -168,6 +181,10 @@ add_custom_target(${CMAKE_PROJECT_NAME}
 
 # set architecture
 string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} arch)
+
+message(STATUS "Detected system name: ${CMAKE_SYSTEM_NAME}")
+message(STATUS "Detected architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+message(STATUS "CI Matrix name should be: '${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}'")
 
 # set generated source path
 set(CMAKE_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/generated-src)
