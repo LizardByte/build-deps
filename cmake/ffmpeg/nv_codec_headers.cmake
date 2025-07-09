@@ -10,7 +10,7 @@ set(WORKING_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/nv-codec-headers
 UNIX_PATH(WORKING_DIR_UNIX ${WORKING_DIR})
 UNIX_PATH(DEST_DIR_UNIX ${CMAKE_CURRENT_BINARY_DIR})
 add_custom_target(nv-codec-headers ALL
-        COMMAND ${SHELL_CMD} "${MAKE_EXECUTABLE} -j${N_PROC}"
+        COMMAND ${SHELL_CMD} "${MAKE_EXECUTABLE} --jobs=${N_PROC}"
         # this will install the headers to the CMAKE_CURRENT_BINARY_DIR/usr/local
         COMMAND ${SHELL_CMD} "DESTDIR=${DEST_DIR_UNIX} ${MAKE_EXECUTABLE} install"
         WORKING_DIRECTORY ${WORKING_DIR}

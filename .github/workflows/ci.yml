@@ -21,6 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  FREEBSD_CLANG_VERSION: 19
   LINUX_GCC_VERSION: 12
   MACOSX_DEPLOYMENT_TARGET: 13.0
 
@@ -78,16 +79,30 @@ jobs:
             shell: msys2 {0}
             msystem: clangarm64
             toolchain: clang-aarch64
+          - name: FreeBSD-amd64
+            os: ubuntu-latest
+            arch: x86_64
+            bsd_release: '14.3'
+            generator: "Unix Makefiles"
+            shell: freebsd {0}
+          - name: FreeBSD-aarch64
+            os: ubuntu-latest  # ubuntu-24.04-arm is slower with the FreeBSD VM
+            arch: aarch64
+            bsd_release: '14.3'
+            generator: "Unix Makefiles"
+            shell: freebsd {0}
     defaults:
       run:
         shell: ${{ matrix.shell }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Prepare Dependencies Linux
         id: cross_compile
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && !startsWith(matrix.shell, 'freebsd')
         run: |
           echo "::group::distro detection"
           # detect dist name like bionic, focal, etc
@@ -254,7 +269,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Setup Dependencies Linux
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && !startsWith(matrix.shell, 'freebsd')
         run: |
           echo "::group::apt update"
           sudo apt-get update
@@ -363,22 +378,59 @@ jobs:
           echo "MSYS2_ROOT=${{ runner.temp }}/msys64" >> $GITHUB_ENV
           cat "${{ runner.temp }}/setup-msys2/msys2.CMD"
 
-      - name: Initialize Submodules
-        # libx265 has issues when using the recursive method of the first checkout action
-        # this is after `msys2/setup-msys2@v2` because `msys2` (default) shell is not available until then.
-        run: |
-          git submodule update --init --recursive
+      - name: Setup FreeBSD
+        if: startsWith(matrix.shell, 'freebsd')
+        uses: vmactions/freebsd-vm@v1.2.1
+        with:
+          arch: ${{ matrix.arch }}
+          prepare: |
+            pkg install -y \
+              devel/autoconf \
+              devel/automake \
+              devel/cmake \
+              devel/git \
+              devel/gmake \
+              devel/llvm${{ env.FREEBSD_CLANG_VERSION }} \
+              devel/nasm \
+              devel/ninja \
+              devel/pkgconf \
+              multimedia/libass \
+              multimedia/libv4l \
+              multimedia/libva \
+              multimedia/v4l_compat \
+              print/freetype2 \
+              security/gnutls \
+              shells/bash \
+              x11/libx11 \
+              x11/libxcb \
+              x11/libXfixes
+
+            # create symlink for shebang bash compatibility
+            ln -s /usr/local/bin/bash /bin/bash
+          release: ${{ matrix.bsd_release }}
+          sync: nfs
 
       - name: Setup ENV
         id: root
         run: |
+          set -e
+          cd $GITHUB_WORKSPACE
           echo "ROOT_PATH=$PWD" >> $GITHUB_ENV
+
+          MAKE_CMD="make"
+          if [ "${{ startsWith(matrix.shell, 'freebsd') }}" = true ]; then
+            # use gmake on FreeBSD instead of make
+            MAKE_CMD="gmake"
+          fi
+          echo "MAKE_CMD=${MAKE_CMD}" >> $GITHUB_ENV
 
       - name: Setup cross compilation
         id: cross
         if: matrix.target != ''
         run: |
-          TOOLCHAIN=${ROOT_PATH}/cmake/toolchains/${{ matrix.target }}.cmake
+          set -e
+          cd $GITHUB_WORKSPACE
+          TOOLCHAIN=${{ env.ROOT_PATH }}/cmake/toolchains/${{ matrix.target }}.cmake
 
           # fail if file does not exist
           if [ ! -f $TOOLCHAIN ]; then
@@ -394,33 +446,76 @@ jobs:
       - name: Get Processor Count
         id: processor_count
         run: |
-          if [[ ${{ runner.os }} == 'macOS' ]]; then
-            echo "PROCESSOR_COUNT=$(sysctl -n hw.ncpu)" >> $GITHUB_OUTPUT
+          set -e
+          cd $GITHUB_WORKSPACE
+          if [ "${{ runner.os }}" = 'macOS' ]; then
+            PROCESSOR_COUNT=$(sysctl -n hw.ncpu)
           else
-            echo "PROCESSOR_COUNT=$(nproc)" >> $GITHUB_OUTPUT
+            PROCESSOR_COUNT=$(nproc)
           fi
+          echo "PROCESSOR_COUNT=${PROCESSOR_COUNT}" >> $GITHUB_OUTPUT
+          echo "PROCESSOR_COUNT: $PROCESSOR_COUNT"
+
+      - name: Get x265 git history
+        run: |
+          set -e
+
+          # x265.pc will not be installed if their cmake cannot detect the latest tag
+          # SVT-AV1 cannot determine version if the git history is not available
+
+          for repo in "x265_git" "SVT-AV1"; do
+            cd $GITHUB_WORKSPACE/third-party/FFmpeg/$repo
+            git config --global --add safe.directory $(pwd)
+            git fetch --tags --force origin
+          done
 
       - name: Configure
         run: |
+          set -e
+          cd $GITHUB_WORKSPACE
+
+          if [ "${{ startsWith(matrix.shell, 'freebsd') }}" = true ]; then
+            export CC=$(which clang${{ env.FREEBSD_CLANG_VERSION }})
+            export CXX=$(which clang++${{ env.FREEBSD_CLANG_VERSION }})
+
+            # make sure they exist
+            if [ ! -f "$CC" ]; then
+              echo "Compiler not found: $CC"
+              exit 1
+            fi
+            if [ ! -f "$CXX" ]; then
+              echo "Compiler not found: $CXX"
+              exit 1
+            fi
+          fi
+
           mkdir -p ./build/dist
           cmake \
             -B build \
             -S . \
             -G "${{ matrix.generator }}" \
-            -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} \
-            -DCMAKE_INSTALL_PREFIX="${ROOT_PATH}/build/dist"
+            -DCMAKE_TOOLCHAIN_FILE=${{ env.CMAKE_TOOLCHAIN_FILE }} \
+            -DCMAKE_INSTALL_PREFIX="${{ env.ROOT_PATH }}/build/dist" \
+            -DPARALLEL_BUILDS=${{ steps.processor_count.outputs.PROCESSOR_COUNT || 1 }}
 
       - name: Build
         run: |
-          make -C build -j${{ steps.processor_count.outputs.PROCESSOR_COUNT }}
+          set -e
+          cd $GITHUB_WORKSPACE
+          ${{ env.MAKE_CMD }} -C build --jobs=${{ steps.processor_count.outputs.PROCESSOR_COUNT || 1 }}
 
       - name: Install
         run: |
-          make -C build install
+          set -e
+          cd $GITHUB_WORKSPACE
+          ${{ env.MAKE_CMD }} -C build install
 
       - name: Debug logs
         if: always()
         run: |
+          set -e
+          cd $GITHUB_WORKSPACE
+
           echo "::group::x264 config.log"
           cat ./third-party/FFmpeg/x264/config.log || true
           echo "::endgroup::"
@@ -432,20 +527,27 @@ jobs:
       - name: Debug build directory
         if: always()
         run: |
+          set -e
+          cd $GITHUB_WORKSPACE
           ls -R ./build
 
       - name: Debug build/dist directory
         if: always()
         run: |
+          set -e
+          cd $GITHUB_WORKSPACE
           ls -R ./build/dist
 
       - name: Cleanup
         run: |
+          set -e
+          cd $GITHUB_WORKSPACE
           rm -f -r ./build/dist/share
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
+          if-no-files-found: error
           name: ${{ matrix.name }}
           path: ./build/dist
 
