@@ -16,8 +16,7 @@ macro(APPLY_GIT_PATCH repo_path patch_path)
                 COMMAND_ECHO STDOUT)
 
         if(${SUCCESS} EQUAL 1)
-            # We don't stop here because it can happen in case of parallel builds
-            message(WARNING "\n::error:: failed to apply the patch patch: ${patch_path}\n")
+            message(FATAL_ERROR "\n::error:: failed to apply the patch: ${patch_path}\n")
         endif()
     endif()
 endmacro()

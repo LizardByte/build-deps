@@ -1,5 +1,7 @@
+set(X264_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/x264)
+
 if(BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_X264_PATCHES)
-    file(GLOB FFMPEG_X264_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/x264/*.patch)
+    file(GLOB FFMPEG_X264_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/FFmpeg/x264/*.patch)
 
     foreach(patch_file ${FFMPEG_X264_FILES})
         APPLY_GIT_PATCH(${FFMPEG_GENERATED_SRC_PATH} ${patch_file})
@@ -52,7 +54,7 @@ endif()
 
 # On Windows, the x264 submodule needs to have line endings converted to LF, see the README.md
 
-set(WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/x264)
+set(WORKING_DIR "${X264_GENERATED_SRC_PATH}")
 UNIX_PATH(WORKING_DIR_UNIX ${WORKING_DIR})
 add_custom_target(x264 ALL
         COMMAND ${SHELL_CMD} "${X264_COMPILER_FLAGS} ./configure \

@@ -1,5 +1,7 @@
+set(SVT_AV1_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/SVT-AV1)
+
 if(BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_SVT_AV1_PATCHES)
-    file(GLOB FFMPEG_SVT_AV1_PATCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/SVT-AV1/*.patch)
+    file(GLOB FFMPEG_SVT_AV1_PATCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/FFmpeg/SVT-AV1/*.patch)
 
     foreach(patch_file ${FFMPEG_SVT_AV1_PATCH_FILES})
         APPLY_GIT_PATCH(${FFMPEG_GENERATED_SRC_PATH} ${patch_file})
@@ -12,8 +14,11 @@ set(BUILD_DEC OFF CACHE BOOL "Build decoders")
 set(ENABLE_AVX512 ON CACHE BOOL "Enable AVX512")
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries")
 
+# disable LTO because it forces projects linking against our pre-build to use the same compiler version
+set(SVT_AV1_LTO OFF CACHE BOOL "Enable Link Time Optimization (LTO)")
+
 # build SVT-AV1
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/SVT-AV1 SVT-AV1 SYSTEM)
+add_subdirectory(${SVT_AV1_GENERATED_SRC_PATH} SVT-AV1 SYSTEM)
 add_dependencies(${CMAKE_PROJECT_NAME} SvtAv1Enc)
 
 # install SVT-AV1 as a build target, this must be installed before building FFmpeg
@@ -25,4 +30,4 @@ add_custom_target(SvtAv1
 add_dependencies(SvtAv1 SvtAv1Enc)
 add_dependencies(${CMAKE_PROJECT_NAME} SvtAv1)
 
-# PKG_CONFIG_PATH alraedy set since this is installed directly to the prefix
+# PKG_CONFIG_PATH already set since this is installed directly to the prefix
