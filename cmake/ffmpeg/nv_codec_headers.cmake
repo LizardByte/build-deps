@@ -1,12 +1,15 @@
+set(NV_CODEC_HEADERS_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/nv-codec-headers)
+
 if(BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_NV_CODEC_HEADERS_PATCHES)
-    file(GLOB FFMPEG_NV_CODEC_HEADER_PATCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/nv-codec-headers/*.patch)
+    file(GLOB FFMPEG_NV_CODEC_HEADER_PATCH_FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/FFmpeg/nv-codec-headers/*.patch)
 
     foreach(patch_file ${FFMPEG_NV_CODEC_HEADER_PATCH_FILES})
         APPLY_GIT_PATCH(${FFMPEG_GENERATED_SRC_PATH} ${patch_file})
     endforeach()
 endif()
 
-set(WORKING_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/nv-codec-headers")
+set(WORKING_DIR "${NV_CODEC_HEADERS_GENERATED_SRC_PATH}")
 UNIX_PATH(WORKING_DIR_UNIX ${WORKING_DIR})
 UNIX_PATH(DEST_DIR_UNIX ${CMAKE_CURRENT_BINARY_DIR})
 add_custom_target(nv-codec-headers ALL

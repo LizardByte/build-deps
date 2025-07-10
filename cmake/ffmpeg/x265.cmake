@@ -1,5 +1,12 @@
+set(X265_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/x265_git)
+
+file(GLOB X265_GIT_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/x265_git/*.patch)
+foreach(patch_file ${X265_GIT_FILES})
+    APPLY_GIT_PATCH(${X265_GENERATED_SRC_PATH} ${patch_file})
+endforeach()
+
 if(BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_X265_PATCHES)
-    file(GLOB FFMPEG_X265_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/x265/*.patch)
+    file(GLOB FFMPEG_X265_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/FFmpeg/x265/*.patch)
 
     foreach(patch_file ${FFMPEG_X265_FILES})
         APPLY_GIT_PATCH(${FFMPEG_GENERATED_SRC_PATH} ${patch_file})
@@ -17,7 +24,7 @@ if(${arch} STREQUAL "amd64" OR ${arch} STREQUAL "x86_64")
 endif()
 
 # build x265
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/x265_git/source x265 SYSTEM)
+add_subdirectory(${X265_GENERATED_SRC_PATH}/source x265 SYSTEM)
 add_dependencies(${CMAKE_PROJECT_NAME} x265-static)
 
 # install x265 as a build target, this must be installed before building FFmpeg

@@ -186,9 +186,6 @@ message(STATUS "Detected system name: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "Detected architecture: ${CMAKE_SYSTEM_PROCESSOR}")
 message(STATUS "CI Matrix name should be: '${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}'")
 
-# set generated source path
-set(CMAKE_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/generated-src)
-
 if(BUILD_ALL OR BUILD_ALL_SUNSHINE OR BUILD_FFMPEG)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/_main.cmake)
 endif()
