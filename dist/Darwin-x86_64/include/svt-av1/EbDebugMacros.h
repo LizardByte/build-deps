@@ -35,9 +35,9 @@ extern "C" {
 #endif // __cplusplus
 
 //FOR DEBUGGING - Do not remove
-#define OPT_LD_LATENCY2         0 // Latency optimization for low delay
+#define FIX_AVX512_ICL_RTCD         1 // Correct avx512icl support detection
+#define OPT_LD_LATENCY2         1 // Latency optimization for low delay - to keep the Macro for backwards testing until 3.0
 #define LOG_ENC_DONE            0 // log encoder job one
-#define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define DEBUG_TPL               0 // Prints to debug TPL
 #define DETAILED_FRAME_OUTPUT   0 // Prints detailed frame output from the library for debugging
 #define TUNE_CHROMA_SSIM        0 // Allows for Chroma and SSIM BDR-based Tuning
@@ -48,10 +48,10 @@ extern "C" {
 #define LAD_MG_PRINT            0 // Report LAD
 #define RC_NO_R2R               0 // This is a debugging flag for RC and makes encoder to run with no R2R in RC mode
                                   // Note that the speed might impacted significantly
-#if RC_NO_R2R
-#define REMOVE_LP1_LPN_DIFF     1 // Disallow single-thread/multi-thread differences
-#else
-#define REMOVE_LP1_LPN_DIFF     0 // Disallow single-thread/multi-thread differences
+#if !RC_NO_R2R
+#define FTR_KF_ON_FLY_SAMPLE      0 // Sample code to signal KF
+#define FTR_RES_ON_FLY_SAMPLE     0 // Sample functions to change the resolution on the fly
+#define FTR_RATE_ON_FLY_SAMPLE     0 // Sample functions to change bit rate
 #endif
 // Super-resolution debugging code
 #define DEBUG_SCALING           0
@@ -63,6 +63,12 @@ extern "C" {
 
 // Switch frame debugging code
 #define DEBUG_SFRAME            0
+
+// Variance boost debugging code
+#define DEBUG_VAR_BOOST         0
+#define DEBUG_VAR_BOOST_QP      0
+#define DEBUG_VAR_BOOST_STATS   0
+
 // Quantization matrices
 #define DEBUG_QM_LEVEL          0
 #define DEBUG_STARTUP_MG_SIZE   0
