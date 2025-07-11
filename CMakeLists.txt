@@ -41,6 +41,20 @@ if(UNIX AND NOT APPLE)
     include(GNUInstallDirs)
 endif()
 
+set(EXTRA_COMPILE_FLAGS "-w" CACHE STRING "Extra compiler flags to use for all targets")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EXTRA_COMPILE_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_COMPILE_FLAGS}")
+
+# Set compiler the various targets that use make directly
+set(MAKE_COMPILER_FLAGS "CFLAGS='${CMAKE_C_FLAGS}' CXXFLAGS='${CMAKE_CXX_FLAGS}'")
+if(CMAKE_C_COMPILER)
+    set(MAKE_COMPILER_FLAGS "${MAKE_COMPILER_FLAGS} CC=${CMAKE_C_COMPILER}")
+endif()
+if(CMAKE_CXX_COMPILER)
+    set(MAKE_COMPILER_FLAGS "${MAKE_COMPILER_FLAGS} CXX=${CMAKE_CXX_COMPILER}")
+endif()
+message(STATUS "make compiler flags: ${MAKE_COMPILER_FLAGS}")
+
 # if PARALLEL_BUILDS is not defined, set it to the number of processors
 if(NOT DEFINED PARALLEL_BUILDS)
     include(ProcessorCount)
