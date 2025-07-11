@@ -43,27 +43,18 @@ endif()
 # configure command will only take the first argument if not converted to string
 string(REPLACE ";" " " FFMPEG_X264_EXTRA_CONFIGURE "${FFMPEG_X264_EXTRA_CONFIGURE}")
 
-# Set compiler for x264 configure script
-set(X264_COMPILER_FLAGS "")
-if(CMAKE_C_COMPILER)
-    set(X264_COMPILER_FLAGS "CC=${CMAKE_C_COMPILER}")
-endif()
-if(CMAKE_CXX_COMPILER)
-    set(X264_COMPILER_FLAGS "${X264_COMPILER_FLAGS} CXX=${CMAKE_CXX_COMPILER}")
-endif()
-
 # On Windows, the x264 submodule needs to have line endings converted to LF, see the README.md
 
 set(WORKING_DIR "${X264_GENERATED_SRC_PATH}")
 UNIX_PATH(WORKING_DIR_UNIX ${WORKING_DIR})
 add_custom_target(x264 ALL
-        COMMAND ${SHELL_CMD} "${X264_COMPILER_FLAGS} ./configure \
+        COMMAND ${SHELL_CMD} "${MAKE_COMPILER_FLAGS} ./configure \
 --prefix=${CMAKE_CURRENT_BINARY_DIR_UNIX}/x264 \
 --disable-cli \
 --enable-static \
 ${FFMPEG_X264_EXTRA_CONFIGURE}"
-        COMMAND ${SHELL_CMD} "${MAKE_EXECUTABLE} --jobs=${N_PROC}"
-        COMMAND ${SHELL_CMD} "${MAKE_EXECUTABLE} install"
+        COMMAND ${SHELL_CMD} "${MAKE_COMPILER_FLAGS} ${MAKE_EXECUTABLE} --jobs=${N_PROC}"
+        COMMAND ${SHELL_CMD} "${MAKE_COMPILER_FLAGS} ${MAKE_EXECUTABLE} install"
         WORKING_DIRECTORY ${WORKING_DIR}
         COMMENT "Target: x264"
         COMMAND_EXPAND_LISTS
