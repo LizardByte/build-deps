@@ -373,11 +373,35 @@ jobs:
           echo "MSYS2_ROOT=${{ runner.temp }}/msys64" >> $GITHUB_ENV
           cat "${{ runner.temp }}/setup-msys2/msys2.CMD"
 
+      - name: Get submodule history
+        shell: bash
+        run: |
+          # x265.pc will not be installed if their cmake cannot detect the latest tag
+          # SVT-AV1 cannot determine version if the git history is not available
+
+          for repo in "x265_git" "SVT-AV1"; do
+            cd ${GITHUB_WORKSPACE}/third-party/FFmpeg/$repo
+            git fetch --tags --force origin
+          done
+
+      - name: Get Processor Count
+        id: processor_count
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = 'macOS' ]; then
+            PROCESSOR_COUNT=$(sysctl -n hw.ncpu)
+          else
+            PROCESSOR_COUNT=$(nproc)
+          fi
+          echo "PROCESSOR_COUNT=${PROCESSOR_COUNT}" >> $GITHUB_OUTPUT
+          echo "PROCESSOR_COUNT: $PROCESSOR_COUNT"
+
       - name: Setup FreeBSD
         if: startsWith(matrix.shell, 'freebsd')
         uses: vmactions/freebsd-vm@v1.2.1
         with:
           arch: ${{ matrix.arch }}
+          cpu: ${{ steps.processor_count.outputs.PROCESSOR_COUNT }}
           prepare: |
             pkg install -y \
               devel/autoconf \
@@ -440,31 +464,6 @@ jobs:
             echo "CCPREFIX=/usr/bin/${{ matrix.target }}-" >> $GITHUB_ENV
           fi
 
-      - name: Get Processor Count
-        id: processor_count
-        run: |
-          set -e
-          cd $GITHUB_WORKSPACE
-          if [ "${{ runner.os }}" = 'macOS' ]; then
-            PROCESSOR_COUNT=$(sysctl -n hw.ncpu)
-          else
-            PROCESSOR_COUNT=$(nproc)
-          fi
-          echo "PROCESSOR_COUNT=${PROCESSOR_COUNT}" >> $GITHUB_OUTPUT
-          echo "PROCESSOR_COUNT: $PROCESSOR_COUNT"
-
-      - name: Get submodule history
-        run: |
-          set -e
-
-          # x265.pc will not be installed if their cmake cannot detect the latest tag
-          # SVT-AV1 cannot determine version if the git history is not available
-
-          for repo in "x265_git" "SVT-AV1"; do
-            cd $GITHUB_WORKSPACE/third-party/FFmpeg/$repo
-            git fetch --tags --force origin
-          done
-
       - name: Configure
         run: |
           set -e
@@ -508,10 +507,8 @@ jobs:
 
       - name: Debug logs
         if: always()
+        shell: bash
         run: |
-          set -e
-          cd $GITHUB_WORKSPACE
-
           echo "::group::x264 config.log"
           cat ./third-party/FFmpeg/x264/config.log || true
           echo "::endgroup::"
@@ -522,23 +519,17 @@ jobs:
 
       - name: Debug build directory
         if: always()
-        run: |
-          set -e
-          cd $GITHUB_WORKSPACE
-          ls -R ./build
+        shell: bash
+        run: ls -R ./build
 
       - name: Debug build/dist directory
         if: always()
-        run: |
-          set -e
-          cd $GITHUB_WORKSPACE
-          ls -R ./build/dist
+        shell: bash
+        run: ls -R ./build/dist
 
       - name: Cleanup
-        run: |
-          set -e
-          cd $GITHUB_WORKSPACE
-          rm -f -r ./build/dist/share
+        shell: bash
+        run: rm -f -r ./build/dist/share
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
