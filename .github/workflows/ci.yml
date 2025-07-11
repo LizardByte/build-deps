@@ -574,6 +574,13 @@ jobs:
       - name: Debug dist directory
         run: ls -R dist
 
+      - name: Extract first line of commit message
+        id: commit_message
+        run: |
+          FIRST_LINE=$(echo "${{ github.event.head_commit.message }}" | head -n 1)
+          echo "first_line=$FIRST_LINE"
+          echo "first_line=$FIRST_LINE" >> $GITHUB_OUTPUT
+
       - name: Commit dist
         if: >-
           startsWith(github.repository, 'LizardByte/') &&
@@ -587,4 +594,4 @@ jobs:
           directory: dist
           branch: dist
           force: false
-          message: "Commit ${{ github.sha }}"
+          message: "${{ steps.commit_message.outputs.first_line }}"
