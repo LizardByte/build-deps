@@ -248,23 +248,23 @@ jobs:
 
           echo "::group::output"
           echo "CROSS_COMPILE=${cross_compile}"
-          echo "CROSS_COMPILE=${cross_compile}" >> $GITHUB_OUTPUT
+          echo "CROSS_COMPILE=${cross_compile}" >> "${GITHUB_OUTPUT}"
 
           echo "DEPENDENCIES=${dependencies[@]}"
-          echo "DEPENDENCIES=${dependencies[@]}" >> $GITHUB_OUTPUT
+          echo "DEPENDENCIES=${dependencies[@]}" >> "${GITHUB_OUTPUT}"
 
           echo "PKG_CONFIG_SYSROOT_DIR=${pkg_config_sysroot_dir}"
-          echo "PKG_CONFIG_SYSROOT_DIR=${pkg_config_sysroot_dir}" >> $GITHUB_ENV
+          echo "PKG_CONFIG_SYSROOT_DIR=${pkg_config_sysroot_dir}" >> "${GITHUB_ENV}"
 
           echo "PKG_CONFIG_PATH=${pkg_config_sysroot_dir}/pkgconfig"
-          echo "PKG_CONFIG_PATH=${pkg_config_sysroot_dir}/pkgconfig" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=${pkg_config_sysroot_dir}/pkgconfig" >> "${GITHUB_ENV}"
 
           if [[ ${cross_compile} == false ]]; then
             echo "CC=gcc-${LINUX_GCC_VERSION}"
-            echo "CC=gcc-${LINUX_GCC_VERSION}" >> $GITHUB_ENV
+            echo "CC=gcc-${LINUX_GCC_VERSION}" >> "${GITHUB_ENV}"
 
             echo "CXX=g++-${LINUX_GCC_VERSION}"
-            echo "CXX=g++-${LINUX_GCC_VERSION}" >> $GITHUB_ENV
+            echo "CXX=g++-${LINUX_GCC_VERSION}" >> "${GITHUB_ENV}"
           fi
           echo "::endgroup::"
 
@@ -357,7 +357,7 @@ jobs:
 
           # install pinned dependencies
           if [ -n "$tarballs" ]; then
-            pacman -U --noconfirm ${tarballs}
+            pacman -U --noconfirm "${tarballs}"
           fi
 
           # Only add --ignore if we have packages to ignore
@@ -370,7 +370,7 @@ jobs:
       - name: Debug msys2.CMD
         if: runner.os == 'Windows'
         run: |
-          echo "MSYS2_ROOT=${{ runner.temp }}/msys64" >> $GITHUB_ENV
+          echo "MSYS2_ROOT=${{ runner.temp }}/msys64" >> "${GITHUB_ENV}"
           cat "${{ runner.temp }}/setup-msys2/msys2.CMD"
 
       - name: Get submodule history
@@ -380,7 +380,7 @@ jobs:
           # SVT-AV1 cannot determine version if the git history is not available
 
           for repo in "x265_git" "SVT-AV1"; do
-            cd ${GITHUB_WORKSPACE}/third-party/FFmpeg/$repo
+            cd "${GITHUB_WORKSPACE}/third-party/FFmpeg/${repo}"
             git fetch --tags --force origin
           done
 
@@ -393,8 +393,8 @@ jobs:
           else
             PROCESSOR_COUNT=$(nproc)
           fi
-          echo "PROCESSOR_COUNT=${PROCESSOR_COUNT}" >> $GITHUB_OUTPUT
-          echo "PROCESSOR_COUNT: $PROCESSOR_COUNT"
+          echo "PROCESSOR_COUNT=${PROCESSOR_COUNT}" >> "${GITHUB_OUTPUT}"
+          echo "PROCESSOR_COUNT: ${PROCESSOR_COUNT}"
 
       - name: Setup FreeBSD
         if: startsWith(matrix.shell, 'freebsd')
@@ -436,14 +436,14 @@ jobs:
         run: |
           set -e
           cd $GITHUB_WORKSPACE
-          echo "ROOT_PATH=$PWD" >> $GITHUB_ENV
+          echo "ROOT_PATH=$PWD" >> "${GITHUB_ENV}"
 
           MAKE_CMD="make"
           if [ "${{ startsWith(matrix.shell, 'freebsd') }}" = true ]; then
             # use gmake on FreeBSD instead of make
             MAKE_CMD="gmake"
           fi
-          echo "MAKE_CMD=${MAKE_CMD}" >> $GITHUB_ENV
+          echo "MAKE_CMD=${MAKE_CMD}" >> "${GITHUB_ENV}"
 
       - name: Setup cross compilation
         id: cross
@@ -459,9 +459,9 @@ jobs:
               exit 1
           fi
 
-          echo "CMAKE_TOOLCHAIN_FILE=$TOOLCHAIN" >> $GITHUB_ENV
+          echo "CMAKE_TOOLCHAIN_FILE=$TOOLCHAIN" >> "${GITHUB_ENV}"
           if [[ ${{ runner.os }} == 'Linux' ]]; then
-            echo "CCPREFIX=/usr/bin/${{ matrix.target }}-" >> $GITHUB_ENV
+            echo "CCPREFIX=/usr/bin/${{ matrix.target }}-" >> "${GITHUB_ENV}"
           fi
 
       - name: Configure
@@ -567,10 +567,12 @@ jobs:
 
       - name: Extract first line of commit message
         id: commit_message
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          FIRST_LINE=$(echo "${{ github.event.head_commit.message }}" | head -n 1)
+          FIRST_LINE=$(echo "${COMMIT_MESSAGE}" | head -n 1)
           echo "first_line=$FIRST_LINE"
-          echo "first_line=$FIRST_LINE" >> $GITHUB_OUTPUT
+          echo "first_line=$FIRST_LINE" >> "${GITHUB_OUTPUT}"
 
       - name: Commit dist
         if: >-
