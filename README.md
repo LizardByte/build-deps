@@ -4,6 +4,7 @@
 
 This is a common set of pre-compiled dependencies for [LizardByte/Sunshine](https://github.com/LizardByte/Sunshine).
 
+- [Boost](https://www.boost.org)
 - [FFmpeg](https://ffmpeg.org)
 
 ## Usage
@@ -16,13 +17,6 @@ This is a common set of pre-compiled dependencies for [LizardByte/Sunshine](http
    git submodule update --init --recursive
    checkout dist
    ```
-
-## Plans
-
-- [ ] Add more dependencies
-  - [ ] boost
-  - [ ] cuda (developer toolkit)
-- [ ] build linux dependencies in Docker (to more closely align with target environments)
 
 ## License
 
@@ -159,6 +153,7 @@ pacman -S \
     diffutils \
     git \
     make \
+    patch \ 
     pkg-config \
     mingw-w64-ucrt-x86_64-binutils \
     mingw-w64-ucrt-x86_64-cmake \
@@ -179,6 +174,7 @@ pacman -S \
     diffutils \
     git \
     make \
+    patch \ 
     pkg-config \
     mingw-w64-clang-aarch64-binutils \
     mingw-w64-clang-aarch64-cmake \
