@@ -7,10 +7,16 @@ project(build-deps
 
 # Main options
 option(BUILD_ALL "Build all dependencies" ON)
-option(BUILD_ALL_SUNSHINE "Build all Sunshine dependencies" ON)
+option(BUILD_ALL_LIBDISPLAYDEVICE "Build all libdisplaydevice dependencies" OFF)
+option(BUILD_ALL_SUNSHINE "Build all Sunshine dependencies" OFF)
+
+# Boost options
+option(BUILD_BOOST "Build Boost" OFF)
+option(BUILD_BOOST_LIBDISPLAYDEVICE "Build boost for libdisplaydevice" ON)
+option(BUILD_BOOST_SUNSHINE "Build boost for Sunshine" ON)
 
 # FFmpeg options
-option(BUILD_FFMPEG "Build FFmpeg" ON)
+option(BUILD_FFMPEG "Build FFmpeg" OFF)
 option(BUILD_FFMPEG_ALL_PATCHES "Apply FFmpeg patches" ON)
 option(BUILD_FFMPEG_AMF "Build FFmpeg AMF" ON)
 option(BUILD_FFMPEG_AMF_PATCHES "Apply FFmpeg AMF patches" ON)
@@ -32,6 +38,10 @@ option(BUILD_FFMPEG_X265_PATCHES "Apply FFmpeg x265 patches" ON)
 # common includes
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/apply_git_patch.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/unix_path.cmake)
+
+# CPM
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpm/CPM.cmake)
+CPMUsePackageLock(package-lock.cmake)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
     set(FREEBSD ON)
@@ -200,6 +210,15 @@ message(STATUS "Detected system name: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "Detected architecture: ${CMAKE_SYSTEM_PROCESSOR}")
 message(STATUS "CI Matrix name should be: '${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}'")
 
+# boost
+# TODO: boost build fails on Windows due to NASM errors during configure?
+# https://github.com/Orphis/boost-cmake/issues/42
+# https://github.com/libsdl-org/SDL/issues/10250
+if(BUILD_ALL OR BUILD_ALL_LIBDISPLAYDEVICE OR BUILD_ALL_SUNSHINE OR BUILD_BOOST)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/boost/_main.cmake)
+endif()
+
+# FFmpeg
 if(BUILD_ALL OR BUILD_ALL_SUNSHINE OR BUILD_FFMPEG)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/_main.cmake)
 endif()
