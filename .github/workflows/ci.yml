@@ -32,50 +32,42 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name:  # these are ordered by average build time, longest first
-          # ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}
-          - FreeBSD-aarch64
-          - FreeBSD-amd64
-          - Windows-AMD64
-          - Windows-ARM64
-          - Darwin-arm64
-          - Darwin-x86_64
-          - Linux-aarch64
-          - Linux-ppc64le
-          - Linux-x86_64
-        build:
-          - BOOST
-          - FFMPEG
         include:
+          # name: ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}
           - name: Linux-x86_64
             os: ubuntu-22.04
             arch: x86_64
             generator: "Unix Makefiles"
             shell: bash
+            build: ALL
           - name: Linux-aarch64
             os: ubuntu-22.04
             arch: aarch64
             generator: "Unix Makefiles"
             shell: bash
             target: aarch64-linux-gnu
+            build: ALL
           - name: Linux-ppc64le
             os: ubuntu-22.04
             arch: powerpc64le
             generator: "Unix Makefiles"
             shell: bash
             target: powerpc64le-linux-gnu
+            build: FFMPEG  # https://github.com/boostorg/context/issues/311
           - name: Darwin-x86_64
             os: macos-13
             arch: x86_64
             generator: "Unix Makefiles"
             shell: bash
             target: x86_64-apple-macosx
+            build: ALL
           - name: Darwin-arm64
             os: macos-14
             arch: aarch64
             generator: "Unix Makefiles"
             shell: bash
             target: arm64-apple-macosx
+            build: ALL
           - name: Windows-AMD64
             os: windows-2022
             arch: x86_64
@@ -83,6 +75,15 @@ jobs:
             shell: msys2 {0}
             msystem: ucrt64
             toolchain: ucrt-x86_64
+            build: BOOST
+          - name: Windows-AMD64
+            os: windows-2022
+            arch: x86_64
+            generator: "MSYS Makefiles"
+            shell: msys2 {0}
+            msystem: ucrt64
+            toolchain: ucrt-x86_64
+            build: FFMPEG
           - name: Windows-ARM64
             os: windows-11-arm
             arch: aarch64
@@ -90,21 +91,21 @@ jobs:
             shell: msys2 {0}
             msystem: clangarm64
             toolchain: clang-aarch64
+            build: ALL
           - name: FreeBSD-amd64
             os: ubuntu-latest
             arch: x86_64
             bsd_release: '14.3'
             generator: "Unix Makefiles"
             shell: freebsd {0}
+            build: ALL
           - name: FreeBSD-aarch64
             os: ubuntu-latest  # ubuntu-24.04-arm is slower with the FreeBSD VM
             arch: aarch64
             bsd_release: '14.3'
             generator: "Unix Makefiles"
             shell: freebsd {0}
-        exclude:
-          - name: Linux-ppc64le  # https://github.com/boostorg/context/issues/311
-            build: BOOST
+            build: ALL
     defaults:
       run:
         shell: ${{ matrix.shell }}
@@ -558,6 +559,15 @@ jobs:
           if-no-files-found: error
           name: ${{ matrix.name }}-${{ matrix.build }}
           path: ./build/dist
+
+  conclusion:
+    name: Conclusion
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # this job is simply used for branch protection rules so we don't have to add every matrix combination
+      - name: Check build status
+        run: echo "Build succeeded"
 
   update_dist:
     # only the commit is conditional, so the rest of the job can be verified on PRs
