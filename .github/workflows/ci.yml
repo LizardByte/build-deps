@@ -27,44 +27,47 @@ env:
 
 jobs:
   build:
-    name: Build (${{ matrix.name }})
+    name: Build ${{ matrix.build }} (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
-    # https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu
-    # https://trac.ffmpeg.org/wiki/CompilationGuide/macOS
-    # https://trac.ffmpeg.org/wiki/CompilationGuide/MinGW
     strategy:
-      fail-fast: false  # false to test all, true to fail entire job if any fail
+      fail-fast: false
       matrix:
         include:
-          - name: Linux-x86_64  # ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}
+          # name: ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}
+          - name: Linux-x86_64
             os: ubuntu-22.04
             arch: x86_64
             generator: "Unix Makefiles"
             shell: bash
+            build: ALL
           - name: Linux-aarch64
             os: ubuntu-22.04
             arch: aarch64
             generator: "Unix Makefiles"
             shell: bash
             target: aarch64-linux-gnu
+            build: ALL
           - name: Linux-ppc64le
             os: ubuntu-22.04
             arch: powerpc64le
             generator: "Unix Makefiles"
             shell: bash
             target: powerpc64le-linux-gnu
+            build: FFMPEG  # https://github.com/boostorg/context/issues/311
           - name: Darwin-x86_64
             os: macos-13
             arch: x86_64
             generator: "Unix Makefiles"
             shell: bash
             target: x86_64-apple-macosx
+            build: ALL
           - name: Darwin-arm64
             os: macos-14
             arch: aarch64
             generator: "Unix Makefiles"
             shell: bash
             target: arm64-apple-macosx
+            build: ALL
           - name: Windows-AMD64
             os: windows-2022
             arch: x86_64
@@ -72,6 +75,15 @@ jobs:
             shell: msys2 {0}
             msystem: ucrt64
             toolchain: ucrt-x86_64
+            build: BOOST
+          - name: Windows-AMD64
+            os: windows-2022
+            arch: x86_64
+            generator: "MSYS Makefiles"
+            shell: msys2 {0}
+            msystem: ucrt64
+            toolchain: ucrt-x86_64
+            build: FFMPEG
           - name: Windows-ARM64
             os: windows-11-arm
             arch: aarch64
@@ -79,18 +91,21 @@ jobs:
             shell: msys2 {0}
             msystem: clangarm64
             toolchain: clang-aarch64
+            build: ALL
           - name: FreeBSD-amd64
             os: ubuntu-latest
             arch: x86_64
             bsd_release: '14.3'
             generator: "Unix Makefiles"
             shell: freebsd {0}
+            build: ALL
           - name: FreeBSD-aarch64
             os: ubuntu-latest  # ubuntu-24.04-arm is slower with the FreeBSD VM
             arch: aarch64
             bsd_release: '14.3'
             generator: "Unix Makefiles"
             shell: freebsd {0}
+            build: ALL
     defaults:
       run:
         shell: ${{ matrix.shell }}
@@ -327,6 +342,7 @@ jobs:
             "diffutils"
             "git"
             "make"
+            "patch"
             "pkg-config"
             "mingw-w64-${TOOLCHAIN}-binutils"
             "mingw-w64-${TOOLCHAIN}-cmake"
@@ -489,6 +505,8 @@ jobs:
             -B build \
             -S . \
             -G "${{ matrix.generator }}" \
+            -DBUILD_ALL=OFF \
+            -DBUILD_${{ matrix.build }}=ON \
             -DCMAKE_TOOLCHAIN_FILE=${{ env.CMAKE_TOOLCHAIN_FILE }} \
             -DCMAKE_INSTALL_PREFIX="${{ env.ROOT_PATH }}/build/dist" \
             -DPARALLEL_BUILDS=${{ steps.processor_count.outputs.PROCESSOR_COUNT || 1 }}
@@ -506,7 +524,9 @@ jobs:
           ${{ env.MAKE_CMD }} -C build install
 
       - name: Debug logs
-        if: always()
+        if: >-
+          always() &&
+          matrix.build == 'FFMPEG'
         shell: bash
         run: |
           echo "::group::x264 config.log"
@@ -529,14 +549,25 @@ jobs:
 
       - name: Cleanup
         shell: bash
-        run: rm -f -r ./build/dist/share
+        run: |
+          rm -f -r ./build/dist/share
+          rm -f -r ./build/dist/lib/cmake
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
-          name: ${{ matrix.name }}
+          name: ${{ matrix.name }}-${{ matrix.build }}
           path: ./build/dist
+
+  conclusion:
+    name: Conclusion
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # this job is simply used for branch protection rules so we don't have to add every matrix combination
+      - name: Check build status
+        run: echo "Build succeeded"
 
   update_dist:
     # only the commit is conditional, so the rest of the job can be verified on PRs
