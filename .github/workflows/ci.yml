@@ -560,15 +560,6 @@ jobs:
           name: ${{ matrix.name }}-${{ matrix.build }}
           path: ./build/dist
 
-  conclusion:
-    name: Conclusion
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      # this job is simply used for branch protection rules so we don't have to add every matrix combination
-      - name: Check build status
-        run: echo "Build succeeded"
-
   update_dist:
     # only the commit is conditional, so the rest of the job can be verified on PRs
     name: Update dist
@@ -593,8 +584,31 @@ jobs:
         with:
           path: dist/dist
 
+      - name: Arrange dist
+        working-directory: dist/dist
+        run: |
+          for dir in */; do
+            dir="${dir%/}"
+            new_name="${dir%-*}"
+            if [[ "${dir}" != "${new_name}" ]]; then
+              if [[ -d "${new_name}" ]]; then
+                rsync -a "${dir}/" "${new_name}/"
+                rm -rf "${dir}"
+              else
+                mv "${dir}" "${new_name}"
+              fi
+            fi
+          done
+
       - name: Debug dist directory
         run: ls -R dist
+
+      - name: Show git diff
+        working-directory: dist/dist
+        run: |
+          git add --all
+          echo "Changed files:" >> "${GITHUB_STEP_SUMMARY}"
+          git diff --cached --name-only >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Extract first line of commit message
         id: commit_message
