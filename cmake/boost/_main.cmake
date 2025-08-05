@@ -32,6 +32,7 @@ endif()
 
 set(BOOST_ENABLE_CMAKE ON)  # Use experimental superproject to pull library dependencies recursively
 set(BOOST_INCLUDE_LIBRARIES ${BOOST_COMPONENTS_BASE} ${BOOST_COMPONENTS})
+set(BOOST_INSTALL_INCLUDE_SUBDIR "")  # boost uses a versioned directory by default on Windows
 set(BOOST_SKIP_INSTALL_RULES OFF)  # disabled to allow installation of Boost libraries
 set(Boost_USE_STATIC_LIBS ON)  # cmake-lint: disable=C0103
 
