@@ -580,7 +580,7 @@ jobs:
           mkdir -p dist/dist
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: dist/dist
 
