@@ -52,7 +52,7 @@ if(BUILD_FFMPEG_AMF)
 endif()
 if(BUILD_FFMPEG_MF)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
-            --enable-encoder=h264_mf,hevc_mf
+            --enable-encoder=h264_mf,hevc_mf,av1_mf
             --enable-mediafoundation
     )
 endif()
