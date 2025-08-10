@@ -17,7 +17,7 @@
 [submodule "third-party/FFmpeg/FFmpeg"]
 	path = third-party/FFmpeg/FFmpeg
 	url = https://github.com/FFmpeg/FFmpeg.git
-	branch = release/7.1
+	branch = release/8.0
 [submodule "third-party/FFmpeg/SVT-AV1"]
 	path = third-party/FFmpeg/SVT-AV1
 	url = https://github.com/LizardByte-infrastructure/SVT-AV1.git
