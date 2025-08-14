@@ -44,4 +44,9 @@ if(WIN32)
     file(MAKE_DIRECTORY ${Boost_BINARY_DIR}/libs/log/src/windows)
 endif()
 
+# https://github.com/boostorg/context/issues/311
+if (CMAKE_SYSTEM_PROCESSOR STREQUAL "ppc64le")
+    set(BOOST_CONTEXT_ARCHITECTURE "ppc64")
+endif ()
+
 add_subdirectory(${Boost_SOURCE_DIR} ${Boost_BINARY_DIR} SYSTEM)
