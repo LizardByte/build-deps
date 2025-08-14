@@ -53,7 +53,7 @@ jobs:
             generator: "Unix Makefiles"
             shell: bash
             target: powerpc64le-linux-gnu
-            build: FFMPEG  # https://github.com/boostorg/context/issues/311
+            build: ALL
           - name: Darwin-x86_64
             os: macos-13
             arch: x86_64
