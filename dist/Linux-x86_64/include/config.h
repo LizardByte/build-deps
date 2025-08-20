@@ -6,7 +6,7 @@
 #define CONFIG_THIS_YEAR 2025
 #define FFMPEG_DATADIR "/home/runner/work/build-deps/build-deps/build/FFmpeg/share/ffmpeg"
 #define AVCONV_DATADIR "/home/runner/work/build-deps/build-deps/build/FFmpeg/share/ffmpeg"
-#define CC_IDENT "gcc 12 (Ubuntu 12.3.0-1ubuntu1~22.04)"
+#define CC_IDENT "gcc 12 (Ubuntu 12.3.0-1ubuntu1~22.04.2)"
 #define OS_NAME linux
 #define EXTERN_PREFIX ""
 #define EXTERN_ASM 
