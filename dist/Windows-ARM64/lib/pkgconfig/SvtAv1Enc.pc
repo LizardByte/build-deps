@@ -5,7 +5,7 @@ libdir=${exec_prefix}/lib
 
 Name: SvtAv1Enc
 Description: SVT (Scalable Video Technology) for AV1 encoder library
-Version: 3.1.0
+Version: 3.1.2
 Requires.private: 
 Libs: -L${libdir} -lSvtAv1Enc
 Libs.private: 
