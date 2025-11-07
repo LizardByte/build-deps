@@ -22,3 +22,12 @@ CPMDeclarePackage(Boost
             "${PATCH_DIRECTORY}/boost/02-no-link-libatomic-clang-windows.patch"
         DOWNLOAD_ONLY YES
 )
+
+# libva
+CPMDeclarePackage(libva
+        NAME libva
+        VERSION 2.22.0
+        GIT_REPOSITORY https://github.com/intel/libva.git
+        GIT_TAG 2.22.0
+        DOWNLOAD_ONLY YES
+)

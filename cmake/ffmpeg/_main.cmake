@@ -5,7 +5,7 @@ set(FFMPEG_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/FFmpeg)
 set(AVCODEC_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/libavcodec)
 
 if(WIN32)
-    set(BUILD_FFMPEG_VAAPI OFF)
+    set(BUILD_FFMPEG_LIBVA OFF)
 
     # We must disable CUDA and NVENC on ARM64 until following issues is resolved
     # https://github.com/FFmpeg/FFmpeg/blob/4e5523c98597a417eb43555933b1075d18ec5f8b/configure#L7443
@@ -16,7 +16,7 @@ elseif(APPLE)
     set(BUILD_FFMPEG_AMF OFF)
     set(BUILD_FFMPEG_MF OFF)
     set(BUILD_FFMPEG_NV_CODEC_HEADERS OFF)
-    set(BUILD_FFMPEG_VAAPI OFF)
+    set(BUILD_FFMPEG_LIBVA OFF)
 elseif(FREEBSD)
     set(BUILD_FFMPEG_AMF OFF)
     set(BUILD_FFMPEG_MF OFF)
@@ -43,8 +43,8 @@ if(BUILD_FFMPEG_SVT_AV1)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/svt_av1.cmake)
 endif()
 
-if(BUILD_FFMPEG_VAAPI)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/vaapi.cmake)
+if(BUILD_FFMPEG_LIBVA)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/libva.cmake)
 endif()
 
 if(BUILD_FFMPEG_X264)
