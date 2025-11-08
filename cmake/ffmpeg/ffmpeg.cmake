@@ -30,8 +30,10 @@ list(APPEND FFMPEG_EXTRA_CONFIGURE
         --pkg-config-flags='--static'
         --extra-cflags='-I${CMAKE_CURRENT_BINARY_DIR_UNIX}/usr/local/include'
         --extra-cflags='-I${CMAKE_CURRENT_BINARY_DIR_UNIX}/x264/include'
+        --extra-cflags='-I${CMAKE_CURRENT_BINARY_DIR_UNIX}/libva/include'
         --extra-ldflags='-L${CMAKE_CURRENT_BINARY_DIR_UNIX}/usr/local/lib'
         --extra-ldflags='-L${CMAKE_CURRENT_BINARY_DIR_UNIX}/x264/lib'
+        --extra-ldflags='-L${CMAKE_CURRENT_BINARY_DIR_UNIX}/libva/lib'
         --extra-libs='-lpthread -lm'
         --disable-all
         --disable-autodetect
@@ -75,7 +77,7 @@ if(BUILD_FFMPEG_SVT_AV1)
             --enable-encoder=libsvtav1
     )
 endif()
-if(BUILD_FFMPEG_VAAPI)
+if(BUILD_FFMPEG_LIBVA)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
             --enable-vaapi
             --enable-encoder=h264_vaapi,hevc_vaapi,av1_vaapi
@@ -161,6 +163,9 @@ if(BUILD_FFMPEG_NV_CODEC_HEADERS)
 endif()
 if(BUILD_FFMPEG_SVT_AV1)
     add_dependencies(ffmpeg SvtAv1)
+endif()
+if(BUILD_FFMPEG_LIBVA)
+    add_dependencies(ffmpeg libva)
 endif()
 if(BUILD_FFMPEG_X264)
     add_dependencies(ffmpeg x264)
