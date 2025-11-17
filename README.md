@@ -77,8 +77,8 @@ pkg install -y \
   print/freetype2 \
   security/gnutls \
   shells/bash \
-  x11/libx11 \
   x11/libxcb \
+  x11/libX11 \
   x11/libXfixes
 ```
 
