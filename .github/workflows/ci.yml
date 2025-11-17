@@ -459,7 +459,7 @@ jobs:
           release: ${{ matrix.bsd_release }}
           run: |
             git config --global --add safe.directory "*"
-          sync: sshfs
+          sync: rsync
 
       - name: Setup ENV
         id: root
