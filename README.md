@@ -142,7 +142,7 @@ brew install \
 ℹ️ Cross-compilation is not supported on Windows. You must build on the target architecture.
 
 First, install [MSYS2](https://www.msys2.org/).
- 
+
 ##### x86_64 / amd64
 
 Open the UCRT64 shell and run the following commands:
@@ -153,7 +153,7 @@ pacman -S \
     diffutils \
     git \
     make \
-    patch \ 
+    patch \
     pkg-config \
     mingw-w64-ucrt-x86_64-binutils \
     mingw-w64-ucrt-x86_64-cmake \
@@ -174,7 +174,7 @@ pacman -S \
     diffutils \
     git \
     make \
-    patch \ 
+    patch \
     pkg-config \
     mingw-w64-clang-aarch64-binutils \
     mingw-w64-clang-aarch64-cmake \
