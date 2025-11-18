@@ -322,7 +322,7 @@ jobs:
 
       - name: Setup msys2 Windows
         if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@fb197b72ce45fb24f17bf3f807a388985654d1f2  # v2.29.0
         with:
           msystem: ${{ matrix.msystem }}
           update: true
@@ -414,7 +414,7 @@ jobs:
 
       - name: Setup FreeBSD
         if: startsWith(matrix.shell, 'freebsd')
-        uses: vmactions/freebsd-vm@v1.2.5
+        uses: vmactions/freebsd-vm@c58a3f0f77417d932df47c7874b308c02b2c7cc1  # v1.2.5
         with:
           arch: ${{ matrix.arch }}
           cpu: ${{ steps.processor_count.outputs.PROCESSOR_COUNT }}
@@ -624,7 +624,7 @@ jobs:
           startsWith(github.repository, 'LizardByte/') &&
           github.ref == 'refs/heads/master' &&
           (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-        uses: actions-js/push@v1.5
+        uses: actions-js/push@5a7cbd780d82c0c937b5977586e641b2fd94acc5  # v1.5
         with:
           github_token: ${{ secrets.GH_BOT_TOKEN }}
           author_email: ${{ secrets.GH_BOT_EMAIL }}
