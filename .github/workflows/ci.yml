@@ -23,7 +23,7 @@ concurrency:
 env:
   FREEBSD_CLANG_VERSION: 19
   LINUX_GCC_VERSION: 12
-  MACOSX_DEPLOYMENT_TARGET: 13.0
+  MACOSX_DEPLOYMENT_TARGET: 14.0
 
 jobs:
   build:
@@ -55,7 +55,7 @@ jobs:
             target: powerpc64le-linux-gnu
             build: ALL
           - name: Darwin-x86_64
-            os: macos-13
+            os: macos-15-intel
             arch: x86_64
             generator: "Unix Makefiles"
             shell: bash
