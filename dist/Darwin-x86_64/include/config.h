@@ -6,7 +6,7 @@
 #define CONFIG_THIS_YEAR 2025
 #define FFMPEG_DATADIR "/Users/runner/work/build-deps/build-deps/build/FFmpeg/share/ffmpeg"
 #define AVCONV_DATADIR "/Users/runner/work/build-deps/build-deps/build/FFmpeg/share/ffmpeg"
-#define CC_IDENT "Apple clang version 15.0.0 (clang-1500.1.0.2.5)"
+#define CC_IDENT "Apple clang version 17.0.0 (clang-1700.0.13.5)"
 #define OS_NAME darwin
 #define EXTERN_PREFIX "_"
 #define EXTERN_ASM _
@@ -409,7 +409,7 @@
 #define HAVE_KCVIMAGEBUFFERCOLORPRIMARIES_ITU_R_2020 1
 #define HAVE_KCVIMAGEBUFFERTRANSFERFUNCTION_ITU_R_2020 1
 #define HAVE_KCVIMAGEBUFFERTRANSFERFUNCTION_SMPTE_ST_428_1 1
-#define HAVE_KVTQPMODULATIONLEVEL_DEFAULT 0
+#define HAVE_KVTQPMODULATIONLEVEL_DEFAULT 1
 #define HAVE_SECPKGCONTEXT_KEYINGMATERIALINFO 0
 #define HAVE_SOCKLEN_T 1
 #define HAVE_STRUCT_ADDRINFO 1
