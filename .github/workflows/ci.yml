@@ -554,7 +554,7 @@ jobs:
           rm -f -r ./build/dist/lib/cmake
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           if-no-files-found: error
           name: ${{ matrix.name }}-${{ matrix.build }}
@@ -580,7 +580,7 @@ jobs:
           mkdir -p dist/dist
 
       - name: Download artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           path: dist/dist
 
