@@ -193,10 +193,18 @@ jobs:
           echo "package architecture: $package_arch"
 
           dependencies+=(
-            "libva-dev:$package_arch"
-            "libva-glx2:$package_arch"
-            "libgl1:$package_arch"
-            "libglx0:$package_arch"
+            "libdrm-dev:$package_arch"
+            "libgl-dev:$package_arch"
+            "libglx-dev:$package_arch"
+            "libwayland-dev:$package_arch"
+            "libwayland-client0:$package_arch"
+            "libx11-dev:$package_arch"
+            "libx11-xcb-dev:$package_arch"
+            "libxcb1-dev:$package_arch"
+            "libxcb-dri3-dev:$package_arch"
+            "libxcb-xfixes0-dev:$package_arch"
+            "libxext-dev:$package_arch"
+            "libxfixes-dev:$package_arch"
           )
 
           echo "::group::apt sources"
@@ -412,6 +420,41 @@ jobs:
           echo "PROCESSOR_COUNT=${PROCESSOR_COUNT}" >> "${GITHUB_OUTPUT}"
           echo "PROCESSOR_COUNT: ${PROCESSOR_COUNT}"
 
+      - name: Setup ENV
+        id: root
+        shell: bash
+        run: |
+          set -e
+          cd "$GITHUB_WORKSPACE"
+          echo "ROOT_PATH=$PWD" >> "${GITHUB_ENV}"
+
+          MAKE_CMD="make"
+          if [ "${{ startsWith(matrix.shell, 'freebsd') }}" = true ]; then
+            # use gmake on FreeBSD instead of make
+            MAKE_CMD="gmake"
+          fi
+          echo "MAKE_CMD=${MAKE_CMD}" >> "${GITHUB_ENV}"
+
+      - name: Setup cross compilation
+        id: cross
+        if: matrix.target != ''
+        shell: bash
+        run: |
+          set -e
+          cd "$GITHUB_WORKSPACE"
+          TOOLCHAIN=${{ env.ROOT_PATH }}/cmake/toolchains/${{ matrix.target }}.cmake
+
+          # fail if file does not exist
+          if [ ! -f $TOOLCHAIN ]; then
+              echo "Toolchain file not found: $TOOLCHAIN"
+              exit 1
+          fi
+
+          echo "CMAKE_TOOLCHAIN_FILE=$TOOLCHAIN" >> "${GITHUB_ENV}"
+          if [[ ${{ runner.os }} == 'Linux' ]]; then
+            echo "CCPREFIX=/usr/bin/${{ matrix.target }}-" >> "${GITHUB_ENV}"
+          fi
+
       - name: Setup FreeBSD
         if: startsWith(matrix.shell, 'freebsd')
         uses: vmactions/freebsd-vm@c54ba3b62f49de9b67a2f3af017ab6152f0ebb6f  # v1.3.4
@@ -425,60 +468,34 @@ jobs:
               devel/cmake \
               devel/git \
               devel/gmake \
+              devel/libtool \
               devel/llvm${{ env.FREEBSD_CLANG_VERSION }} \
+              devel/meson \
               devel/nasm \
               devel/ninja \
               devel/pkgconf \
+              graphics/libdrm \
+              graphics/libglvnd \
+              graphics/wayland \
               multimedia/libass \
               multimedia/libv4l \
-              multimedia/libva \
               multimedia/v4l_compat \
               print/freetype2 \
               security/gnutls \
               shells/bash \
-              x11/libxcb \
               x11/libX11 \
-              x11/libXfixes
+              x11/libxcb \
+              x11/libXext \
+              x11/libXfixes \
+              x11/xorgproto
 
             # create symlink for shebang bash compatibility
             ln -s /usr/local/bin/bash /bin/bash
           release: ${{ matrix.bsd_release }}
           run: |
             git config --global --add safe.directory "*"
-          sync: nfs
-
-      - name: Setup ENV
-        id: root
-        run: |
-          set -e
-          cd $GITHUB_WORKSPACE
-          echo "ROOT_PATH=$PWD" >> "${GITHUB_ENV}"
-
-          MAKE_CMD="make"
-          if [ "${{ startsWith(matrix.shell, 'freebsd') }}" = true ]; then
-            # use gmake on FreeBSD instead of make
-            MAKE_CMD="gmake"
-          fi
-          echo "MAKE_CMD=${MAKE_CMD}" >> "${GITHUB_ENV}"
-
-      - name: Setup cross compilation
-        id: cross
-        if: matrix.target != ''
-        run: |
-          set -e
-          cd $GITHUB_WORKSPACE
-          TOOLCHAIN=${{ env.ROOT_PATH }}/cmake/toolchains/${{ matrix.target }}.cmake
-
-          # fail if file does not exist
-          if [ ! -f $TOOLCHAIN ]; then
-              echo "Toolchain file not found: $TOOLCHAIN"
-              exit 1
-          fi
-
-          echo "CMAKE_TOOLCHAIN_FILE=$TOOLCHAIN" >> "${GITHUB_ENV}"
-          if [[ ${{ runner.os }} == 'Linux' ]]; then
-            echo "CCPREFIX=/usr/bin/${{ matrix.target }}-" >> "${GITHUB_ENV}"
-          fi
+          sync: rsync
+          copyback: false
 
       - name: Configure
         run: |
@@ -522,6 +539,11 @@ jobs:
           set -e
           cd $GITHUB_WORKSPACE
           ${{ env.MAKE_CMD }} -C build install
+
+      - name: Sync FreeBSD build output to host
+        if: startsWith(matrix.shell, 'freebsd')
+        shell: bash
+        run: rsync -av --mkpath -e ssh "freebsd:$GITHUB_WORKSPACE/build/dist" "$GITHUB_WORKSPACE/build"
 
       - name: Debug logs
         if: >-
