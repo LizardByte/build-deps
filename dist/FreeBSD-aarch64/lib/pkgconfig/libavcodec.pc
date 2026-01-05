@@ -9,6 +9,6 @@ Version: 62.11.100
 Requires: libavutil >= 60.8.100
 Requires.private: 
 Conflicts:
-Libs: -L${libdir}  -lavcodec -pthread -lm -L/home/runner/work/build-deps/build-deps/build/dist/lib -lSvtAv1Enc -lpthread -lm -L/home/runner/work/build-deps/build-deps/build/x264/lib -lx264 -lpthread -lm -L/home/runner/work/build-deps/build-deps/build/dist/lib -lx265 -lc++ -lm -lgcc -lgcc_s -lgcc -lgcc_s -lrt -ldl -L/usr/local/lib -lva
+Libs: -L${libdir}  -lavcodec -pthread -lm -L/home/runner/work/build-deps/build-deps/build/dist/lib -lSvtAv1Enc -lpthread -lm -L/home/runner/work/build-deps/build-deps/build/x264/lib -lx264 -lpthread -lm -L/home/runner/work/build-deps/build-deps/build/dist/lib -lx265 -lc++ -lm -lgcc -lgcc_s -lgcc -lgcc_s -lrt -ldl -L/home/runner/work/build-deps/build-deps/build/libva/lib -lva
 Libs.private: 
 Cflags: -I${includedir}

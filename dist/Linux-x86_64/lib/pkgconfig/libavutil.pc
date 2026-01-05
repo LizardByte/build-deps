@@ -9,6 +9,6 @@ Version: 60.8.100
 Requires: 
 Requires.private: 
 Conflicts:
-Libs: -L${libdir}  -lavutil -lva-drm -lva -lm -lva -latomic -pthread
+Libs: -L${libdir}  -lavutil -lm -L/home/runner/work/build-deps/build-deps/build/libva/lib -lva -latomic -pthread
 Libs.private: 
 Cflags: -I${includedir}
