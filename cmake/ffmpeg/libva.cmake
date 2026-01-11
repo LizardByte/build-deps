@@ -60,12 +60,5 @@ add_custom_target(libva ALL
 )
 add_dependencies(${CMAKE_PROJECT_NAME} libva)
 
-# Install libva headers and libraries
-install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/libva/include/"
-        DESTINATION include)
-install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/libva/lib/"
-        DESTINATION lib
-        FILES_MATCHING PATTERN "*.a")
-
 # Add to PKG_CONFIG_PATH for FFmpeg to find
 set(PKG_CONFIG_PATH "${CMAKE_CURRENT_BINARY_DIR_UNIX}/libva/lib/pkgconfig:${PKG_CONFIG_PATH}")
