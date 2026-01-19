@@ -83,6 +83,12 @@ if(BUILD_FFMPEG_LIBVA)
             --enable-encoder=h264_vaapi,hevc_vaapi,av1_vaapi
     )
 endif()
+if(BUILD_FFMPEG_VULKAN)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE
+            --enable-vulkan
+            --enable-encoder=h264_vulkan,hevc_vulkan,av1_vulkan
+    )
+endif()
 if(BUILD_FFMPEG_X264)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
             --enable-libx264
