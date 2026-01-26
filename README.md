@@ -70,6 +70,8 @@ pkg install -y \
   devel/nasm \
   devel/ninja \
   devel/pkgconf \
+  graphics/vulkan-headers \
+  graphics/vulkan-loader \
   multimedia/libass \
   multimedia/libv4l \
   multimedia/libva \
@@ -86,7 +88,7 @@ pkg install -y \
 
 ```bash
 sudo apt install -y \
-autoconf \
+    autoconf \
     automake \
     build-essential \
     cmake \
@@ -100,6 +102,7 @@ autoconf \
     libsdl2-dev \
     libtool \
     libvorbis-dev \
+    libvulkan-dev \
     libxcb1-dev \
     libxcb-shm0-dev \
     libxcb-xfixes0-dev \
