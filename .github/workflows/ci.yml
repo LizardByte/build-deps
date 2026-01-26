@@ -212,6 +212,7 @@ jobs:
             "libdrm-dev:$package_arch"
             "libgl-dev:$package_arch"
             "libglx-dev:$package_arch"
+            "libvulkan-dev:$package_arch"
             "libwayland-dev:$package_arch"
             "libwayland-client0:$package_arch"
             "libx11-dev:$package_arch"
@@ -492,6 +493,8 @@ jobs:
               devel/pkgconf \
               graphics/libdrm \
               graphics/libglvnd \
+              graphics/vulkan-headers \
+              graphics/vulkan-loader \
               graphics/wayland \
               multimedia/libass \
               multimedia/libv4l \
