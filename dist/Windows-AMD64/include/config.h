@@ -6,7 +6,7 @@
 #define CONFIG_THIS_YEAR 2025
 #define FFMPEG_DATADIR "/d/a/build-deps/build-deps/build/FFmpeg/share/ffmpeg"
 #define AVCONV_DATADIR "/d/a/build-deps/build-deps/build/FFmpeg/share/ffmpeg"
-#define CC_IDENT "gcc 15.2.0 (Rev9, Built by MSYS2 project)"
+#define CC_IDENT "gcc 15.2.0 (Rev11, Built by MSYS2 project)"
 #define OS_NAME mingw32
 #define EXTERN_PREFIX ""
 #define EXTERN_ASM 
