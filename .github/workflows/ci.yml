@@ -337,7 +337,9 @@ jobs:
 
       - name: Update Windows dependencies
         env:
-          MSYSTEM: ${{ matrix.msystem }}
+          # MSYSTEM is a built-in environment variable of MSYS2.
+          # Do not use this environment variable name.
+          MATRIX_MSYSTEM: ${{ matrix.msystem }}
           TOOLCHAIN: ${{ matrix.toolchain }}
         if: runner.os == 'Windows'
         shell: msys2 {0}
@@ -371,7 +373,7 @@ jobs:
             tarball="${pkg}-${version}-any.pkg.tar.zst"
 
             # download and install working version
-            wget "https://repo.msys2.org/mingw/${MSYSTEM}/${tarball}"
+            wget "https://repo.msys2.org/mingw/${MATRIX_MSYSTEM}/${tarball}"
 
             tarballs="${tarballs} ${tarball}"
           done
