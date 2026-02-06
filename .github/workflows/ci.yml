@@ -459,7 +459,7 @@ jobs:
 
       - name: Setup FreeBSD
         if: startsWith(matrix.shell, 'freebsd')
-        uses: vmactions/freebsd-vm@262fcf6e3e09d447753de95ad05d006c26e11f22  # v1.3.9
+        uses: vmactions/freebsd-vm@f674f993e17ee7a71c14726b5d96599e59cda724  # v1.4.0
         with:
           arch: ${{ matrix.arch }}
           cpu: ${{ steps.processor_count.outputs.PROCESSOR_COUNT }}
