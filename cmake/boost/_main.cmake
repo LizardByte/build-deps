@@ -49,4 +49,16 @@ if (CMAKE_SYSTEM_PROCESSOR STREQUAL "ppc64le")
     set(BOOST_CONTEXT_ARCHITECTURE "ppc64")
 endif ()
 
+set(_original_cmake_install_prefix ${CMAKE_INSTALL_PREFIX})
+set(_original_cmake_install_includedir ${CMAKE_INSTALL_INCLUDEDIR})
+set(_original_cmake_install_libdir ${CMAKE_INSTALL_LIBDIR})
+
+set(CMAKE_INSTALL_PREFIX ${BOOST_INSTALL_PREFIX})
+set(CMAKE_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_PREFIX}/include")
+set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib")
+
 add_subdirectory(${Boost_SOURCE_DIR} ${Boost_BINARY_DIR} SYSTEM)
+
+set(CMAKE_INSTALL_PREFIX ${_original_cmake_install_prefix})
+set(CMAKE_INSTALL_INCLUDEDIR ${_original_cmake_install_includedir})
+set(CMAKE_INSTALL_LIBDIR ${_original_cmake_install_libdir})

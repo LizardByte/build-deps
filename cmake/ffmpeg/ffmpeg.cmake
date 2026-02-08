@@ -175,9 +175,9 @@ if(BUILD_FFMPEG_X265)
 endif()
 add_dependencies(${CMAKE_PROJECT_NAME} ffmpeg)
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/include/"
-        DESTINATION include)
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/include)
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/lib/"
-        DESTINATION lib)
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/lib)
 
 
 #
@@ -253,30 +253,30 @@ add_dependencies(${CMAKE_PROJECT_NAME} cbs)
 
 # install cbs target headers
 install(FILES ${EXTRA_FFMPEG_INCLUDE_FILES}
-        DESTINATION include)
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/include)
 install(FILES ${EXTRA_AVCODEC_INCLUDE_FILES}
-        DESTINATION include/libavcodec)
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/include/libavcodec)
 install(FILES ${EXTRA_AVCODEC_HEVC_INCLUDE_FILES}
-        DESTINATION include/libavcodec/hevc)
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/include/libavcodec/hevc)
 install(FILES ${EXTRA_AVUTIL_INCLUDE_FILES}
-        DESTINATION include/libavutil)
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/include/libavutil)
 install(TARGETS cbs
-        DESTINATION lib)
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/lib)
 
 # conditional headers based on architecture
 if (EXISTS ${AVCODEC_GENERATED_SRC_PATH}/${CBS_ARCH_PATH}/mathops.h)
     install(FILES ${AVCODEC_GENERATED_SRC_PATH}/${CBS_ARCH_PATH}/mathops.h
-            DESTINATION include/libavcodec/${CBS_ARCH_PATH})
+            DESTINATION ${FFMPEG_INSTALL_PREFIX}/include/libavcodec/${CBS_ARCH_PATH})
 endif()
 if (EXISTS ${AVUTIL_GENERATED_SRC_PATH}/${CBS_ARCH_PATH}/asm.h)
     install(FILES ${AVUTIL_GENERATED_SRC_PATH}/${CBS_ARCH_PATH}/asm.h
-            DESTINATION include/libavutil/${CBS_ARCH_PATH})
+            DESTINATION ${FFMPEG_INSTALL_PREFIX}/include/libavutil/${CBS_ARCH_PATH})
 endif()
 if (EXISTS ${AVUTIL_GENERATED_SRC_PATH}/${CBS_ARCH_PATH}/intmath.h)
     install(FILES ${AVUTIL_GENERATED_SRC_PATH}/${CBS_ARCH_PATH}/intmath.h
-            DESTINATION include/libavutil/${CBS_ARCH_PATH})
+            DESTINATION ${FFMPEG_INSTALL_PREFIX}/include/libavutil/${CBS_ARCH_PATH})
 endif()
 
 # install pkg-config file
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libcbs.pc
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/lib/pkgconfig)

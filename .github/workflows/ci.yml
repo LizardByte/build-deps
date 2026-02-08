@@ -1,16 +1,11 @@
 ---
 name: CI
-permissions:
-  contents: read
+permissions: {}
 
 on:
   pull_request:
     branches:
       - master
-    types:
-      - opened
-      - synchronize
-      - reopened
   push:
     branches:
       - master
@@ -26,48 +21,93 @@ env:
   MACOSX_DEPLOYMENT_TARGET: 14.0
 
 jobs:
+  release-setup:
+    name: Release Setup
+    outputs:
+      publish_release: ${{ steps.release-setup.outputs.publish_release }}
+      release_body: ${{ steps.release-setup.outputs.release_body }}
+      release_commit: ${{ steps.release-setup.outputs.release_commit }}
+      release_generate_release_notes: ${{ steps.release-setup.outputs.release_generate_release_notes }}
+      release_tag: ${{ steps.release-setup.outputs.release_tag }}
+      release_version: ${{ steps.release-setup.outputs.release_version }}
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Release Setup
+        id: release-setup
+        uses: LizardByte/actions/actions/release_setup@ce5d2be83ba14f30062762579f46d074892c5dd0  # v2026.203.15239
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
   build:
-    name: Build ${{ matrix.build }} (${{ matrix.name }})
+    name: ${{ matrix.build }} - ${{ matrix.name }}
+    needs: release-setup
+    permissions:
+      contents: read
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        build:
+          - BOOST
+          - FFMPEG
+        # name: ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}
+        name:  # each entry must have a matching block in the "include" section below
+          - Darwin-arm64
+          - Darwin-x86_64
+          - FreeBSD-aarch64
+          - FreeBSD-amd64
+          - Linux-aarch64
+          - Linux-ppc64le
+          - Linux-x86_64
+          - Windows-AMD64
+          - Windows-ARM64
         include:
-          # name: ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}
-          - name: Linux-x86_64
-            os: ubuntu-22.04
-            arch: x86_64
-            generator: "Unix Makefiles"
-            shell: bash
-            build: ALL
-          - name: Linux-aarch64
-            os: ubuntu-22.04
-            arch: aarch64
-            generator: "Unix Makefiles"
-            shell: bash
-            target: aarch64-linux-gnu
-            build: ALL
-          - name: Linux-ppc64le
-            os: ubuntu-22.04
-            arch: powerpc64le
-            generator: "Unix Makefiles"
-            shell: bash
-            target: powerpc64le-linux-gnu
-            build: ALL
-          - name: Darwin-x86_64
-            os: macos-15-intel
-            arch: x86_64
-            generator: "Unix Makefiles"
-            shell: bash
-            target: x86_64-apple-macosx
-            build: ALL
           - name: Darwin-arm64
             os: macos-14
             arch: aarch64
             generator: "Unix Makefiles"
             shell: bash
             target: arm64-apple-macosx
-            build: ALL
+          - name: Darwin-x86_64
+            os: macos-15-intel
+            arch: x86_64
+            generator: "Unix Makefiles"
+            shell: bash
+            target: x86_64-apple-macosx
+          - name: FreeBSD-aarch64
+            os: ubuntu-latest  # ubuntu-24.04-arm is slower with the FreeBSD VM
+            arch: aarch64
+            bsd_release: '14.3'
+            generator: "Unix Makefiles"
+            shell: freebsd {0}
+          - name: FreeBSD-amd64
+            os: ubuntu-latest
+            arch: x86_64
+            bsd_release: '14.3'
+            generator: "Unix Makefiles"
+            shell: freebsd {0}
+          - name: Linux-aarch64
+            os: ubuntu-22.04
+            arch: aarch64
+            generator: "Unix Makefiles"
+            shell: bash
+            target: aarch64-linux-gnu
+          - name: Linux-ppc64le
+            os: ubuntu-22.04
+            arch: powerpc64le
+            generator: "Unix Makefiles"
+            shell: bash
+            target: powerpc64le-linux-gnu
+          - name: Linux-x86_64
+            os: ubuntu-22.04
+            arch: x86_64
+            generator: "Unix Makefiles"
+            shell: bash
           - name: Windows-AMD64
             os: windows-2022
             arch: x86_64
@@ -75,15 +115,6 @@ jobs:
             shell: msys2 {0}
             msystem: ucrt64
             toolchain: ucrt-x86_64
-            build: BOOST
-          - name: Windows-AMD64
-            os: windows-2022
-            arch: x86_64
-            generator: "MSYS Makefiles"
-            shell: msys2 {0}
-            msystem: ucrt64
-            toolchain: ucrt-x86_64
-            build: FFMPEG
           - name: Windows-ARM64
             os: windows-11-arm
             arch: aarch64
@@ -91,27 +122,12 @@ jobs:
             shell: msys2 {0}
             msystem: clangarm64
             toolchain: clang-aarch64
-            build: ALL
-          - name: FreeBSD-amd64
-            os: ubuntu-latest
-            arch: x86_64
-            bsd_release: '14.3'
-            generator: "Unix Makefiles"
-            shell: freebsd {0}
-            build: ALL
-          - name: FreeBSD-aarch64
-            os: ubuntu-latest  # ubuntu-24.04-arm is slower with the FreeBSD VM
-            arch: aarch64
-            bsd_release: '14.3'
-            generator: "Unix Makefiles"
-            shell: freebsd {0}
-            build: ALL
     defaults:
       run:
         shell: ${{ matrix.shell }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           submodules: recursive
 
@@ -305,24 +321,22 @@ jobs:
       - name: Setup Dependencies MacOS
         if: runner.os == 'macOS'
         run: |
+          # git, libtool, ninja, pkg-config, and wget are all pre-installed in brew on GitHub runners
+          # they are excluded to avoid warnings in the GitHub step summary
+
           dependencies=(
             "automake"
             "fdk-aac"
-            "git"
             "lame"
             "libass"
-            "libtool"
             "libvorbis"
             "libvpx"
             "nasm"
-            "ninja"
             "opus"
-            "pkg-config"
             "sdl"
             "shtool"
             "texi2html"
             "theora"
-            "wget"
             "xvid"
           )
 
@@ -502,7 +516,7 @@ jobs:
       - name: Configure
         run: |
           set -e
-          cd $GITHUB_WORKSPACE
+          cd "$GITHUB_WORKSPACE"
 
           if [ "${{ startsWith(matrix.shell, 'freebsd') }}" = true ]; then
             export CC=$(which clang${{ env.FREEBSD_CLANG_VERSION }})
@@ -533,13 +547,13 @@ jobs:
       - name: Build
         run: |
           set -e
-          cd $GITHUB_WORKSPACE
+          cd "$GITHUB_WORKSPACE"
           ${{ env.MAKE_CMD }} -C build --jobs=${{ steps.processor_count.outputs.PROCESSOR_COUNT || 1 }}
 
       - name: Install
         run: |
           set -e
-          cd $GITHUB_WORKSPACE
+          cd "$GITHUB_WORKSPACE"
           ${{ env.MAKE_CMD }} -C build install
 
       - name: Sync FreeBSD build output to host
@@ -574,86 +588,84 @@ jobs:
       - name: Cleanup
         shell: bash
         run: |
-          rm -f -r ./build/dist/share
-          rm -f -r ./build/dist/lib/cmake
+          # Remove unnecessary files
+          if [ -d ./build/dist/boost/share ]; then
+            rm -f -r ./build/dist/boost/share
+          fi
+          if [ -d ./build/dist/boost/lib/cmake ]; then
+            rm -f -r ./build/dist/boost/lib/cmake
+          fi
+          if [ -d ./build/dist/ffmpeg/share ]; then
+            rm -f -r ./build/dist/ffmpeg/share
+          fi
+          if [ -d ./build/dist/ffmpeg/lib/cmake ]; then
+            rm -f -r ./build/dist/ffmpeg/lib/cmake
+          fi
+
+      - name: Create Archives
+        shell: bash
+        run: |
+          set -e
+          cd "$GITHUB_WORKSPACE/build/dist"
+
+          # Create archives based on what was built
+          if [ "${{ matrix.build }}" = "BOOST" ] || [ "${{ matrix.build }}" = "ALL" ]; then
+            if [ -d "boost" ]; then
+              tar -czf "../../${{ matrix.name }}-boost.tar.gz" boost
+            fi
+          fi
+
+          if [ "${{ matrix.build }}" = "FFMPEG" ] || [ "${{ matrix.build }}" = "ALL" ]; then
+            if [ -d "ffmpeg" ]; then
+              tar -czf "../../${{ matrix.name }}-ffmpeg.tar.gz" ffmpeg
+            fi
+          fi
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6.0.0
         with:
           if-no-files-found: error
           name: ${{ matrix.name }}-${{ matrix.build }}
-          path: ./build/dist
+          path: ./${{ matrix.name }}-*.tar.gz
 
-  update_dist:
-    # only the commit is conditional, so the rest of the job can be verified on PRs
-    name: Update dist
+  conclude:
     needs: build
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout dist
-        uses: actions/checkout@v6
-        with:
-          ref: dist
-          path: dist
-          persist-credentials: false  # otherwise, the token used is the GITHUB_TOKEN, instead of the personal token
-          fetch-depth: 0  # otherwise, will fail to push refs to dest repo
+      - name: Conclude
+        run: echo "All tests passed"
 
-      - name: Cleanup
-        run: |
-          rm -rf dist/*
-          mkdir -p dist/dist
-
+  release:
+    name: Create Release
+    if:
+      needs.release-setup.outputs.publish_release == 'true' &&
+      startsWith(github.repository, 'LizardByte/')
+    needs:
+      - release-setup
+      - build
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
         with:
-          path: dist/dist
+          path: artifacts
+          merge-multiple: true
 
-      - name: Arrange dist
-        working-directory: dist/dist
-        run: |
-          for dir in */; do
-            dir="${dir%/}"
-            new_name="${dir%-*}"
-            if [[ "${dir}" != "${new_name}" ]]; then
-              if [[ -d "${new_name}" ]]; then
-                rsync -a "${dir}/" "${new_name}/"
-                rm -rf "${dir}"
-              else
-                mv "${dir}" "${new_name}"
-              fi
-            fi
-          done
+      - name: Debug artifacts
+        run: ls -R artifacts
 
-      - name: Debug dist directory
-        run: ls -R dist
-
-      - name: Show git diff
-        working-directory: dist/dist
-        run: |
-          git add --all
-          echo "Changed files:" >> "${GITHUB_STEP_SUMMARY}"
-          git diff --cached --name-only >> "${GITHUB_STEP_SUMMARY}"
-
-      - name: Extract first line of commit message
-        id: commit_message
-        env:
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        run: |
-          FIRST_LINE=$(echo "${COMMIT_MESSAGE}" | head -n 1)
-          echo "first_line=$FIRST_LINE"
-          echo "first_line=$FIRST_LINE" >> "${GITHUB_OUTPUT}"
-
-      - name: Commit dist
-        if: >-
-          startsWith(github.repository, 'LizardByte/') &&
-          github.ref == 'refs/heads/master' &&
-          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-        uses: actions-js/push@5a7cbd780d82c0c937b5977586e641b2fd94acc5  # v1.5
+      - name: Create/Update GitHub Release
+        uses: LizardByte/actions/actions/release_create@ce5d2be83ba14f30062762579f46d074892c5dd0  # v2026.203.15239
         with:
-          github_token: ${{ secrets.GH_BOT_TOKEN }}
-          author_email: ${{ secrets.GH_BOT_EMAIL }}
-          author_name: ${{ secrets.GH_BOT_NAME }}
-          directory: dist
-          branch: dist
-          force: false
-          message: "${{ steps.commit_message.outputs.first_line }}"
+          allowUpdates: false
+          body: ${{ needs.release-setup.outputs.release_body }}
+          draft: true
+          generateReleaseNotes: ${{ needs.release-setup.outputs.release_generate_release_notes }}
+          name: ${{ needs.release-setup.outputs.release_tag }}
+          prerelease: true
+          tag: ${{ needs.release-setup.outputs.release_tag }}
+          token: ${{ secrets.GH_BOT_TOKEN }}
+          virustotal_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
