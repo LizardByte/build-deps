@@ -25,6 +25,6 @@ add_custom_target(nv-codec-headers ALL
 )
 add_dependencies(${CMAKE_PROJECT_NAME} nv-codec-headers)
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/usr/local/include/ffnvcodec"
-        DESTINATION include
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/include
 )
 set(PKG_CONFIG_PATH "${CMAKE_CURRENT_BINARY_DIR_UNIX}/usr/local/lib/pkgconfig:${PKG_CONFIG_PATH}")

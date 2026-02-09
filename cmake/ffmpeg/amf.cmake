@@ -17,5 +17,5 @@ add_custom_target(amf ALL
 )
 add_dependencies(${CMAKE_PROJECT_NAME} amf)
 install(DIRECTORY ${AMF_TARGET_DIR}
-        DESTINATION include
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/include
 )

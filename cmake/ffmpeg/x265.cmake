@@ -23,6 +23,10 @@ if(${arch} STREQUAL "amd64" OR ${arch} STREQUAL "x86_64")
     set(ENABLE_HDR10_PLUS ON CACHE BOOL "Enable HDR10+ support")
 endif()
 
+# ensure x265 installs into the ffmpeg prefix
+set(_original_cmake_install_prefix ${CMAKE_INSTALL_PREFIX})
+set(CMAKE_INSTALL_PREFIX ${FFMPEG_INSTALL_PREFIX})
+
 # build x265
 add_subdirectory(${X265_GENERATED_SRC_PATH}/source x265 SYSTEM)
 add_dependencies(${CMAKE_PROJECT_NAME} x265-static)
@@ -42,3 +46,5 @@ if(ENABLE_HDR10_PLUS)
 endif()
 
 # PKG_CONFIG_PATH already set since this is installed directly to the prefix
+
+set(CMAKE_INSTALL_PREFIX ${_original_cmake_install_prefix})

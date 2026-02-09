@@ -17,6 +17,10 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries")
 # disable LTO because it forces projects linking against our pre-build to use the same compiler version
 set(SVT_AV1_LTO OFF CACHE BOOL "Enable Link Time Optimization (LTO)")
 
+# ensure SVT-AV1 installs into the ffmpeg prefix
+set(_original_cmake_install_prefix ${CMAKE_INSTALL_PREFIX})
+set(CMAKE_INSTALL_PREFIX ${FFMPEG_INSTALL_PREFIX})
+
 # build SVT-AV1
 add_subdirectory(${SVT_AV1_GENERATED_SRC_PATH} SVT-AV1 SYSTEM)
 add_dependencies(${CMAKE_PROJECT_NAME} SvtAv1Enc)
@@ -31,3 +35,5 @@ add_dependencies(SvtAv1 SvtAv1Enc)
 add_dependencies(${CMAKE_PROJECT_NAME} SvtAv1)
 
 # PKG_CONFIG_PATH already set since this is installed directly to the prefix
+
+set(CMAKE_INSTALL_PREFIX ${_original_cmake_install_prefix})

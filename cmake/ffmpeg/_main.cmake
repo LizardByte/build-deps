@@ -27,6 +27,9 @@ elseif(UNIX)
     set(BUILD_FFMPEG_MF OFF)
 endif()
 
+set(_original_cmake_install_prefix ${CMAKE_INSTALL_PREFIX})
+set(CMAKE_INSTALL_PREFIX ${FFMPEG_INSTALL_PREFIX})
+
 if(BUILD_FFMPEG_AMF)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/amf.cmake)
 endif()
@@ -56,3 +59,5 @@ if(BUILD_FFMPEG_X265)
 endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/ffmpeg.cmake)
+
+set(CMAKE_INSTALL_PREFIX ${_original_cmake_install_prefix})
