@@ -22,3 +22,11 @@
 	path = third-party/FFmpeg/SVT-AV1
 	url = https://github.com/LizardByte-infrastructure/SVT-AV1.git
 	branch = master
+[submodule "third-party/FFmpeg/Vulkan-Headers"]
+	path = third-party/FFmpeg/Vulkan-Headers
+	url = https://github.com/KhronosGroup/Vulkan-Headers.git
+	branch = main
+[submodule "third-party/FFmpeg/Vulkan-Loader"]
+	path = third-party/FFmpeg/Vulkan-Loader
+	url = https://github.com/KhronosGroup/Vulkan-Loader.git
+	branch = main

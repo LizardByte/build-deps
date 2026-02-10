@@ -70,8 +70,6 @@ pkg install -y \
   devel/nasm \
   devel/ninja \
   devel/pkgconf \
-  graphics/vulkan-headers \
-  graphics/vulkan-loader \
   multimedia/libass \
   multimedia/libv4l \
   multimedia/libva \
@@ -102,7 +100,6 @@ sudo apt install -y \
     libsdl2-dev \
     libtool \
     libvorbis-dev \
-    libvulkan-dev \
     libxcb1-dev \
     libxcb-shm0-dev \
     libxcb-xfixes0-dev \

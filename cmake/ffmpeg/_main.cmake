@@ -1,5 +1,6 @@
 # the destination directory needs to be same level down as the original source directory
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        PATTERN "Vulkan-Loader/tests" EXCLUDE)  # vulkan loader test files contain emojis in file names which can fail
 
 set(FFMPEG_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/FFmpeg)
 set(AVCODEC_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/libavcodec)
@@ -50,6 +51,10 @@ endif()
 
 if(BUILD_FFMPEG_LIBVA)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/libva.cmake)
+endif()
+
+if(BUILD_FFMPEG_VULKAN)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/vulkan.cmake)
 endif()
 
 if(BUILD_FFMPEG_X264)
