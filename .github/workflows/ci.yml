@@ -503,6 +503,7 @@ jobs:
               x11/libxcb \
               x11/libXext \
               x11/libXfixes \
+              x11/libXrandr \
               x11/xorgproto
 
             # create symlink for shebang bash compatibility

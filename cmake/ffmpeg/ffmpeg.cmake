@@ -31,9 +31,11 @@ list(APPEND FFMPEG_EXTRA_CONFIGURE
         --extra-cflags='-I${CMAKE_CURRENT_BINARY_DIR_UNIX}/usr/local/include'
         --extra-cflags='-I${CMAKE_CURRENT_BINARY_DIR_UNIX}/x264/include'
         --extra-cflags='-I${CMAKE_CURRENT_BINARY_DIR_UNIX}/libva/include'
+        --extra-cflags='-I${CMAKE_CURRENT_BINARY_DIR_UNIX}/vulkan/include'
         --extra-ldflags='-L${CMAKE_CURRENT_BINARY_DIR_UNIX}/usr/local/lib'
         --extra-ldflags='-L${CMAKE_CURRENT_BINARY_DIR_UNIX}/x264/lib'
         --extra-ldflags='-L${CMAKE_CURRENT_BINARY_DIR_UNIX}/libva/lib'
+        --extra-ldflags='-L${CMAKE_CURRENT_BINARY_DIR_UNIX}/vulkan/lib'
         --extra-libs='-lpthread -lm'
         --disable-all
         --disable-autodetect
@@ -81,6 +83,12 @@ if(BUILD_FFMPEG_LIBVA)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
             --enable-vaapi
             --enable-encoder=h264_vaapi,hevc_vaapi,av1_vaapi
+    )
+endif()
+if(BUILD_FFMPEG_VULKAN)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE
+            --enable-vulkan
+            --enable-encoder=h264_vulkan,hevc_vulkan,av1_vulkan
     )
 endif()
 if(BUILD_FFMPEG_X264)
@@ -166,6 +174,9 @@ if(BUILD_FFMPEG_SVT_AV1)
 endif()
 if(BUILD_FFMPEG_LIBVA)
     add_dependencies(ffmpeg libva)
+endif()
+if(BUILD_FFMPEG_VULKAN)
+    add_dependencies(ffmpeg vulkan-loader)
 endif()
 if(BUILD_FFMPEG_X264)
     add_dependencies(ffmpeg x264)

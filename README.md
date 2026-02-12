@@ -86,7 +86,7 @@ pkg install -y \
 
 ```bash
 sudo apt install -y \
-autoconf \
+    autoconf \
     automake \
     build-essential \
     cmake \
