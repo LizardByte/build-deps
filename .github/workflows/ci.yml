@@ -201,6 +201,7 @@ jobs:
             dependencies+=("g++-${LINUX_GCC_VERSION}-powerpc64le-linux-gnu")
             cross_compile=true
             package_arch="ppc64el"
+            dependencies+=("libquadmath0:$package_arch")  # required for cross compiling Boost 1.89+
           else
             dependencies+=("gcc-${LINUX_GCC_VERSION}")
             dependencies+=("g++-${LINUX_GCC_VERSION}")

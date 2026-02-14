@@ -49,6 +49,14 @@ if (CMAKE_SYSTEM_PROCESSOR STREQUAL "ppc64le")
     set(BOOST_CONTEXT_ARCHITECTURE "ppc64")
 endif ()
 
+# Handle cross-compilation issues with Boost.Charconv
+# When cross-compiling, CMake cannot execute test binaries, so we pre-set the result.
+# Exit code 0 = quadmath is available, 1 = not available
+# We set it to 0 since libquadmath0 is installed for cross-compilation targets in CI
+if(CMAKE_CROSSCOMPILING)
+    set(BOOST_CHARCONV_QUADMATH_FOUND_EXITCODE 0 CACHE STRING "Exit code for Boost.Charconv quadmath test")
+endif()
+
 set(_original_cmake_install_prefix ${CMAKE_INSTALL_PREFIX})
 set(_original_cmake_install_includedir ${CMAKE_INSTALL_INCLUDEDIR})
 set(_original_cmake_install_libdir ${CMAKE_INSTALL_LIBDIR})
