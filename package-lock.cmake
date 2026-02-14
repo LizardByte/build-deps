@@ -14,9 +14,9 @@ set(PATCH_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/patches")
 # Boost
 CPMDeclarePackage(Boost
         NAME Boost
-        VERSION 1.87.0
-        URL https://github.com/boostorg/boost/releases/download/boost-1.87.0/boost-1.87.0-cmake.tar.xz
-        URL_HASH SHA256=7da75f171837577a52bbf217e17f8ea576c7c246e4594d617bfde7fafd408be5
+        VERSION 1.89.0
+        URL https://github.com/boostorg/boost/releases/download/boost-1.89.0/boost-1.89.0-cmake.tar.xz
+        URL_HASH SHA256=67acec02d0d118b5de9eb441f5fb707b3a1cdd884be00ca24b9a73c995511f74
         PATCHES
             "${PATCH_DIRECTORY}/boost/01-fix-arm64-asm-compile.patch"
             "${PATCH_DIRECTORY}/boost/02-no-link-libatomic-clang-windows.patch"
