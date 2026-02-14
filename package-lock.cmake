@@ -17,9 +17,6 @@ CPMDeclarePackage(Boost
         VERSION 1.89.0
         URL https://github.com/boostorg/boost/releases/download/boost-1.89.0/boost-1.89.0-cmake.tar.xz
         URL_HASH SHA256=67acec02d0d118b5de9eb441f5fb707b3a1cdd884be00ca24b9a73c995511f74
-        PATCHES
-            "${PATCH_DIRECTORY}/boost/01-fix-arm64-asm-compile.patch"
-            "${PATCH_DIRECTORY}/boost/02-no-link-libatomic-clang-windows.patch"
         DOWNLOAD_ONLY YES
 )
 
