@@ -587,23 +587,6 @@ jobs:
         shell: bash
         run: ls -R ./build/dist
 
-      - name: Cleanup
-        shell: bash
-        run: |
-          # Remove unnecessary files
-          if [ -d ./build/dist/boost/share ]; then
-            rm -f -r ./build/dist/boost/share
-          fi
-          if [ -d ./build/dist/boost/lib/cmake ]; then
-            rm -f -r ./build/dist/boost/lib/cmake
-          fi
-          if [ -d ./build/dist/ffmpeg/share ]; then
-            rm -f -r ./build/dist/ffmpeg/share
-          fi
-          if [ -d ./build/dist/ffmpeg/lib/cmake ]; then
-            rm -f -r ./build/dist/ffmpeg/lib/cmake
-          fi
-
       - name: Create Archives
         shell: bash
         run: |
