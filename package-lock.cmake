@@ -14,9 +14,9 @@ set(PATCH_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/patches")
 
 # Boost
 # renovate: datasource=github-release-attachments depName=boostorg/boost extractVersion=^boost-(?<version>.+)$
-set(BOOST_VERSION 1.89.0)
+set(BOOST_TAG boost-1.89.0)
 set(BOOST_SHA256 67acec02d0d118b5de9eb441f5fb707b3a1cdd884be00ca24b9a73c995511f74)
-set(BOOST_TAG boost-${BOOST_VERSION})
+string(REGEX REPLACE "^boost-" "" BOOST_VERSION "${BOOST_TAG}")
 CPMDeclarePackage(Boost
         NAME Boost
         VERSION ${BOOST_VERSION}
