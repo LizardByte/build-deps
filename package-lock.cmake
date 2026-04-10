@@ -13,7 +13,7 @@
 set(PATCH_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/patches")
 
 # Boost
-# renovate: datasource=github-release-attachments depName=boostorg/boost extractVersion=^boost-(?<version>.+)$
+# renovate: datasource=github-release-attachments depName=boostorg/boost
 set(BOOST_TAG boost-1.89.0)
 set(BOOST_SHA256 67acec02d0d118b5de9eb441f5fb707b3a1cdd884be00ca24b9a73c995511f74)
 string(REGEX REPLACE "^boost-" "" BOOST_VERSION "${BOOST_TAG}")
