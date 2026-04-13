@@ -62,8 +62,8 @@ set(_original_cmake_install_includedir ${CMAKE_INSTALL_INCLUDEDIR})
 set(_original_cmake_install_libdir ${CMAKE_INSTALL_LIBDIR})
 
 set(CMAKE_INSTALL_PREFIX ${BOOST_INSTALL_PREFIX})
-set(CMAKE_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_PREFIX}/include")
-set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_INCLUDEDIR "boost/include")
+set(CMAKE_INSTALL_LIBDIR "boost/lib")
 
 add_subdirectory(${Boost_SOURCE_DIR} ${Boost_BINARY_DIR} SYSTEM)
 
