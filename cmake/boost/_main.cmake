@@ -35,6 +35,8 @@ set(BOOST_INCLUDE_LIBRARIES ${BOOST_COMPONENTS_BASE} ${BOOST_COMPONENTS})
 set(BOOST_INSTALL_INCLUDE_SUBDIR "")  # boost uses a versioned directory by default on Windows
 set(BOOST_SKIP_INSTALL_RULES OFF)  # disabled to allow installation of Boost libraries
 set(Boost_USE_STATIC_LIBS ON)  # cmake-lint: disable=C0103
+set(BOOST_LOCALE_ENABLE_ICONV OFF CACHE BOOL "Boost.Locale: disable iconv backend for prebuilt dependencies" FORCE)
+set(BOOST_LOCALE_ENABLE_ICU OFF CACHE BOOL "Boost.Locale: disable ICU backend for prebuilt dependencies" FORCE)
 
 message(STATUS "Boost_BINARY_DIR: ${Boost_BINARY_DIR}")
 message(STATUS "Boost_SOURCE_DIR: ${Boost_SOURCE_DIR}")
