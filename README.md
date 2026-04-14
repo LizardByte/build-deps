@@ -84,6 +84,8 @@ pkg install -y \
 
 #### Linux
 
+##### Debian/Ubuntu
+
 ```bash
 sudo apt install -y \
     autoconf \
@@ -122,34 +124,20 @@ apk add --no-cache \
     bash \
     build-base \
     cmake \
-    freetype-dev \
     git \
-    glib-dev \
-    gnutls-dev \
-    lame-dev \
-    libass-dev \
     libdrm-dev \
     libtool \
-    libvorbis-dev \
     libx11-dev \
     libxcb-dev \
     libxext-dev \
     libxfixes-dev \
     libxrandr-dev \
     linux-headers \
-    meson \
+    mesa-dev \
     nasm \
-    ninja-build \
     numactl-dev \
-    opus-dev \
     pkgconf \
-    samurai \
-    sdl2-dev \
-    texinfo \
-    wayland-dev \
-    wget \
-    xorgproto \
-    zlib-dev
+    wayland-dev
 ```
 
 #### macOS
