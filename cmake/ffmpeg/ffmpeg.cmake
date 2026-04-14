@@ -67,7 +67,7 @@ if(BUILD_FFMPEG_NV_CODEC_HEADERS)
             --enable-ffnvcodec
             --enable-nvenc
     )
-    if(UNIX AND NOT APPLE AND NOT FREEBSD)
+    if(UNIX AND NOT APPLE AND NOT FREEBSD AND BUILD_FFMPEG_CUDA_LLVM)
         list(APPEND FFMPEG_EXTRA_CONFIGURE
                 --enable-cuda_llvm
         )

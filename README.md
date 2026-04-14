@@ -113,6 +113,45 @@ sudo apt install -y \
     zlib1g-dev
 ```
 
+#### Alpine
+
+```bash
+apk add --no-cache \
+    autoconf \
+    automake \
+    bash \
+    build-base \
+    cmake \
+    freetype-dev \
+    git \
+    glib-dev \
+    gnutls-dev \
+    lame-dev \
+    libass-dev \
+    libdrm-dev \
+    libtool \
+    libvorbis-dev \
+    libx11-dev \
+    libxcb-dev \
+    libxext-dev \
+    libxfixes-dev \
+    libxrandr-dev \
+    linux-headers \
+    meson \
+    nasm \
+    ninja-build \
+    numactl-dev \
+    opus-dev \
+    pkgconf \
+    samurai \
+    sdl2-dev \
+    texinfo \
+    wayland-dev \
+    wget \
+    xorgproto \
+    zlib-dev
+```
+
 #### macOS
 
 ```bash
