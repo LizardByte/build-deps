@@ -84,6 +84,8 @@ pkg install -y \
 
 #### Linux
 
+##### Debian/Ubuntu
+
 ```bash
 sudo apt install -y \
     autoconf \
@@ -111,6 +113,31 @@ sudo apt install -y \
     texinfo \
     wget \
     zlib1g-dev
+```
+
+#### Alpine
+
+```bash
+apk add --no-cache \
+    autoconf \
+    automake \
+    bash \
+    build-base \
+    cmake \
+    git \
+    libdrm-dev \
+    libtool \
+    libx11-dev \
+    libxcb-dev \
+    libxext-dev \
+    libxfixes-dev \
+    libxrandr-dev \
+    linux-headers \
+    mesa-dev \
+    nasm \
+    numactl-dev \
+    pkgconf \
+    wayland-dev
 ```
 
 #### macOS

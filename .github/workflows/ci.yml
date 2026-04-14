@@ -49,6 +49,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
     strategy:
       fail-fast: false
       matrix:
@@ -57,6 +58,8 @@ jobs:
           - FFMPEG
         # name: ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}
         name:  # each entry must have a matching block in the "include" section below
+          - Alpine-aarch64
+          - Alpine-x86_64
           - Darwin-arm64
           - Darwin-x86_64
           - FreeBSD-aarch64
@@ -67,6 +70,20 @@ jobs:
           - Windows-AMD64
           - Windows-ARM64
         include:
+          - name: Alpine-aarch64
+            os: ubuntu-24.04-arm
+            arch: aarch64
+            build_ffmpeg_cuda_llvm: 'OFF'
+            generator: "Unix Makefiles"
+            shell: sh
+            container: alpine:3.22
+          - name: Alpine-x86_64
+            os: ubuntu-latest
+            arch: x86_64
+            build_ffmpeg_cuda_llvm: 'OFF'
+            generator: "Unix Makefiles"
+            shell: sh
+            container: alpine:3.22
           - name: Darwin-arm64
             os: macos-14
             arch: aarch64
@@ -126,6 +143,36 @@ jobs:
       run:
         shell: ${{ matrix.shell }}
     steps:
+      - name: Fix arm64 Alpine container
+        if: runner.arch == 'ARM64' && startsWith(matrix.name, 'Alpine')
+        uses: laverdet/alpine-arm64@7f0f72ee2f71eb2324e5888e8b6e42b1b53e6160  # v1.0.0
+
+      # must be before checkout so that git is available in the container
+      - name: Setup Dependencies Alpine
+        if: startsWith(matrix.name, 'Alpine')
+        run: |
+          set -eux
+          apk add --no-cache \
+            autoconf \
+            automake \
+            bash \
+            build-base \
+            cmake \
+            git \
+            libdrm-dev \
+            libtool \
+            libx11-dev \
+            libxcb-dev \
+            libxext-dev \
+            libxfixes-dev \
+            libxrandr-dev \
+            linux-headers \
+            mesa-dev \
+            nasm \
+            numactl-dev \
+            pkgconf \
+            wayland-dev
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
@@ -133,7 +180,7 @@ jobs:
 
       - name: Prepare Dependencies Linux
         id: cross_compile
-        if: runner.os == 'Linux' && !startsWith(matrix.shell, 'freebsd')
+        if: runner.os == 'Linux' && !startsWith(matrix.shell, 'freebsd') && !startsWith(matrix.name, 'Alpine')
         run: |
           echo "::group::distro detection"
           # detect dist name like bionic, focal, etc
@@ -309,7 +356,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Setup Dependencies Linux
-        if: runner.os == 'Linux' && !startsWith(matrix.shell, 'freebsd')
+        if: runner.os == 'Linux' && !startsWith(matrix.shell, 'freebsd') && !startsWith(matrix.name, 'Alpine')
         run: |
           echo "::group::apt update"
           sudo apt-get update
@@ -520,6 +567,8 @@ jobs:
           set -e
           cd "$GITHUB_WORKSPACE"
 
+          build_ffmpeg_cuda_llvm="${{ matrix.build_ffmpeg_cuda_llvm || 'ON' }}"
+
           if [ "${{ startsWith(matrix.shell, 'freebsd') }}" = true ]; then
             export CC=$(which clang${{ env.FREEBSD_CLANG_VERSION }})
             export CXX=$(which clang++${{ env.FREEBSD_CLANG_VERSION }})
@@ -542,6 +591,7 @@ jobs:
             -G "${{ matrix.generator }}" \
             -DBUILD_ALL=OFF \
             -DBUILD_${{ matrix.build }}=ON \
+            -DBUILD_FFMPEG_CUDA_LLVM=${build_ffmpeg_cuda_llvm} \
             -DCMAKE_TOOLCHAIN_FILE=${{ env.CMAKE_TOOLCHAIN_FILE }} \
             -DCMAKE_INSTALL_PREFIX="${{ env.ROOT_PATH }}/build/dist" \
             -DPARALLEL_BUILDS=${{ steps.processor_count.outputs.PROCESSOR_COUNT || 1 }}
