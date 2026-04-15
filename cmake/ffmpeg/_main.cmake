@@ -1,3 +1,12 @@
+# x265.pc will not be installed if their cmake cannot detect the latest tag
+# SVT-AV1 cannot determine version if the git history is not available
+foreach(repo "x265_git" "SVT-AV1")
+    execute_process(
+        COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/${repo}" fetch --tags --depth=1
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+endforeach()
+
 # the destination directory needs to be same level down as the original source directory
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
         PATTERN "Vulkan-Loader/tests" EXCLUDE)  # vulkan loader test files contain emojis in file names which can fail
