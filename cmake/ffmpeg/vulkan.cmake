@@ -79,3 +79,12 @@ add_dependencies(${CMAKE_PROJECT_NAME} vulkan-loader)
 
 # Add to PKG_CONFIG_PATH for FFmpeg to find
 set(PKG_CONFIG_PATH "${CMAKE_CURRENT_BINARY_DIR_UNIX}/vulkan/lib/pkgconfig:${PKG_CONFIG_PATH}")
+
+# Apply Vulkan patches to FFmpeg source
+if(BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_VULKAN_PATCHES)
+    file(GLOB FFMPEG_VULKAN_PATCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/FFmpeg/vulkan/*.patch)
+
+    foreach(patch_file ${FFMPEG_VULKAN_PATCH_FILES})
+        APPLY_GIT_PATCH(${FFMPEG_GENERATED_SRC_PATH} ${patch_file})
+    endforeach()
+endif()

@@ -36,6 +36,7 @@ option(BUILD_FFMPEG_X264_PATCHES "Apply FFmpeg x264 patches" ON)
 option(BUILD_FFMPEG_X265 "Build FFmpeg x265" ON)
 option(BUILD_FFMPEG_X265_PATCHES "Apply FFmpeg x265 patches" ON)
 option(BUILD_FFMPEG_VULKAN "Build FFmpeg with Vulkan video encoding support" ON)
+option(BUILD_FFMPEG_VULKAN_PATCHES "Apply FFmpeg Vulkan patches" ON)
 
 # common includes
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/apply_git_patch.cmake)
