@@ -1,0 +1,69 @@
+From 0acc73b7fbf65a2b9091359c1ca1b434a1dfb239 Mon Sep 17 00:00:00 2001
+From: nyanmisaka <nst799610810@gmail.com>
+Date: Thu, 2 Apr 2026 19:24:06 +0800
+Subject: [PATCH] avcodec/amfenc: support full range in AV1 and update
+ deprecated AMF range flags for H264/HEVC
+
+Furthermore, the flags for H264/HEVC have been updated to those renamed in AMF 1.5.0+,
+instead of using the old ones that were already marked as deprecated:
+
+AMF_VIDEO_ENCODER_FULL_RANGE_COLOR -> AMF_VIDEO_ENCODER_OUTPUT_FULL_RANGE_COLOR
+AMF_VIDEO_ENCODER_HEVC_NOMINAL_RANGE -> AMF_VIDEO_ENCODER_HEVC_OUTPUT_FULL_RANGE_COLOR
+
+The macro content remains the same, therefore it will not cause regressions.
+
+Signed-off-by: nyanmisaka <nst799610810@gmail.com>
+---
+ libavcodec/amfenc_av1.c  | 4 ++--
+ libavcodec/amfenc_h264.c | 2 +-
+ libavcodec/amfenc_hevc.c | 2 +-
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/libavcodec/amfenc_av1.c b/libavcodec/amfenc_av1.c
+index b57c76de27208..6197fc96e2c2b 100644
+--- a/libavcodec/amfenc_av1.c
++++ b/libavcodec/amfenc_av1.c
+@@ -262,7 +262,7 @@ static av_cold int amf_encode_init_av1(AVCodecContext* avctx)
+     AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_AV1_OUTPUT_COLOR_PROFILE, color_profile);
+ 
+     // Color Range
+-    // TODO
++    AMF_ASSIGN_PROPERTY_BOOL(res, ctx->encoder, AMF_VIDEO_ENCODER_AV1_OUTPUT_FULL_RANGE_COLOR, (avctx->color_range == AVCOL_RANGE_JPEG));
+ 
+     // Color Transfer Characteristics (AMF matches ISO/IEC)
+     if(avctx->color_primaries != AVCOL_PRI_UNSPECIFIED && (pix_fmt == AV_PIX_FMT_NV12 || pix_fmt == AV_PIX_FMT_P010)){
+@@ -746,7 +746,7 @@ const FFCodec ff_av1_amf_encoder = {
+                       AV_CODEC_CAP_DR1,
+     .caps_internal  = FF_CODEC_CAP_INIT_CLEANUP,
+     CODEC_PIXFMTS_ARRAY(ff_amf_pix_fmts),
+-    .color_ranges   = AVCOL_RANGE_MPEG, /* FIXME: implement tagging */
++    .color_ranges   = AVCOL_RANGE_MPEG | AVCOL_RANGE_JPEG,
+     .p.wrapper_name   = "amf",
+     .hw_configs     = ff_amfenc_hw_configs,
+ };
+diff --git a/libavcodec/amfenc_h264.c b/libavcodec/amfenc_h264.c
+index b92b9af875ad6..ff2fe31dd608f 100644
+--- a/libavcodec/amfenc_h264.c
++++ b/libavcodec/amfenc_h264.c
+@@ -275,7 +275,7 @@ static av_cold int amf_encode_init_h264(AVCodecContext *avctx)
+     AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_OUTPUT_COLOR_PROFILE, color_profile);
+ 
+     /// Color Range (Support for older Drivers)
+-    AMF_ASSIGN_PROPERTY_BOOL(res, ctx->encoder, AMF_VIDEO_ENCODER_FULL_RANGE_COLOR, !!(avctx->color_range == AVCOL_RANGE_JPEG));
++    AMF_ASSIGN_PROPERTY_BOOL(res, ctx->encoder, AMF_VIDEO_ENCODER_OUTPUT_FULL_RANGE_COLOR, (avctx->color_range == AVCOL_RANGE_JPEG));
+ 
+     /// Color Depth
+     pix_fmt = avctx->hw_frames_ctx ? ((AVHWFramesContext*)avctx->hw_frames_ctx->data)->sw_format
+diff --git a/libavcodec/amfenc_hevc.c b/libavcodec/amfenc_hevc.c
+index 01d6ea9b3d10e..7bd04d5dcf5ca 100644
+--- a/libavcodec/amfenc_hevc.c
++++ b/libavcodec/amfenc_hevc.c
+@@ -257,7 +257,7 @@ static av_cold int amf_encode_init_hevc(AVCodecContext *avctx)
+     AMF_ASSIGN_PROPERTY_INT64(res, ctx->encoder, AMF_VIDEO_ENCODER_HEVC_OUTPUT_COLOR_PROFILE, color_profile);
+ 
+     // Color Range (Support for older Drivers)
+-    AMF_ASSIGN_PROPERTY_BOOL(res, ctx->encoder, AMF_VIDEO_ENCODER_HEVC_NOMINAL_RANGE, !!(avctx->color_range == AVCOL_RANGE_JPEG));
++    AMF_ASSIGN_PROPERTY_BOOL(res, ctx->encoder, AMF_VIDEO_ENCODER_HEVC_OUTPUT_FULL_RANGE_COLOR, (avctx->color_range == AVCOL_RANGE_JPEG));
+ 
+     // Color Transfer Characteristics (AMF matches ISO/IEC)
+     if(avctx->color_trc != AVCOL_TRC_UNSPECIFIED && (pix_fmt == AV_PIX_FMT_NV12 || pix_fmt == AV_PIX_FMT_P010)){
