@@ -1,0 +1,41 @@
+Fix encode feedback flags check running before capabilities are queried
+
+The feedback flags check added in 735c84b57f was placed before
+GetPhysicalDeviceVideoCapabilitiesKHR populates enc_caps, so
+supportedEncodeFeedbackFlags is always zero and the check always fails.
+
+Move the check to after the capabilities query where enc_caps is valid.
+
+diff --git a/libavcodec/vulkan_encode.c b/libavcodec/vulkan_encode.c
+--- a/libavcodec/vulkan_encode.c
++++ b/libavcodec/vulkan_encode.c
+@@ -773,14 +773,6 @@
+         return AVERROR(EINVAL);
+     }
+ 
+-    if ((ctx->enc_caps.supportedEncodeFeedbackFlags & feedback_flags) !=
+-        feedback_flags) {
+-        av_log (avctx, AV_LOG_ERROR,
+-                "Driver does not support required encode feedback flags "
+-                "(BUFFER_OFFSET and BYTES_WRITTEN).\n");
+-        return AVERROR(ENOTSUP);
+-    }
+-
+     ctx->base.op = &vulkan_base_encode_ops;
+     ctx->codec = codec;
+ 
+@@ -880,6 +872,14 @@
+         return AVERROR_EXTERNAL;
+     }
+ 
++    if ((ctx->enc_caps.supportedEncodeFeedbackFlags & feedback_flags) !=
++        feedback_flags) {
++        av_log (avctx, AV_LOG_ERROR,
++                "Driver does not support required encode feedback flags "
++                "(BUFFER_OFFSET and BYTES_WRITTEN).\n");
++        return AVERROR(ENOTSUP);
++    }
++
+     err = init_rc(avctx, ctx);
+     if (err < 0)
+         return err;
