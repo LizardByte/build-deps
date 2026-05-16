@@ -99,13 +99,13 @@ jobs:
           - name: FreeBSD-aarch64
             os: ubuntu-latest  # ubuntu-24.04-arm is slower with the FreeBSD VM
             arch: aarch64
-            bsd_release: '14.3'
+            bsd_release: '14.4'
             generator: "Unix Makefiles"
             shell: freebsd {0}
           - name: FreeBSD-amd64
             os: ubuntu-latest
             arch: x86_64
-            bsd_release: '14.3'
+            bsd_release: '14.4'
             generator: "Unix Makefiles"
             shell: freebsd {0}
           - name: Linux-aarch64
