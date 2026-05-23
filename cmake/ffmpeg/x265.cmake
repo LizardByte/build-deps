@@ -1,3 +1,6 @@
+# x265.pc will not be installed if their cmake cannot detect the latest tag
+GIT_FETCH_TAGS("third-party/FFmpeg/x265_git")
+
 set(X265_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/x265_git)
 
 file(GLOB X265_GIT_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/x265_git/*.patch)

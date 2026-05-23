@@ -1,3 +1,6 @@
+# SVT-AV1 cannot determine version if the git history is not available
+GIT_FETCH_TAGS("third-party/FFmpeg/SVT-AV1")
+
 set(SVT_AV1_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/SVT-AV1)
 
 if(BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_SVT_AV1_PATCHES)

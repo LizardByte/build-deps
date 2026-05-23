@@ -40,6 +40,7 @@ option(BUILD_FFMPEG_VULKAN_PATCHES "Apply FFmpeg Vulkan patches" ON)
 
 # common includes
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/apply_git_patch.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/git_fetch_tags.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/unix_path.cmake)
 
 # CPM
