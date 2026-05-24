@@ -4,7 +4,6 @@
 
 This is a common set of pre-compiled dependencies for [LizardByte/Sunshine](https://github.com/LizardByte/Sunshine).
 
-- [Boost](https://www.boost.org)
 - [FFmpeg](https://ffmpeg.org)
 
 ## Usage

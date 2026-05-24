@@ -11,7 +11,7 @@
 # See https://github.com/LizardByte/.github/blob/master/renovate-config.json5 for the configuration of renovate.
 #
 # Expected dependency structure for new entries:
-# - Start each block with a human-readable comment, for example `# Boost`.
+# - Start each block with a human-readable comment, for example `# Example dependency`.
 # - Follow it with consecutive renovate metadata comments.
 # - The first metadata line must start with `# renovate:` and include `datasource=` and `depName=`.
 # - Optional metadata keys are `packageName=`, `versioning=`, `extractVersion=`, and `registryUrl=`.
@@ -32,20 +32,6 @@
 # - `CPMDeclarePackage(...)`
 
 set(PATCH_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/patches")
-
-# Boost
-# renovate: datasource=github-release-attachments depName=boostorg/boost
-# versioning=regex:^boost-(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?<prerelease>\.[A-Za-z0-9.-]+)?$
-set(BOOST_TAG boost-1.89.0)
-set(BOOST_SHA256 67acec02d0d118b5de9eb441f5fb707b3a1cdd884be00ca24b9a73c995511f74)
-string(REGEX REPLACE "^boost-" "" BOOST_VERSION "${BOOST_TAG}")
-CPMDeclarePackage(Boost
-        NAME Boost
-        VERSION ${BOOST_VERSION}
-        URL https://github.com/boostorg/boost/releases/download/${BOOST_TAG}/${BOOST_TAG}-cmake.tar.xz
-        URL_HASH SHA256=${BOOST_SHA256}
-        DOWNLOAD_ONLY YES
-)
 
 # libva
 # renovate: datasource=github-tags depName=intel/libva
