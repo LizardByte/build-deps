@@ -46,6 +46,7 @@ list(APPEND FFMPEG_EXTRA_CONFIGURE
         --enable-avutil
         --enable-bsfs  # ensure config.h will have CONFIG_CBS_ flags
         --enable-swscale
+        --enable-encoder=mpeg2video,h263p
 )
 
 if(BUILD_FFMPEG_AMF)
@@ -82,7 +83,7 @@ endif()
 if(BUILD_FFMPEG_LIBVA)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
             --enable-vaapi
-            --enable-encoder=h264_vaapi,hevc_vaapi,av1_vaapi
+            --enable-encoder=h264_vaapi,hevc_vaapi,av1_vaapi,mpeg2_vaapi
     )
 endif()
 if(BUILD_FFMPEG_VULKAN)
@@ -108,7 +109,7 @@ endif()
 if(WIN32)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
             --enable-d3d11va
-            --enable-encoder=h264_qsv,hevc_qsv,av1_qsv
+            --enable-encoder=h264_qsv,hevc_qsv,av1_qsv,mpeg2_qsv
             --enable-libvpl
     )
 elseif(APPLE)
