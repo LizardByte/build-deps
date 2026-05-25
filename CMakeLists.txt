@@ -7,13 +7,7 @@ project(build-deps
 
 # Main options
 option(BUILD_ALL "Build all dependencies" ON)
-option(BUILD_ALL_LIBDISPLAYDEVICE "Build all libdisplaydevice dependencies" OFF)
 option(BUILD_ALL_SUNSHINE "Build all Sunshine dependencies" OFF)
-
-# Boost options
-option(BUILD_BOOST "Build Boost" OFF)
-option(BUILD_BOOST_LIBDISPLAYDEVICE "Build boost for libdisplaydevice" ON)
-option(BUILD_BOOST_SUNSHINE "Build boost for Sunshine" ON)
 
 # FFmpeg options
 option(BUILD_FFMPEG "Build FFmpeg" OFF)
@@ -158,19 +152,12 @@ endif()
 UNIX_PATH(CMAKE_CURRENT_BINARY_DIR_UNIX ${CMAKE_CURRENT_BINARY_DIR})
 UNIX_PATH(CMAKE_INSTALL_PREFIX_UNIX ${CMAKE_INSTALL_PREFIX})
 
-# Set up separate install prefixes for BOOST and FFMPEG
-# This allows us to package them separately
-if(NOT DEFINED BOOST_INSTALL_PREFIX)
-    set(BOOST_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/boost")
-endif()
 if(NOT DEFINED FFMPEG_INSTALL_PREFIX)
     set(FFMPEG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/ffmpeg")
 endif()
 
-UNIX_PATH(BOOST_INSTALL_PREFIX_UNIX ${BOOST_INSTALL_PREFIX})
 UNIX_PATH(FFMPEG_INSTALL_PREFIX_UNIX ${FFMPEG_INSTALL_PREFIX})
 
-message(STATUS "Boost install prefix: ${BOOST_INSTALL_PREFIX}")
 message(STATUS "FFmpeg install prefix: ${FFMPEG_INSTALL_PREFIX}")
 
 # setup pkg-config path
@@ -228,14 +215,6 @@ string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} arch)
 message(STATUS "Detected system name: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "Detected architecture: ${CMAKE_SYSTEM_PROCESSOR}")
 message(STATUS "CI Matrix name should be: '${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}'")
-
-# boost
-# TODO: boost build fails on Windows due to NASM errors during configure?
-# https://github.com/Orphis/boost-cmake/issues/42
-# https://github.com/libsdl-org/SDL/issues/10250
-if(BUILD_ALL OR BUILD_ALL_LIBDISPLAYDEVICE OR BUILD_ALL_SUNSHINE OR BUILD_BOOST)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/boost/_main.cmake)
-endif()
 
 # FFmpeg
 if(BUILD_ALL OR BUILD_ALL_SUNSHINE OR BUILD_FFMPEG)
