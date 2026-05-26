@@ -1,0 +1,20 @@
+Fix vulkan_encode returning success when video encode queue is missing
+
+When ff_vk_qf_find() fails to find a video encode queue, the error path
+returns the stale 'err' variable which is 0 from the previous successful
+ff_vk_load_functions() call. This causes avcodec_open2() to report success
+despite the encoder being in a broken state, leading to a SIGSEGV when
+the caller attempts to encode a frame.
+
+diff --git a/libavcodec/vulkan_encode.c b/libavcodec/vulkan_encode.c
+--- a/libavcodec/vulkan_encode.c
++++ b/libavcodec/vulkan_encode.c
+@@ -811,7 +811,7 @@
+     if (!ctx->qf_enc) {
+         av_log(avctx, AV_LOG_ERROR, "Encoding of %s is not supported by this device\n",
+                avcodec_get_name(avctx->codec_id));
+-        return err;
++        return AVERROR(ENOSYS);
+     }
+ 
+     /* Load all properties */
