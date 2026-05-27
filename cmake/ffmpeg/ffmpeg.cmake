@@ -114,7 +114,7 @@ if(WIN32)
     )
 elseif(APPLE)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
-            --enable-encoder=h264_videotoolbox,hevc_videotoolbox
+            --enable-encoder=h264_videotoolbox,hevc_videotoolbox,prores_videotoolbox
             --enable-videotoolbox
     )
 elseif(FREEBSD)
