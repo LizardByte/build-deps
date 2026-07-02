@@ -35,7 +35,7 @@ set(PATCH_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/patches")
 
 # libva
 # renovate: datasource=github-tags depName=intel/libva
-set(LIBVA_VERSION 2.23.0)
+set(LIBVA_VERSION 2.24.0)
 CPMDeclarePackage(libva
         NAME libva
         VERSION ${LIBVA_VERSION}
