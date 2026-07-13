@@ -1,0 +1,80 @@
+Fix Vulkan encoder resource leaks during teardown
+
+Two issues:
+
+1. The Vulkan H.264/H.265/AV1 encoders initialize a CBS context (enc->cbs)
+   but never close it, leaking cloned SPS/VPS/PPS structs (~1-8 MB per session).
+
+2. ff_vulkan_encode_uninit() calls ff_hw_base_encode_close() which frees
+   remaining pictures without calling the encoder .free callback, leaking
+   VkImageViews. Also av_buffer_pool_uninit() is called after the device
+   reference is released.
+
+diff --git a/libavcodec/vulkan_encode_h264.c b/libavcodec/vulkan_encode_h264.c
+--- a/libavcodec/vulkan_encode_h264.c
++++ b/libavcodec/vulkan_encode_h264.c
+@@ -1561,6 +1561,8 @@
+ static av_cold int vulkan_encode_h264_close(AVCodecContext *avctx)
+ {
+     VulkanEncodeH264Context *enc = avctx->priv_data;
++    ff_cbs_fragment_free(&enc->current_access_unit);
++    ff_cbs_close(&enc->cbs);
+     ff_vulkan_encode_uninit(&enc->common);
+     return 0;
+ }
+diff --git a/libavcodec/vulkan_encode_h265.c b/libavcodec/vulkan_encode_h265.c
+--- a/libavcodec/vulkan_encode_h265.c
++++ b/libavcodec/vulkan_encode_h265.c
+@@ -1698,6 +1698,8 @@
+ static av_cold int vulkan_encode_h265_close(AVCodecContext *avctx)
+ {
+     VulkanEncodeH265Context *enc = avctx->priv_data;
++    ff_cbs_fragment_free(&enc->current_access_unit);
++    ff_cbs_close(&enc->cbs);
+     ff_vulkan_encode_uninit(&enc->common);
+     return 0;
+ }
+diff --git a/libavcodec/vulkan_encode_av1.c b/libavcodec/vulkan_encode_av1.c
+--- a/libavcodec/vulkan_encode_av1.c
++++ b/libavcodec/vulkan_encode_av1.c
+@@ -1359,6 +1359,8 @@
+ static av_cold int vulkan_encode_av1_close(AVCodecContext *avctx)
+ {
+     VulkanEncodeAV1Context *enc = avctx->priv_data;
++    ff_cbs_fragment_free(&enc->current_access_unit);
++    ff_cbs_close(&enc->cbs);
+     av_free(enc->padding_payload);
+     ff_vulkan_encode_uninit(&enc->common);
+     return 0;
+ }
+diff --git a/libavcodec/vulkan_encode.c b/libavcodec/vulkan_encode.c
+--- a/libavcodec/vulkan_encode.c
++++ b/libavcodec/vulkan_encode.c
+@@ -42,10 +42,25 @@
+                                              ctx->session_params,
+                                              s->hwctx->alloc);
+ 
+-    ff_hw_base_encode_close(&ctx->base);
+-
++    /* Free the packet buffer pool while the device is still valid */
+     av_buffer_pool_uninit(&ctx->buf_pool);
+ 
++    /* Destroy image views for pictures still in the encode queue.
++     * ff_hw_base_encode_close() does not call the .free callback. */
++    for (FFHWBaseEncodePicture *pic = ctx->base.pic_start; pic; pic = pic->next) {
++        FFVulkanEncodePicture *vp = pic->priv;
++        if (vp && vp->in.view) {
++            vk->DestroyImageView(s->hwctx->act_dev, vp->in.view, s->hwctx->alloc);
++            vp->in.view = VK_NULL_HANDLE;
++        }
++        if (vp && !ctx->common.layered_dpb && vp->dpb.view) {
++            vk->DestroyImageView(s->hwctx->act_dev, vp->dpb.view, s->hwctx->alloc);
++            vp->dpb.view = VK_NULL_HANDLE;
++        }
++    }
++
++    ff_hw_base_encode_close(&ctx->base);
++
+     ff_vk_video_common_uninit(s, &ctx->common);
+ 
+     ff_vk_uninit(s);
