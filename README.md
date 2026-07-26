@@ -1,6 +1,19 @@
-# build-deps
+<div align="center">
+  <img
+    src="https://raw.githubusercontent.com/LizardByte/.github/refs/heads/master/branding/logos/logo.svg"
+    alt="LizardByte icon"
+    width="256"
+  />
+  <h1 align="center">LizardByte build deps</h1>
+  <h4 align="center">Prebuilt dependencies for LizardByte projects.</h4>
+</div>
 
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/lizardbyte/build-deps/ci.yml.svg?branch=master&label=build&logo=github&style=for-the-badge)](https://github.com/LizardByte/build-deps/actions/workflows/ci.yml?query=branch%3Amaster)
+<div align="center">
+  <a href="https://github.com/LizardByte/build-deps/actions/workflows/ci.yml?query=branch%3Amaster"><img src="https://img.shields.io/github/actions/workflow/status/lizardbyte/build-deps/ci.yml.svg?branch=master&label=build&logo=github&style=for-the-badge" alt="GitHub Workflow Status (CI)"></a>
+  <a href="https://sonarcloud.io/project/overview?id=LizardByte_build-deps"><img src="https://img.shields.io/sonar/quality_gate/LizardByte_build-deps.svg?server=https%3A%2F%2Fsonarcloud.io&style=for-the-badge&logo=sonarqubecloud&label=sonarcloud" alt="SonarCloud"></a>
+</div>
+
+## Overview
 
 This is a common set of pre-compiled dependencies for [LizardByte/Sunshine](https://github.com/LizardByte/Sunshine).
 
