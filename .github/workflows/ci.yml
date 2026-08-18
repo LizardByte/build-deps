@@ -18,7 +18,7 @@ concurrency:
 env:
   FREEBSD_CLANG_VERSION: 19
   LINUX_GCC_VERSION: 12
-  MACOSX_DEPLOYMENT_TARGET: 14.0
+  MACOSX_DEPLOYMENT_TARGET: '14.0'
 
 jobs:
   release-setup:
@@ -61,7 +61,6 @@ jobs:
           - Alpine-x86_64
           - Darwin-arm64
           - Darwin-x86_64
-          - FreeBSD-aarch64
           - FreeBSD-amd64
           - Linux-aarch64
           - Linux-ppc64le
@@ -95,16 +94,10 @@ jobs:
             generator: "Unix Makefiles"
             shell: bash
             target: x86_64-apple-macosx
-          - name: FreeBSD-aarch64
-            os: ubuntu-latest  # ubuntu-24.04-arm is slower with the FreeBSD VM
-            arch: aarch64
-            bsd_release: '15.1'
-            generator: "Unix Makefiles"
-            shell: freebsd {0}
           - name: FreeBSD-amd64
             os: ubuntu-latest
             arch: x86_64
-            bsd_release: '15.1'
+            bsd_release: "15.1"
             generator: "Unix Makefiles"
             shell: freebsd {0}
           - name: Linux-aarch64
