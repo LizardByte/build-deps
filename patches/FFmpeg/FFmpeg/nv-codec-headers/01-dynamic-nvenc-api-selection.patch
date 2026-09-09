@@ -1,0 +1,579 @@
+Select a compatible NVENC SDK implementation at runtime
+
+Compile FFmpeg's NVENC implementation against SDK 11.0, 12.0, 13.0,
+and 13.1 headers. Query the installed driver's maximum
+NVENC API version before encoder initialization and dispatch every encoder
+operation to the newest compatible implementation.
+
+NVENC structures and feature fields change between SDK generations, so
+rewriting only the API bits in structure version values is not sufficient.
+Keeping each implementation isolated behind the existing FFmpeg encoder
+interface preserves the correct ABI while allowing one libavcodec build to
+run on drivers from the SDK 11.0 generation onward.
+
+diff --git a/libavcodec/Makefile b/libavcodec/Makefile
+index 95ba308..ee28312
+--- a/libavcodec/Makefile
++++ b/libavcodec/Makefile
+@@ -277,7 +277,9 @@ OBJS-$(CONFIG_AV1_CUVID_DECODER)       += cuviddec.o
+ OBJS-$(CONFIG_AV1_D3D12VA_ENCODER)     += d3d12va_encode_av1.o av1_levels.o
+ OBJS-$(CONFIG_AV1_MEDIACODEC_DECODER)  += mediacodecdec.o
+ OBJS-$(CONFIG_AV1_MEDIACODEC_ENCODER)  += mediacodecenc.o
+-OBJS-$(CONFIG_AV1_NVENC_ENCODER)       += nvenc_av1.o nvenc.o
++NVENC-OBJS                            := nvenc_dispatch.o nvenc_1310.o nvenc_1300.o nvenc_1200.o nvenc_1100.o
++
++OBJS-$(CONFIG_AV1_NVENC_ENCODER)       += nvenc_av1.o $(NVENC-OBJS)
+ OBJS-$(CONFIG_AV1_QSV_ENCODER)         += qsvenc_av1.o
+ OBJS-$(CONFIG_AV1_VAAPI_ENCODER)       += vaapi_encode_av1.o av1_levels.o
+ OBJS-$(CONFIG_AV1_VULKAN_ENCODER)      += vulkan_encode.o vulkan_encode_av1.o \
+@@ -439,7 +441,7 @@ OBJS-$(CONFIG_H264_MEDIACODEC_DECODER) += mediacodecdec.o
+ OBJS-$(CONFIG_H264_MEDIACODEC_ENCODER) += mediacodecenc.o
+ OBJS-$(CONFIG_H264_MF_ENCODER)         += mfenc.o mf_utils.o
+ OBJS-$(CONFIG_H264_MMAL_DECODER)       += mmaldec.o
+-OBJS-$(CONFIG_H264_NVENC_ENCODER)      += nvenc_h264.o nvenc.o
++OBJS-$(CONFIG_H264_NVENC_ENCODER)      += nvenc_h264.o $(NVENC-OBJS)
+ OBJS-$(CONFIG_H264_OH_DECODER)         += ohcodec.o ohdec.o
+ OBJS-$(CONFIG_H264_OH_ENCODER)         += ohcodec.o ohenc.o
+ OBJS-$(CONFIG_H264_QSV_DECODER)        += qsvdec.o
+@@ -469,7 +471,12 @@ OBJS-$(CONFIG_HEVC_D3D12VA_ENCODER)    += d3d12va_encode_hevc.o h265_profile_lev
+ OBJS-$(CONFIG_HEVC_MEDIACODEC_DECODER) += mediacodecdec.o
+ OBJS-$(CONFIG_HEVC_MEDIACODEC_ENCODER) += mediacodecenc.o
+ OBJS-$(CONFIG_HEVC_MF_ENCODER)         += mfenc.o mf_utils.o
+-OBJS-$(CONFIG_HEVC_NVENC_ENCODER)      += nvenc_hevc.o nvenc.o
++OBJS-$(CONFIG_HEVC_NVENC_ENCODER)      += nvenc_hevc.o $(NVENC-OBJS)
++
++libavcodec/nvenc_1100.o: CPPFLAGS += -I$(NVENC_SDK_1100_INCLUDE)
++libavcodec/nvenc_1200.o: CPPFLAGS += -I$(NVENC_SDK_1200_INCLUDE)
++libavcodec/nvenc_1300.o: CPPFLAGS += -I$(NVENC_SDK_1300_INCLUDE)
++libavcodec/nvenc_1310.o libavcodec/nvenc_dispatch.o libavcodec/nvenc_h264.o libavcodec/nvenc_hevc.o libavcodec/nvenc_av1.o: CPPFLAGS += -I$(NVENC_SDK_1310_INCLUDE)
+ OBJS-$(CONFIG_HEVC_OH_DECODER)         += ohcodec.o ohdec.o
+ OBJS-$(CONFIG_HEVC_OH_ENCODER)         += ohcodec.o ohenc.o
+ OBJS-$(CONFIG_HEVC_QSV_DECODER)        += qsvdec.o
+diff --git a/libavcodec/nvenc.c b/libavcodec/nvenc.c
+index 9203fb6..57b6e77 100644
+--- a/libavcodec/nvenc.c
++++ b/libavcodec/nvenc.c
+@@ -554,11 +554,19 @@ static int nvenc_check_capabilities(AVCodecContext *avctx)
+         return AVERROR(ENOSYS);
+     }
+ 
++#ifdef NVENC_HAVE_SINGLE_SLICE_INTRA_REFRESH
+     ret = nvenc_check_cap(avctx, NV_ENC_CAPS_SINGLE_SLICE_INTRA_REFRESH);
+     if(ctx->single_slice_intra_refresh && ret <= 0) {
+         av_log(avctx, AV_LOG_WARNING, "Single slice intra refresh not supported by the device\n");
+         return AVERROR(ENOSYS);
+     }
++#else
++    if (ctx->single_slice_intra_refresh) {
++        av_log(avctx, AV_LOG_WARNING,
++               "Single slice intra refresh requires NVENC SDK 11.1 or newer\n");
++        return AVERROR(ENOSYS);
++    }
++#endif
+ 
+     ret = nvenc_check_cap(avctx, NV_ENC_CAPS_SUPPORT_INTRA_REFRESH);
+     if((ctx->intra_refresh || ctx->single_slice_intra_refresh) && ret <= 0) {
+@@ -1026,6 +1034,7 @@ static av_cold int nvenc_setup_rate_control(AVCodecContext *avctx)
+         }
+     }
+ 
++#ifdef NVENC_HAVE_CHROMA_QP_OFFSET
+     ctx->encode_config.rcParams.cbQPIndexOffset = ctx->qp_cb_offset;
+     ctx->encode_config.rcParams.crQPIndexOffset = ctx->qp_cr_offset;
+ 
+@@ -1035,6 +1044,13 @@ static av_cold int nvenc_setup_rate_control(AVCodecContext *avctx)
+                "av1_nvenc: qp_cr_offset is currently ignored by the NVENC driver "
+                "(deltaQ_v_ac is forced equal to deltaQ_u_ac); only qp_cb_offset "
+                "takes effect.\n");
++#else
++    if (ctx->qp_cb_offset || ctx->qp_cr_offset) {
++        av_log(avctx, AV_LOG_WARNING,
++               "Chroma QP offsets require NVENC SDK 11.1 or newer\n");
++        return AVERROR(ENOSYS);
++    }
++#endif
+ 
+     if (ctx->ldkfs)
+          ctx->encode_config.rcParams.lowDelayKeyFrameScale = ctx->ldkfs;
+@@ -1179,7 +1195,9 @@ static av_cold int nvenc_setup_h264_config(AVCodecContext *avctx)
+         h264->intraRefreshCnt = cc->gopLength - 1;
+         cc->gopLength = NVENC_INFINITE_GOPLENGTH;
+         h264->outputRecoveryPointSEI = 1;
++#ifdef NVENC_HAVE_SINGLE_SLICE_INTRA_REFRESH
+         h264->singleSliceIntraRefresh = ctx->single_slice_intra_refresh;
++#endif
+     }
+ 
+     if (ctx->constrained_encoding)
+@@ -1360,7 +1378,9 @@ static av_cold int nvenc_setup_hevc_config(AVCodecContext *avctx)
+ #ifdef NVENC_HAVE_HEVC_OUTPUT_RECOVERY_POINT_SEI
+         hevc->outputRecoveryPointSEI = 1;
+ #endif
++#ifdef NVENC_HAVE_SINGLE_SLICE_INTRA_REFRESH
+         hevc->singleSliceIntraRefresh = ctx->single_slice_intra_refresh;
++#endif
+     }
+ 
+ #ifdef NVENC_HAVE_HEVC_AND_AV1_MASTERING_METADATA
+diff --git a/libavcodec/nvenc.h b/libavcodec/nvenc.h
+index ad6ddaa..4ac4480
+--- a/libavcodec/nvenc.h
++++ b/libavcodec/nvenc.h
+@@ -19,6 +19,8 @@
+ #ifndef AVCODEC_NVENC_H
+ #define AVCODEC_NVENC_H
+ 
++#include <stddef.h>
++
+ #include "config.h"
+ 
+ #if CONFIG_D3D11VA
+@@ -43,6 +45,12 @@ typedef void ID3D11Device;
+ #define NVENCAPI_CHECK_VERSION(major, minor) \
+     ((major) < NVENCAPI_MAJOR_VERSION || ((major) == NVENCAPI_MAJOR_VERSION && (minor) <= NVENCAPI_MINOR_VERSION))
+ 
++// SDK 11.1 compile time feature checks
++#if NVENCAPI_CHECK_VERSION(11, 1)
++#define NVENC_HAVE_CHROMA_QP_OFFSET
++#define NVENC_HAVE_SINGLE_SLICE_INTRA_REFRESH
++#endif
++
+ // SDK 12.0 compile time feature checks
+ #if NVENCAPI_CHECK_VERSION(12, 0)
+ #define NVENC_HAVE_HEVC_OUTPUT_RECOVERY_POINT_SEI
+@@ -124,29 +132,37 @@ enum {
+ };
+ 
+ enum {
+-    NV_ENC_H264_PROFILE_BASELINE,
+-    NV_ENC_H264_PROFILE_MAIN,
+-    NV_ENC_H264_PROFILE_HIGH,
++    NV_ENC_H264_PROFILE_BASELINE = 0,
++    NV_ENC_H264_PROFILE_MAIN     = 1,
++    NV_ENC_H264_PROFILE_HIGH     = 2,
+ #ifdef NVENC_HAVE_H264_10BIT_SUPPORT
+-    NV_ENC_H264_PROFILE_HIGH_10,
++    NV_ENC_H264_PROFILE_HIGH_10  = 3,
+ #endif
+ #ifdef NVENC_HAVE_422_SUPPORT
+-    NV_ENC_H264_PROFILE_HIGH_422,
++    NV_ENC_H264_PROFILE_HIGH_422 = 4,
+ #endif
+-    NV_ENC_H264_PROFILE_HIGH_444P,
++    NV_ENC_H264_PROFILE_HIGH_444P = 5,
+ };
+ 
+ enum {
+-    NV_ENC_HEVC_PROFILE_MAIN,
+-    NV_ENC_HEVC_PROFILE_MAIN_10,
+-    NV_ENC_HEVC_PROFILE_REXT,
++    NV_ENC_HEVC_PROFILE_MAIN          = 0,
++    NV_ENC_HEVC_PROFILE_MAIN_10       = 1,
++    NV_ENC_HEVC_PROFILE_REXT          = 2,
+ #ifdef NVENC_HAVE_MVHEVC
+-    NV_ENC_HEVC_PROFILE_MULTIVIEW_MAIN,
++    NV_ENC_HEVC_PROFILE_MULTIVIEW_MAIN = 3,
+ #endif
+ 
+-    NV_ENC_HEVC_PROFILE_COUNT
++    NV_ENC_HEVC_PROFILE_COUNT = 4
+ };
+ 
++typedef enum NvencSDKVersion {
++    NVENC_SDK_UNSUPPORTED,
++    NVENC_SDK_1100,
++    NVENC_SDK_1200,
++    NVENC_SDK_1300,
++    NVENC_SDK_1310,
++} NvencSDKVersion;
++
+ enum {
+     NVENC_LOWLATENCY = 1,
+     NVENC_LOSSLESS   = 2,
+@@ -169,9 +185,16 @@ typedef struct NvencContext
+ {
+     AVClass *avclass;
+ 
++    NvencSDKVersion selected_sdk;
+     NvencDynLoadFunctions nvenc_dload_funcs;
+ 
+-    NV_ENC_INITIALIZE_PARAMS init_encode_params;
++    /* SDK 11.0 and 12.0 use an eight-byte-larger version of this ABI
++     * structure than SDK 13.0. Keep the private context layout identical
++     * across all version-isolated implementations. */
++    union {
++        NV_ENC_INITIALIZE_PARAMS init_encode_params;
++        uint64_t init_encode_params_storage[226];
++    };
+     NV_ENC_CONFIG encode_config;
+     CUcontext cu_context;
+     CUcontext cu_context_internal;
+@@ -277,6 +300,57 @@ typedef struct NvencContext
+     int display_sei_sent;
+ } NvencContext;
+ 
++typedef struct NvencContextABI {
++    size_t size;
++    size_t selected_sdk;
++    size_t nvenc_dload_funcs;
++    size_t init_encode_params;
++    size_t encode_config;
++    size_t cu_context;
++    size_t registered_frames;
++    size_t data_pix_fmt;
++    size_t nvencoder;
++    size_t preset;
++    size_t profile;
++    size_t display_sei_sent;
++} NvencContextABI;
++
++static inline NvencContextABI nvenc_context_abi(void)
++{
++    return (NvencContextABI) {
++        .size               = sizeof(NvencContext),
++        .selected_sdk       = offsetof(NvencContext, selected_sdk),
++        .nvenc_dload_funcs  = offsetof(NvencContext, nvenc_dload_funcs),
++        .init_encode_params = offsetof(NvencContext, init_encode_params),
++        .encode_config      = offsetof(NvencContext, encode_config),
++        .cu_context         = offsetof(NvencContext, cu_context),
++        .registered_frames  = offsetof(NvencContext, registered_frames),
++        .data_pix_fmt       = offsetof(NvencContext, data_pix_fmt),
++        .nvencoder          = offsetof(NvencContext, nvencoder),
++        .preset             = offsetof(NvencContext, preset),
++        .profile            = offsetof(NvencContext, profile),
++        .display_sei_sent   = offsetof(NvencContext, display_sei_sent),
++    };
++}
++
++static inline int nvenc_context_abi_matches(const NvencContextABI *expected)
++{
++    const NvencContextABI actual = nvenc_context_abi();
++
++    return actual.size               == expected->size &&
++           actual.selected_sdk       == expected->selected_sdk &&
++           actual.nvenc_dload_funcs  == expected->nvenc_dload_funcs &&
++           actual.init_encode_params == expected->init_encode_params &&
++           actual.encode_config      == expected->encode_config &&
++           actual.cu_context         == expected->cu_context &&
++           actual.registered_frames  == expected->registered_frames &&
++           actual.data_pix_fmt       == expected->data_pix_fmt &&
++           actual.nvencoder          == expected->nvencoder &&
++           actual.preset             == expected->preset &&
++           actual.profile            == expected->profile &&
++           actual.display_sei_sent   == expected->display_sei_sent;
++}
++
+ int ff_nvenc_encode_init(AVCodecContext *avctx);
+ 
+ int ff_nvenc_encode_close(AVCodecContext *avctx);
+diff --git a/libavcodec/nvenc_1100.c b/libavcodec/nvenc_1100.c
+new file mode 100644
+index 0000000..0b26526
+--- /dev/null
++++ b/libavcodec/nvenc_1100.c
+@@ -0,0 +1,21 @@
++/* Compile the NVENC implementation against SDK 11.0 headers. */
++#include "config_components.h"
++
++#undef CONFIG_AV1_NVENC_ENCODER
++#define CONFIG_AV1_NVENC_ENCODER 0
++
++#define ff_nvenc_encode_init     ff_nvenc_encode_init_1100
++#define ff_nvenc_encode_close    ff_nvenc_encode_close_1100
++#define ff_nvenc_receive_packet  ff_nvenc_receive_packet_1100
++#define ff_nvenc_encode_flush    ff_nvenc_encode_flush_1100
++#define ff_nvenc_pix_fmts        ff_nvenc_pix_fmts_1100
++#define ff_nvenc_hw_configs      ff_nvenc_hw_configs_1100
++
++#include "nvenc.c"
++
++int ff_nvenc_context_abi_matches_1100(const NvencContextABI *expected);
++
++int ff_nvenc_context_abi_matches_1100(const NvencContextABI *expected)
++{
++    return nvenc_context_abi_matches(expected);
++}
+diff --git a/libavcodec/nvenc_1200.c b/libavcodec/nvenc_1200.c
+new file mode 100644
+index 0000000..ba334e0
+--- /dev/null
++++ b/libavcodec/nvenc_1200.c
+@@ -0,0 +1,16 @@
++/* Compile the NVENC implementation against SDK 12.0 headers. */
++#define ff_nvenc_encode_init     ff_nvenc_encode_init_1200
++#define ff_nvenc_encode_close    ff_nvenc_encode_close_1200
++#define ff_nvenc_receive_packet  ff_nvenc_receive_packet_1200
++#define ff_nvenc_encode_flush    ff_nvenc_encode_flush_1200
++#define ff_nvenc_pix_fmts        ff_nvenc_pix_fmts_1200
++#define ff_nvenc_hw_configs      ff_nvenc_hw_configs_1200
++
++#include "nvenc.c"
++
++int ff_nvenc_context_abi_matches_1200(const NvencContextABI *expected);
++
++int ff_nvenc_context_abi_matches_1200(const NvencContextABI *expected)
++{
++    return nvenc_context_abi_matches(expected);
++}
+diff --git a/libavcodec/nvenc_1300.c b/libavcodec/nvenc_1300.c
+new file mode 100644
+index 0000000..c1aa7b7
+--- /dev/null
++++ b/libavcodec/nvenc_1300.c
+@@ -0,0 +1,16 @@
++/* Compile the NVENC implementation against SDK 13.0 headers. */
++#define ff_nvenc_encode_init     ff_nvenc_encode_init_1300
++#define ff_nvenc_encode_close    ff_nvenc_encode_close_1300
++#define ff_nvenc_receive_packet  ff_nvenc_receive_packet_1300
++#define ff_nvenc_encode_flush    ff_nvenc_encode_flush_1300
++#define ff_nvenc_pix_fmts        ff_nvenc_pix_fmts_1300
++#define ff_nvenc_hw_configs      ff_nvenc_hw_configs_1300
++
++#include "nvenc.c"
++
++int ff_nvenc_context_abi_matches_1300(const NvencContextABI *expected);
++
++int ff_nvenc_context_abi_matches_1300(const NvencContextABI *expected)
++{
++    return nvenc_context_abi_matches(expected);
++}
+diff --git a/libavcodec/nvenc_dispatch.c b/libavcodec/nvenc_dispatch.c
+new file mode 100644
+index 0000000..d776e6a
+--- /dev/null
++++ b/libavcodec/nvenc_dispatch.c
+@@ -0,0 +1,221 @@
++/*
++ * Runtime dispatch for version-isolated NVENC implementations.
++ *
++ * NVIDIA preserves backward compatibility within the driver, but each SDK
++ * revision defines its own structure versions and, in some cases, different
++ * structure layouts.  Select an implementation compiled with headers that
++ * the installed driver supports instead of rewriting version fields in
++ * structures compiled from a newer SDK.
++ */
++
++#include "config.h"
++#include "config_components.h"
++
++#include "nvenc.h"
++
++#define NVENC_DRIVER_VERSION(major, minor) (((major) << 4) | (minor))
++
++int ff_nvenc_encode_init_1100(AVCodecContext *avctx);
++int ff_nvenc_encode_close_1100(AVCodecContext *avctx);
++int ff_nvenc_receive_packet_1100(AVCodecContext *avctx, AVPacket *pkt);
++void ff_nvenc_encode_flush_1100(AVCodecContext *avctx);
++int ff_nvenc_context_abi_matches_1100(const NvencContextABI *expected);
++
++int ff_nvenc_encode_init_1200(AVCodecContext *avctx);
++int ff_nvenc_encode_close_1200(AVCodecContext *avctx);
++int ff_nvenc_receive_packet_1200(AVCodecContext *avctx, AVPacket *pkt);
++void ff_nvenc_encode_flush_1200(AVCodecContext *avctx);
++int ff_nvenc_context_abi_matches_1200(const NvencContextABI *expected);
++
++int ff_nvenc_encode_init_1300(AVCodecContext *avctx);
++int ff_nvenc_encode_close_1300(AVCodecContext *avctx);
++int ff_nvenc_receive_packet_1300(AVCodecContext *avctx, AVPacket *pkt);
++void ff_nvenc_encode_flush_1300(AVCodecContext *avctx);
++int ff_nvenc_context_abi_matches_1300(const NvencContextABI *expected);
++
++int ff_nvenc_encode_init_1310(AVCodecContext *avctx);
++int ff_nvenc_encode_close_1310(AVCodecContext *avctx);
++int ff_nvenc_receive_packet_1310(AVCodecContext *avctx, AVPacket *pkt);
++void ff_nvenc_encode_flush_1310(AVCodecContext *avctx);
++
++static const char *nvenc_sdk_name(NvencSDKVersion sdk)
++{
++    switch (sdk) {
++    case NVENC_SDK_1100:
++        return "11.0";
++    case NVENC_SDK_1200:
++        return "12.0";
++    case NVENC_SDK_1300:
++        return "13.0";
++    case NVENC_SDK_1310:
++        return "13.1";
++    case NVENC_SDK_UNSUPPORTED:
++    default:
++        return "unsupported";
++    }
++}
++
++static int nvenc_sdk_context_abi_matches(NvencSDKVersion sdk)
++{
++    const NvencContextABI expected = nvenc_context_abi();
++
++    switch (sdk) {
++    case NVENC_SDK_1100:
++        return ff_nvenc_context_abi_matches_1100(&expected);
++    case NVENC_SDK_1200:
++        return ff_nvenc_context_abi_matches_1200(&expected);
++    case NVENC_SDK_1300:
++        return ff_nvenc_context_abi_matches_1300(&expected);
++    case NVENC_SDK_1310:
++        return 1;
++    case NVENC_SDK_UNSUPPORTED:
++    default:
++        return 0;
++    }
++}
++
++static av_cold int nvenc_select_sdk(AVCodecContext *avctx)
++{
++    NvencContext *ctx = avctx->priv_data;
++    NvencFunctions *nvenc_dl = NULL;
++    uint32_t max_version = 0;
++    NVENCSTATUS err;
++    int ret;
++
++    ret = nvenc_load_functions(&nvenc_dl, avctx);
++    if (ret < 0)
++        return ret;
++
++    err = nvenc_dl->NvEncodeAPIGetMaxSupportedVersion(&max_version);
++    nvenc_free_functions(&nvenc_dl);
++    if (err != NV_ENC_SUCCESS) {
++        av_log(avctx, AV_LOG_ERROR,
++               "Failed to query the maximum supported NVENC API version: %d\n",
++               err);
++        return AVERROR_EXTERNAL;
++    }
++
++    if (max_version >= NVENC_DRIVER_VERSION(13, 1))
++        ctx->selected_sdk = NVENC_SDK_1310;
++    else if (max_version >= NVENC_DRIVER_VERSION(13, 0))
++        ctx->selected_sdk = NVENC_SDK_1300;
++    else if (max_version >= NVENC_DRIVER_VERSION(12, 0))
++        ctx->selected_sdk = NVENC_SDK_1200;
++    else if (max_version >= NVENC_DRIVER_VERSION(11, 0))
++        ctx->selected_sdk = NVENC_SDK_1100;
++    else
++        ctx->selected_sdk = NVENC_SDK_UNSUPPORTED;
++
++    if (ctx->selected_sdk == NVENC_SDK_UNSUPPORTED) {
++        av_log(avctx, AV_LOG_ERROR,
++               "Driver does not support the minimum required NVENC API version. "
++               "Required: 11.0 Found: %u.%u\n",
++               max_version >> 4, max_version & 0xf);
++        return AVERROR(ENOSYS);
++    }
++
++    if (!nvenc_sdk_context_abi_matches(ctx->selected_sdk)) {
++        av_log(avctx, AV_LOG_ERROR,
++               "NVENC SDK %s private context ABI is incompatible with the "
++               "current headers\n",
++               nvenc_sdk_name(ctx->selected_sdk));
++        return AVERROR_BUG;
++    }
++
++    av_log(avctx, AV_LOG_VERBOSE,
++           "Driver supports NVENC API %u.%u; using SDK %s implementation\n",
++           max_version >> 4, max_version & 0xf,
++           nvenc_sdk_name(ctx->selected_sdk));
++    return 0;
++}
++
++av_cold int ff_nvenc_encode_init(AVCodecContext *avctx)
++{
++    NvencContext *ctx = avctx->priv_data;
++    int ret = nvenc_select_sdk(avctx);
++
++    if (ret < 0)
++        return ret;
++
++    if (ctx->selected_sdk == NVENC_SDK_1100 &&
++        avctx->codec_id == AV_CODEC_ID_AV1) {
++        av_log(avctx, AV_LOG_ERROR,
++               "AV1 encoding requires an NVENC 12.0 or newer driver API\n");
++        return AVERROR(ENOSYS);
++    }
++
++    switch (ctx->selected_sdk) {
++    case NVENC_SDK_1310:
++        return ff_nvenc_encode_init_1310(avctx);
++    case NVENC_SDK_1300:
++        return ff_nvenc_encode_init_1300(avctx);
++    case NVENC_SDK_1200:
++        return ff_nvenc_encode_init_1200(avctx);
++    case NVENC_SDK_1100:
++        return ff_nvenc_encode_init_1100(avctx);
++    case NVENC_SDK_UNSUPPORTED:
++    default:
++        return AVERROR(ENOSYS);
++    }
++}
++
++av_cold int ff_nvenc_encode_close(AVCodecContext *avctx)
++{
++    NvencContext *ctx = avctx->priv_data;
++
++    switch (ctx->selected_sdk) {
++    case NVENC_SDK_1310:
++        return ff_nvenc_encode_close_1310(avctx);
++    case NVENC_SDK_1300:
++        return ff_nvenc_encode_close_1300(avctx);
++    case NVENC_SDK_1200:
++        return ff_nvenc_encode_close_1200(avctx);
++    case NVENC_SDK_1100:
++        return ff_nvenc_encode_close_1100(avctx);
++    case NVENC_SDK_UNSUPPORTED:
++    default:
++        return 0;
++    }
++}
++
++int ff_nvenc_receive_packet(AVCodecContext *avctx, AVPacket *pkt)
++{
++    NvencContext *ctx = avctx->priv_data;
++
++    switch (ctx->selected_sdk) {
++    case NVENC_SDK_1310:
++        return ff_nvenc_receive_packet_1310(avctx, pkt);
++    case NVENC_SDK_1300:
++        return ff_nvenc_receive_packet_1300(avctx, pkt);
++    case NVENC_SDK_1200:
++        return ff_nvenc_receive_packet_1200(avctx, pkt);
++    case NVENC_SDK_1100:
++        return ff_nvenc_receive_packet_1100(avctx, pkt);
++    case NVENC_SDK_UNSUPPORTED:
++    default:
++        return AVERROR(EINVAL);
++    }
++}
++
++av_cold void ff_nvenc_encode_flush(AVCodecContext *avctx)
++{
++    NvencContext *ctx = avctx->priv_data;
++
++    switch (ctx->selected_sdk) {
++    case NVENC_SDK_1310:
++        ff_nvenc_encode_flush_1310(avctx);
++        break;
++    case NVENC_SDK_1300:
++        ff_nvenc_encode_flush_1300(avctx);
++        break;
++    case NVENC_SDK_1200:
++        ff_nvenc_encode_flush_1200(avctx);
++        break;
++    case NVENC_SDK_1100:
++        ff_nvenc_encode_flush_1100(avctx);
++        break;
++    case NVENC_SDK_UNSUPPORTED:
++    default:
++        break;
++    }
++}
+diff --git a/libavcodec/nvenc_1310.c b/libavcodec/nvenc_1310.c
+new file mode 100644
+index 0000000..a733274
+--- /dev/null
++++ b/libavcodec/nvenc_1310.c
+@@ -0,0 +1,7 @@
++/* Compile the NVENC implementation against SDK 13.1 headers. */
++#define ff_nvenc_encode_init     ff_nvenc_encode_init_1310
++#define ff_nvenc_encode_close    ff_nvenc_encode_close_1310
++#define ff_nvenc_receive_packet  ff_nvenc_receive_packet_1310
++#define ff_nvenc_encode_flush    ff_nvenc_encode_flush_1310
++
++#include "nvenc.c"
