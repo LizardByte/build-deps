@@ -47,10 +47,13 @@ string(REPLACE ";" " " FFMPEG_X264_EXTRA_CONFIGURE "${FFMPEG_X264_EXTRA_CONFIGUR
 
 set(WORKING_DIR "${X264_GENERATED_SRC_PATH}")
 UNIX_PATH(WORKING_DIR_UNIX ${WORKING_DIR})
+# Static x264 archives are linked into PIE executables. On AArch64, non-PIC
+# assembly creates text relocations that hardened package builders reject.
 add_custom_target(x264 ALL
         COMMAND ${SHELL_CMD} "${MAKE_COMPILER_FLAGS} ./configure \
 --prefix=${CMAKE_CURRENT_BINARY_DIR_UNIX}/x264 \
 --disable-cli \
+--enable-pic \
 --enable-static \
 ${FFMPEG_X264_EXTRA_CONFIGURE}"
         COMMAND ${SHELL_CMD} "${MAKE_COMPILER_FLAGS} ${MAKE_EXECUTABLE} --jobs=${N_PROC}"
