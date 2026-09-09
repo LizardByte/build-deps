@@ -1,0 +1,29 @@
+Fix invalid Vulkan source-picture barrier access flags
+
+The source picture is written on other queues, whose access flags are
+meaningless on the encode queue. The semaphore wait already makes those
+writes available, so carrying flags such as shader write into this barrier
+violates Vulkan VUID 03915. Use no source access, matching upstream FFmpeg
+commit 2a072b4961ac36fae1d4a62432d154f6616add68.
+
+diff --git a/libavcodec/vulkan_encode.c b/libavcodec/vulkan_encode.c
+--- a/libavcodec/vulkan_encode.c
++++ b/libavcodec/vulkan_encode.c
+@@ -355,12 +355,15 @@
+     if (err < 0)
+         goto fail;
+
+-    /* Source image layout conversion */
++    /* Source image layout conversion. Writes to it happened on other
++     * queues, and were made available by the semaphore wait: their access
++     * flags are not to be carried over, and may not even be valid on this
++     * queue. */
+     img_bar[nb_img_bar] = (VkImageMemoryBarrier2) {
+         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+         .pNext = NULL,
+         .srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+-        .srcAccessMask = vkf->access[0],
++        .srcAccessMask = VK_ACCESS_2_NONE,
+         .dstStageMask = VK_PIPELINE_STAGE_2_VIDEO_ENCODE_BIT_KHR,
+         .dstAccessMask = VK_ACCESS_2_VIDEO_ENCODE_READ_BIT_KHR,
+         .oldLayout = vkf->layout[0],
