@@ -13,11 +13,6 @@
 	url = https://github.com/LizardByte-infrastructure/x265_git.git
 	branch = stable
 	shallow = true
-[submodule "third-party/FFmpeg/nv-codec-headers"]
-	path = third-party/FFmpeg/nv-codec-headers
-	url = https://github.com/FFmpeg/nv-codec-headers.git
-	branch = master
-	shallow = true
 [submodule "third-party/FFmpeg/FFmpeg"]
 	path = third-party/FFmpeg/FFmpeg
 	url = https://github.com/FFmpeg/FFmpeg.git
