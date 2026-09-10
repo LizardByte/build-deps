@@ -1,0 +1,184 @@
+diff --git a/libavutil/pixdesc.c b/libavutil/pixdesc.c
+index 90f9596def..bef34ac606 100644
+--- a/libavutil/pixdesc.c
++++ b/libavutil/pixdesc.c
+@@ -334,6 +334,58 @@ static const AVPixFmtDescriptor av_pix_fmt_descriptors[AV_PIX_FMT_NB] = {
+         },
+         .flags = AV_PIX_FMT_FLAG_RGB | AV_PIX_FMT_FLAG_BE,
+     },
++    [AV_PIX_FMT_BGRA1010102LE] = {
++        .name = "bgra1010102le",
++        .nb_components= 4,
++        .log2_chroma_w= 0,
++        .log2_chroma_h= 0,
++        .comp = {
++            { 0, 4, 0, 2, 10 },       /* R */
++            { 0, 4, 1, 4, 10 },       /* G */
++            { 0, 4, 2, 6, 10 },       /* B */
++            { 0, 4, 0, 0,  2 },       /* A */
++        },
++        .flags = AV_PIX_FMT_FLAG_RGB | AV_PIX_FMT_FLAG_ALPHA,
++    },
++    [AV_PIX_FMT_BGRA1010102BE] = {
++        .name = "bgra1010102be",
++        .nb_components= 4,
++        .log2_chroma_w= 0,
++        .log2_chroma_h= 0,
++        .comp = {
++            { 0, 4, 2, 2, 10 },       /* R */
++            { 0, 4, 1, 4, 10 },       /* G */
++            { 0, 4, 0, 6, 10 },       /* B */
++            { 0, 4, 2, 0,  2 },       /* A */
++        },
++        .flags = AV_PIX_FMT_FLAG_RGB | AV_PIX_FMT_FLAG_ALPHA | AV_PIX_FMT_FLAG_BE,
++    },
++    [AV_PIX_FMT_RGBA1010102LE] = {
++        .name = "rgba1010102le",
++        .nb_components= 4,
++        .log2_chroma_w= 0,
++        .log2_chroma_h= 0,
++        .comp = {
++            { 0, 4, 2, 6, 10 },       /* R */
++            { 0, 4, 1, 4, 10 },       /* G */
++            { 0, 4, 0, 2, 10 },       /* B */
++            { 0, 4, 0, 0,  2 },       /* A */
++        },
++        .flags = AV_PIX_FMT_FLAG_RGB | AV_PIX_FMT_FLAG_ALPHA,
++    },
++    [AV_PIX_FMT_RGBA1010102BE] = {
++        .name = "rgba1010102be",
++        .nb_components= 4,
++        .log2_chroma_w= 0,
++        .log2_chroma_h= 0,
++        .comp = {
++            { 0, 4, 0, 6, 10 },       /* R */
++            { 0, 4, 1, 4, 10 },       /* G */
++            { 0, 4, 2, 2, 10 },       /* B */
++            { 0, 4, 2, 0,  2 },       /* A */
++        },
++        .flags = AV_PIX_FMT_FLAG_RGB | AV_PIX_FMT_FLAG_ALPHA | AV_PIX_FMT_FLAG_BE,
++    },
+     [AV_PIX_FMT_YUV422P] = {
+         .name = "yuv422p",
+         .nb_components = 3,
+diff --git a/libavutil/pixfmt.h b/libavutil/pixfmt.h
+index 2e7b6457e0..d387fd0d1c 100644
+--- a/libavutil/pixfmt.h
++++ b/libavutil/pixfmt.h
+@@ -386,6 +386,11 @@ enum AVPixelFormat {
+     AV_PIX_FMT_X2BGR10LE, ///< packed BGR 10:10:10, 30bpp, (msb)2X 10B 10G 10R(lsb), little-endian, X=unused/undefined
+     AV_PIX_FMT_X2BGR10BE, ///< packed BGR 10:10:10, 30bpp, (msb)2X 10B 10G 10R(lsb), big-endian, X=unused/undefined
+
++    AV_PIX_FMT_BGRA1010102LE, ///< packed BGRA 10:10:10:2, 32bpp, (msb)10B 10G 10R 2A(lsb), little-endian, B(31-22) G(21-12) R(11-2) A(1-0)
++    AV_PIX_FMT_BGRA1010102BE, ///< packed BGRA 10:10:10:2, 32bpp, (msb)10B 10G 10R 2A(lsb), big-endian
++    AV_PIX_FMT_RGBA1010102LE, ///< packed RGBA 10:10:10:2, 32bpp, (msb)10R 10G 10B 2A(lsb), little-endian, R(31-22) G(21-12) B(11-2) A(1-0)
++    AV_PIX_FMT_RGBA1010102BE, ///< packed RGBA 10:10:10:2, 32bpp, (msb)10R 10G 10B 2A(lsb), big-endian
++
+     AV_PIX_FMT_P210BE,      ///< interleaved chroma YUV 4:2:2, 20bpp, data in the high bits, big-endian
+     AV_PIX_FMT_P210LE,      ///< interleaved chroma YUV 4:2:2, 20bpp, data in the high bits, little-endian
+
+@@ -610,10 +615,12 @@ enum AVPixelFormat {
+ #define AV_PIX_FMT_XV36       AV_PIX_FMT_NE(XV36BE,  XV36LE)
+ #define AV_PIX_FMT_XV48       AV_PIX_FMT_NE(XV48BE,  XV48LE)
+ #define AV_PIX_FMT_V30X       AV_PIX_FMT_NE(V30XBE,  V30XLE)
+-#define AV_PIX_FMT_X2RGB10    AV_PIX_FMT_NE(X2RGB10BE, X2RGB10LE)
+-#define AV_PIX_FMT_X2BGR10    AV_PIX_FMT_NE(X2BGR10BE, X2BGR10LE)
++#define AV_PIX_FMT_X2RGB10    AV_PIX_FMT_NE(X2RGB10BE,  X2RGB10LE)
++#define AV_PIX_FMT_X2BGR10    AV_PIX_FMT_NE(X2BGR10BE,  X2BGR10LE)
++#define AV_PIX_FMT_BGRA1010102 AV_PIX_FMT_NE(BGRA1010102BE, BGRA1010102LE)
++#define AV_PIX_FMT_RGBA1010102 AV_PIX_FMT_NE(RGBA1010102BE, RGBA1010102LE)
+
+-#define AV_PIX_FMT_P210       AV_PIX_FMT_NE(P210BE, P210LE)
++#define AV_PIX_FMT_P210     AV_PIX_FMT_NE(P210BE,     P210LE)
+ #define AV_PIX_FMT_P410       AV_PIX_FMT_NE(P410BE, P410LE)
+ #define AV_PIX_FMT_P212       AV_PIX_FMT_NE(P212BE, P212LE)
+ #define AV_PIX_FMT_P412       AV_PIX_FMT_NE(P412BE, P412LE)
+diff --git a/libswscale/format.c b/libswscale/format.c
+index 3464a8af7c..c7a82f9408 100644
+--- a/libswscale/format.c
++++ b/libswscale/format.c
+@@ -253,6 +253,8 @@ static const LegacyFormatEntry legacy_format_entries[] = {
+     [AV_PIX_FMT_Y216LE]         = { 1, 1 },
+     [AV_PIX_FMT_X2RGB10LE]      = { 1, 1 },
+     [AV_PIX_FMT_X2BGR10LE]      = { 1, 1 },
++    [AV_PIX_FMT_BGRA1010102LE]  = { 1, 1 },
++    [AV_PIX_FMT_RGBA1010102LE]  = { 1, 1 },
+     [AV_PIX_FMT_NV20BE]         = { 1, 1 },
+     [AV_PIX_FMT_NV20LE]         = { 1, 1 },
+     [AV_PIX_FMT_P210BE]         = { 1, 1 },
+@@ -774,6 +776,12 @@ static FmtInfo fmt_info_irregular(enum AVPixelFormat fmt)
+     case AV_PIX_FMT_X2BGR10LE:
+     case AV_PIX_FMT_X2BGR10BE:
+         return SUBPACKED_FMT(ABGR, 2, 10, 10, 10);
++    case AV_PIX_FMT_BGRA1010102LE:
++    case AV_PIX_FMT_BGRA1010102BE:
++        return SUBPACKED_FMT(BGRA, 10, 10, 10, 2);
++    case AV_PIX_FMT_RGBA1010102LE:
++    case AV_PIX_FMT_RGBA1010102BE:
++        return SUBPACKED_FMT(RGBA, 10, 10, 10, 2);
+     case AV_PIX_FMT_XV30LE:
+     case AV_PIX_FMT_XV30BE:
+         return SUBPACKED_FMT(AVYU, 2, 10, 10, 10);
+diff --git a/libswscale/input.c b/libswscale/input.c
+index 175ed705f2..75acecf2e6 100644
+--- a/libswscale/input.c
++++ b/libswscale/input.c
+@@ -255,7 +255,9 @@ RGB48FUNCS(bgr, BE, AV_PIX_FMT_BGR48)
+                          origin == AV_PIX_FMT_ABGR)                        \
+                         ? AV_RN32A(&src[(i) * 4])                          \
+                         : ((origin == AV_PIX_FMT_X2RGB10LE ||              \
+-                            origin == AV_PIX_FMT_X2BGR10LE)                \
++                            origin == AV_PIX_FMT_X2BGR10LE ||              \
++                            origin == AV_PIX_FMT_BGRA1010102LE ||          \
++                            origin == AV_PIX_FMT_RGBA1010102LE)            \
+                            ? AV_RL32(&src[(i) * 4])                        \
+                            : (is_be ? AV_RB16(&src[(i) * 2])               \
+                               : AV_RL16(&src[(i) * 2]))))
+@@ -409,6 +411,8 @@ RGB16_32FUNCS(AV_PIX_FMT_RGB555,  BE, rgb15be, 0, 0,  0, 0,   0x7C00, 0x03E0,
+ RGB16_32FUNCS(AV_PIX_FMT_RGB444,  BE, rgb12be, 0, 0,  0, 0,   0x0F00, 0x00F0,   0x000F,  0, 4,  8, RGB2YUV_SHIFT + 4)
+ RGB16_32FUNCS(AV_PIX_FMT_X2RGB10, LE, rgb30le, 16, 6, 0, 0, 0x3FF00000, 0xFFC00, 0x3FF, 0, 0, 4, RGB2YUV_SHIFT + 6)
+ RGB16_32FUNCS(AV_PIX_FMT_X2BGR10, LE, bgr30le, 0, 6, 16, 0, 0x3FF, 0xFFC00, 0x3FF00000, 4, 0, 0, RGB2YUV_SHIFT + 6)
++RGB16_32FUNCS(AV_PIX_FMT_BGRA1010102, LE, bgr30_2le, 0, 6, 16, 2, 0x3FF, 0xFFC00, 0x3FF00000, 4, 0, 0, RGB2YUV_SHIFT + 6)
++RGB16_32FUNCS(AV_PIX_FMT_RGBA1010102, LE, rgb30_2le, 16, 6, 0, 2, 0x3FF00000, 0xFFC00, 0x3FF, 0, 0, 4, RGB2YUV_SHIFT + 6)
+
+ static void gbr24pToUV_half_c(uint8_t *_dstU, uint8_t *_dstV,
+                          const uint8_t *gsrc, const uint8_t *bsrc, const uint8_t *rsrc,
+@@ -2180,6 +2184,12 @@ av_cold void ff_sws_init_input_funcs(SwsInternal *c,
+         case AV_PIX_FMT_X2BGR10LE:
+             *chrToYV12 = bgr30leToUV_half_c;
+             break;
++        case AV_PIX_FMT_BGRA1010102LE:
++            *chrToYV12 = bgr30_2leToUV_half_c;
++            break;
++        case AV_PIX_FMT_RGBA1010102LE:
++            *chrToYV12 = rgb30_2leToUV_half_c;
++            break;
+         case AV_PIX_FMT_RGBAF16BE:
+             *chrToYV12 = rgbaf16beToUV_half_c;
+             break;
+@@ -2279,6 +2289,12 @@ av_cold void ff_sws_init_input_funcs(SwsInternal *c,
+         case AV_PIX_FMT_X2BGR10LE:
+             *chrToYV12 = bgr30leToUV_c;
+             break;
++        case AV_PIX_FMT_BGRA1010102LE:
++            *chrToYV12 = bgr30_2leToUV_c;
++            break;
++        case AV_PIX_FMT_RGBA1010102LE:
++            *chrToYV12 = rgb30_2leToUV_c;
++            break;
+         case AV_PIX_FMT_RGBAF16BE:
+             *chrToYV12 = rgbaf16beToUV_c;
+             break;
+@@ -2685,6 +2701,12 @@ av_cold void ff_sws_init_input_funcs(SwsInternal *c,
+     case AV_PIX_FMT_X2BGR10LE:
+         *lumToYV12 = bgr30leToY_c;
+         break;
++    case AV_PIX_FMT_BGRA1010102LE:
++        *lumToYV12 = bgr30_2leToY_c;
++        break;
++    case AV_PIX_FMT_RGBA1010102LE:
++        *lumToYV12 = rgb30_2leToY_c;
++        break;
+     case AV_PIX_FMT_RGBAF16BE:
+         *lumToYV12 = rgbaf16beToY_c;
+         break;
