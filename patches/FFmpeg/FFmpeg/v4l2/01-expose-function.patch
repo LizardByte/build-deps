@@ -1,0 +1,49 @@
+diff --git a/libavcodec/v4l2_context.c b/libavcodec/v4l2_context.c
+index be1df3785..6d369d394 100644
+--- a/libavcodec/v4l2_context.c
++++ b/libavcodec/v4l2_context.c
+@@ -247,7 +247,7 @@ static int v4l2_stop_decode(V4L2Context *ctx)
+     return 0;
+ }
+ 
+-static int v4l2_stop_encode(V4L2Context *ctx)
++int v4l2_stop_encode(V4L2Context *ctx)
+ {
+     struct v4l2_encoder_cmd cmd = {
+         .cmd = V4L2_ENC_CMD_STOP,
+@@ -267,7 +267,7 @@ static int v4l2_stop_encode(V4L2Context *ctx)
+     return 0;
+ }
+ 
+-static V4L2Buffer* v4l2_dequeue_v4l2buf(V4L2Context *ctx, int timeout)
++V4L2Buffer* v4l2_dequeue_v4l2buf(V4L2Context *ctx, int timeout)
+ {
+     struct v4l2_plane planes[VIDEO_MAX_PLANES];
+     struct v4l2_buffer buf = { 0 };
+diff --git a/libavcodec/v4l2_context.h b/libavcodec/v4l2_context.h
+index fdd5cf528..17a68c148 100644
+--- a/libavcodec/v4l2_context.h
++++ b/libavcodec/v4l2_context.h
+@@ -184,4 +184,9 @@ int ff_v4l2_context_enqueue_packet(V4L2Context* ctx, const AVPacket* pkt);
+  */
+ int ff_v4l2_context_enqueue_frame(V4L2Context* ctx, const AVFrame* f);
+ 
++struct V4L2m2mContext;
++void v4l2_set_ext_ctrl(struct V4L2m2mContext *s, unsigned int id, signed int value, const char *name, int log_warning);
++int v4l2_stop_encode(V4L2Context *ctx);
++V4L2Buffer* v4l2_dequeue_v4l2buf(V4L2Context *ctx, int timeout);
++
+ #endif // AVCODEC_V4L2_CONTEXT_H
+diff --git a/libavcodec/v4l2_m2m_enc.c b/libavcodec/v4l2_m2m_enc.c
+index 93703ccc6..0d712f67e 100644
+--- a/libavcodec/v4l2_m2m_enc.c
++++ b/libavcodec/v4l2_m2m_enc.c
+@@ -50,7 +50,7 @@ static inline void v4l2_set_timeperframe(V4L2m2mContext *s, unsigned int num, un
+         av_log(s->avctx, AV_LOG_WARNING, "Failed to set timeperframe");
+ }
+ 
+-static inline void v4l2_set_ext_ctrl(V4L2m2mContext *s, unsigned int id, signed int value, const char *name, int log_warning)
++void v4l2_set_ext_ctrl(V4L2m2mContext *s, unsigned int id, signed int value, const char *name, int log_warning)
+ {
+     struct v4l2_ext_controls ctrls = { { 0 } };
+     struct v4l2_ext_control ctrl = { 0 };
