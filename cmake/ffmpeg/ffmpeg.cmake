@@ -92,6 +92,12 @@ if(BUILD_FFMPEG_VULKAN)
             --enable-encoder=h264_vulkan,hevc_vulkan,av1_vulkan
     )
 endif()
+if(BUILD_FFMPEG_V4L2)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE
+            --enable-v4l2_m2m
+            --enable-encoder=h264_v4l2m2m,hevc_v4l2m2m,av1_v4l2m2m
+    )
+endif()
 if(BUILD_FFMPEG_X264)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
             --enable-libx264
@@ -118,18 +124,7 @@ elseif(APPLE)
             --enable-videotoolbox
     )
 elseif(FREEBSD)
-    # FFmpeg does not build with this encoder on aarch64 FreeBSD
-    if(${arch} STREQUAL "amd64")
-        list(APPEND FFMPEG_EXTRA_CONFIGURE
-                --enable-encoder=h264_v4l2m2m
-                --enable-v4l2_m2m
-        )
-    endif()
 elseif(UNIX)
-    list(APPEND FFMPEG_EXTRA_CONFIGURE
-            --enable-encoder=h264_v4l2m2m
-            --enable-v4l2_m2m
-    )
 endif()
 
 if(CMAKE_CROSSCOMPILING)
