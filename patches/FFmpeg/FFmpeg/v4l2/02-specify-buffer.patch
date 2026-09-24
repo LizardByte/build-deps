@@ -1,0 +1,114 @@
+diff --git a/libavcodec/v4l2_buffers.c b/libavcodec/v4l2_buffers.c
+index 7f597a424..700c6e5da 100644
+--- a/libavcodec/v4l2_buffers.c
++++ b/libavcodec/v4l2_buffers.c
+@@ -418,6 +418,30 @@ static int v4l2_buffer_swframe_to_buf(const AVFrame *frame, V4L2Buffer *out)
+     return 0;
+ }
+ 
++/*
++ * Sunshine zero-copy path.
++ * only fills metadata, the actual data is already in the buffer
++ */
++static int v4l2_buffer_prepare_buf(const AVFrame *frame, V4L2Buffer *out)
++{
++    V4L2Context *ctx = out->context;
++
++    if (V4L2_TYPE_IS_MULTIPLANAR(out->buf.type)) {
++        out->buf.m.planes = out->planes;
++        out->buf.length = out->num_planes;
++
++        for (int i = 0; i < out->num_planes; i++) {
++            out->planes[i].length = out->plane_info[i].length;
++            out->planes[i].bytesused = ctx->format.fmt.pix_mp.plane_fmt[i].sizeimage;
++            out->planes[i].data_offset = 0;
++        }
++    } else {
++        out->buf.length = out->plane_info[0].length;
++        out->buf.bytesused = ctx->format.fmt.pix.sizeimage;
++    }
++    return 0;
++}
++
+ /******************************************************************************
+  *
+  *              V4L2Buffer interface
+@@ -428,7 +452,7 @@ int ff_v4l2_buffer_avframe_to_buf(const AVFrame *frame, V4L2Buffer *out)
+ {
+     v4l2_set_pts(out, frame->pts);
+ 
+-    return v4l2_buffer_swframe_to_buf(frame, out);
++    return out->context->sunshine_zero_copy ? v4l2_buffer_prepare_buf(frame, out) : v4l2_buffer_swframe_to_buf(frame, out);
+ }
+ 
+ int ff_v4l2_buffer_buf_to_avframe(AVFrame *frame, V4L2Buffer *avbuf)
+diff --git a/libavcodec/v4l2_context.c b/libavcodec/v4l2_context.c
+index 6d369d394..a527a541a 100644
+--- a/libavcodec/v4l2_context.c
++++ b/libavcodec/v4l2_context.c
+@@ -554,6 +554,27 @@ static int v4l2_get_coded_format(V4L2Context* ctx, uint32_t *p)
+     return 0;
+ }
+ 
++/*
++ * Sunshine zero-copy path.
++ * selects the buffer specified by sunshine.
++ */
++static int v4l2_select_specified_buffer(V4L2Buffer **out, V4L2Context *ctx, const AVFrame *frame) {
++    const int buffer_index = ctx->current_buffer_index;
++    if (buffer_index < 0 || buffer_index >= ctx->num_buffers) {
++        av_log(logger(ctx), AV_LOG_ERROR, "%s invalid buffer index %d\n", ctx->name, buffer_index);
++        return AVERROR(EINVAL);
++    }
++
++    V4L2Buffer *avbuf = &ctx->buffers[buffer_index];
++    if (avbuf->status != V4L2BUF_AVAILABLE) {
++        av_log(logger(ctx), AV_LOG_ERROR, "%s buffer %d is not available\n", ctx->name, buffer_index);
++        return AVERROR(EINVAL);
++    }
++
++    *out = avbuf;
++    return 0;
++}
++
+  /*****************************************************************************
+   *
+   *             V4L2 Context Interface
+@@ -588,7 +609,14 @@ int ff_v4l2_context_enqueue_frame(V4L2Context* ctx, const AVFrame* frame)
+         return 0;
+     }
+ 
+-    avbuf = v4l2_getfree_v4l2buf(ctx);
++    if (ctx->sunshine_zero_copy) {
++        ret = v4l2_select_specified_buffer(&avbuf, ctx, frame);
++        if (ret)
++            return ret;
++    } else {
++        avbuf = v4l2_getfree_v4l2buf(ctx);
++    }
++
+     if (!avbuf)
+         return AVERROR(EAGAIN);
+ 
+diff --git a/libavcodec/v4l2_context.h b/libavcodec/v4l2_context.h
+index 17a68c148..90bde059c 100644
+--- a/libavcodec/v4l2_context.h
++++ b/libavcodec/v4l2_context.h
+@@ -93,6 +93,17 @@ typedef struct V4L2Context {
+      */
+     int done;
+ 
++    /**
++     * Sunshine zero-copy path.
++     * Current v4l2 buffer specified by the user. Updated by Sunshine.
++     */
++    int current_buffer_index;
++
++    /**
++     * Sunshine zero-copy path enabled.
++     */
++    int sunshine_zero_copy;
++
+ } V4L2Context;
+ 
+ /**
