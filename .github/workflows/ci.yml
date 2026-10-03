@@ -18,7 +18,7 @@ concurrency:
 env:
   FREEBSD_CLANG_VERSION: 19
   LINUX_GCC_VERSION: 12
-  MACOSX_DEPLOYMENT_TARGET: '14.0'
+  MACOSX_DEPLOYMENT_TARGET: '15.0'
 
 jobs:
   release-setup:
@@ -83,7 +83,7 @@ jobs:
             shell: sh
             container: alpine:3.22
           - name: Darwin-arm64
-            os: macos-14
+            os: macos-15
             arch: aarch64
             generator: "Unix Makefiles"
             shell: bash
@@ -365,7 +365,6 @@ jobs:
 
           dependencies=(
             "automake"
-            "fdk-aac"
             "lame"
             "libass"
             "libvorbis"
