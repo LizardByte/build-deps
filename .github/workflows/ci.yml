@@ -365,7 +365,6 @@ jobs:
 
           dependencies=(
             "automake"
-            "fdk-aac"
             "lame"
             "libass"
             "libvorbis"

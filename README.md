@@ -157,7 +157,6 @@ apk add --no-cache \
 ```bash
 brew install \
     automake \
-    fdk-aac \
     git \
     lame \
     libass \
