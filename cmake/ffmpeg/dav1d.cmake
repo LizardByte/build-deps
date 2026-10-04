@@ -43,7 +43,11 @@ if(CMAKE_CROSSCOMPILING)
     set(DAV1D_MACHINE_OPTION --cross-file)
 endif()
 add_custom_target(dav1d ALL
-        COMMAND ${SHELL_CMD} "'${MESON_EXECUTABLE_UNIX}' setup --reconfigure \
+        COMMAND ${SHELL_CMD} "set --; \
+if [[ -f '${CMAKE_CURRENT_BINARY_DIR_UNIX}/dav1d-build/meson-private/coredata.dat' ]]; then \
+    set -- --reconfigure; \
+fi; \
+'${MESON_EXECUTABLE_UNIX}' setup \"\$@\" \
 '${CMAKE_CURRENT_BINARY_DIR_UNIX}/dav1d-build' '${DAV1D_SOURCE_DIR_UNIX}' \
 ${DAV1D_MACHINE_OPTION} '${DAV1D_MACHINE_FILE_UNIX}' \
 --prefix='${CMAKE_CURRENT_BINARY_DIR_UNIX}/codec-deps' --libdir=lib \
@@ -57,12 +61,16 @@ ${DAV1D_MACHINE_OPTION} '${DAV1D_MACHINE_FILE_UNIX}' \
         VERBATIM
 )
 add_dependencies(${CMAKE_PROJECT_NAME} dav1d)
-set(PKG_CONFIG_PATH "${CMAKE_CURRENT_BINARY_DIR_UNIX}/codec-deps/lib/pkgconfig:${PKG_CONFIG_PATH}")
+set(DAV1D_PKGCONFIG_DIRECTORY lib/pkgconfig)
+if(FREEBSD)
+    set(DAV1D_PKGCONFIG_DIRECTORY libdata/pkgconfig)
+endif()
+set(PKG_CONFIG_PATH "${CMAKE_CURRENT_BINARY_DIR_UNIX}/codec-deps/${DAV1D_PKGCONFIG_DIRECTORY}:${PKG_CONFIG_PATH}")
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/codec-deps/include/dav1d"
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/include)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/codec-deps/lib/libdav1d.a"
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/lib)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/codec-deps/lib/pkgconfig/dav1d.pc"
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/codec-deps/${DAV1D_PKGCONFIG_DIRECTORY}/dav1d.pc"
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/lib/pkgconfig)
 install(FILES ${dav1d_SOURCE_DIR}/COPYING
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/dav1d)

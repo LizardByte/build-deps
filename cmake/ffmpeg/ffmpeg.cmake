@@ -214,6 +214,8 @@ message(STATUS "FFmpeg configure options: ${FFMPEG_EXTRA_CONFIGURE}")
 
 set(WORKING_DIR "${FFMPEG_GENERATED_SRC_PATH}")
 UNIX_PATH(WORKING_DIR_UNIX ${WORKING_DIR})
+# Toolchain files can set the compiler as a normal variable rather than a cache entry.
+file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg-compiler.txt CONTENT "${CMAKE_C_COMPILER}\n")
 add_custom_target(ffmpeg ALL
         COMMAND ${SHELL_CMD} "PKG_CONFIG_PATH='${PKG_CONFIG_PATH}' \
 ./configure \

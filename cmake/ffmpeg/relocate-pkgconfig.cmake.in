@@ -29,6 +29,11 @@ foreach(pkgconfig_file IN LISTS pkgconfig_files)
         endif()
         string(REGEX REPLACE "(^|\n)${variable}=[^\n]*" "\\1${variable}=${value}" content "${content}")
     endforeach()
+    if("@WIN32@" AND pkgconfig_file MATCHES "/libavutil[.]pc$" AND NOT content MATCHES "-lpthread")
+        # MinGW's clock_gettime and nanosleep wrappers require the winpthreads runtime.
+        string(REGEX REPLACE "(^|\n)Libs.private:([^\n]*)"
+                "\\1Libs.private:\\2 -lpthread" content "${content}")
+    endif()
     if("@WIN32@" AND content MATCHES "-lvpl")
         # oneVPL's Windows pkg-config metadata omits its C++ runtime. Keep the
         # runtime after the dispatcher so C compiler consumers can link too.

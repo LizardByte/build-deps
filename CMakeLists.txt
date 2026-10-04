@@ -88,7 +88,7 @@ message(STATUS "parallel builds: ${N_PROC}")
 
 set(MSYS2_ROOT "C:/msys64")
 if(WIN32 AND DEFINED ENV{MSYS2_ROOT})
-    set(MSYS2_ROOT "$ENV{MSYS2_ROOT}")
+    file(TO_CMAKE_PATH "$ENV{MSYS2_ROOT}" MSYS2_ROOT)
     message(STATUS "Detected MSYS2_ROOT, get msys2 path from environment: ${MSYS2_ROOT}")
 endif()
 

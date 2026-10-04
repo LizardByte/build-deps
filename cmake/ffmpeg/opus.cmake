@@ -20,6 +20,11 @@ if(APPLE)
             -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
             -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET})
 endif()
+if(WIN32 AND arch MATCHES "^(arm64|aarch64)$")
+    # NEON is part of the ARM64 baseline; Opus's runtime detection does not support MinGW ARM64.
+    APPLY_GIT_PATCH(${opus_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/opus/cmake-presumed-neon.patch)
+    list(APPEND OPUS_CMAKE_ARGS -DOPUS_MAY_HAVE_NEON=ON -DOPUS_PRESUME_NEON=ON)
+endif()
 add_custom_target(opus ALL
         COMMAND ${CMAKE_COMMAND}
             -S ${opus_SOURCE_DIR}
@@ -34,6 +39,7 @@ add_custom_target(opus ALL
         VERBATIM
 )
 add_dependencies(${CMAKE_PROJECT_NAME} opus)
+set(PKG_CONFIG_PATH "${CMAKE_CURRENT_BINARY_DIR_UNIX}/codec-deps/lib/pkgconfig:${PKG_CONFIG_PATH}")
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/codec-deps/include/opus"
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/include)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/codec-deps/lib/libopus.a"

@@ -13,7 +13,7 @@ export PKG_CONFIG_PATH="$test_dir/ffmpeg/lib/pkgconfig"
 export PKG_CONFIG_LIBDIR="$PKG_CONFIG_PATH"
 unset PKG_CONFIG_SYSROOT_DIR
 
-test -f "$test_dir/ffmpeg/lib/libcbs.a"
+[[ -f "$test_dir/ffmpeg/lib/libcbs.a" ]]
 
 # shellcheck disable=SC2046
 "$compiler" "$(dirname "$0")/ffmpeg-decoders.c" \
@@ -25,8 +25,8 @@ if [[ "$cross_compile" == true ]]; then
 fi
 "$test_dir/codecs"
 
-test -x "$test_dir/ffmpeg/bin/ffmpeg"
-test -x "$test_dir/ffmpeg/bin/ffprobe"
+[[ -x "$test_dir/ffmpeg/bin/ffmpeg" ]]
+[[ -x "$test_dir/ffmpeg/bin/ffprobe" ]]
 ffmpeg="$test_dir/ffmpeg/bin/ffmpeg"
 ffprobe="$test_dir/ffmpeg/bin/ffprobe"
 "$ffmpeg" -version

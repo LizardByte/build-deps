@@ -595,7 +595,7 @@ jobs:
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"
-          compiler=$(sed -n 's/^CMAKE_C_COMPILER:[^=]*=//p' build/CMakeCache.txt)
+          compiler=$(cat build/ffmpeg-compiler.txt)
           bash ./tests/verify-ffmpeg.sh ./build/dist/ffmpeg \
             "${compiler}" "${{ steps.cross_compile.outputs.CROSS_COMPILE || 'false' }}"
 
