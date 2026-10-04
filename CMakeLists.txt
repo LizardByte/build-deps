@@ -11,6 +11,11 @@ option(BUILD_ALL_SUNSHINE "Build all Sunshine dependencies" OFF)
 
 # FFmpeg options
 option(BUILD_FFMPEG "Build FFmpeg" OFF)
+option(BUILD_FFMPEG_ENCODERS "Build FFmpeg encoders" ON)
+option(BUILD_FFMPEG_DECODERS "Build FFmpeg decoders" ON)
+option(BUILD_FFMPEG_TOOLS "Build ffmpeg and ffprobe with formats, filters, and protocols" ON)
+option(BUILD_FFMPEG_DAV1D "Build dav1d AV1 decoder" ON)
+option(BUILD_FFMPEG_OPUS "Build Opus audio codec" ON)
 option(BUILD_FFMPEG_ALL_PATCHES "Apply FFmpeg patches" ON)
 option(BUILD_FFMPEG_AMF "Build FFmpeg AMF" ON)
 option(BUILD_FFMPEG_AMF_PATCHES "Apply FFmpeg AMF patches" ON)
@@ -32,7 +37,7 @@ option(BUILD_FFMPEG_X264 "Build FFmpeg x264" ON)
 option(BUILD_FFMPEG_X264_PATCHES "Apply FFmpeg x264 patches" ON)
 option(BUILD_FFMPEG_X265 "Build FFmpeg x265" ON)
 option(BUILD_FFMPEG_X265_PATCHES "Apply FFmpeg x265 patches" ON)
-option(BUILD_FFMPEG_VULKAN "Build FFmpeg with Vulkan video encoding support" ON)
+option(BUILD_FFMPEG_VULKAN "Build FFmpeg with Vulkan video acceleration support" ON)
 option(BUILD_FFMPEG_VULKAN_PATCHES "Apply FFmpeg Vulkan patches" ON)
 
 # common includes
@@ -83,7 +88,7 @@ message(STATUS "parallel builds: ${N_PROC}")
 
 set(MSYS2_ROOT "C:/msys64")
 if(WIN32 AND DEFINED ENV{MSYS2_ROOT})
-    set(MSYS2_ROOT "$ENV{MSYS2_ROOT}")
+    file(TO_CMAKE_PATH "$ENV{MSYS2_ROOT}" MSYS2_ROOT)
     message(STATUS "Detected MSYS2_ROOT, get msys2 path from environment: ${MSYS2_ROOT}")
 endif()
 

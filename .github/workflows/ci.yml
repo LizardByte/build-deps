@@ -160,6 +160,8 @@ jobs:
             libxrandr-dev \
             linux-headers \
             mesa-dev \
+            meson \
+            ninja \
             nasm \
             numactl-dev \
             pkgconf \
@@ -369,6 +371,7 @@ jobs:
             "libass"
             "libvorbis"
             "libvpx"
+            "meson"
             "nasm"
             "opus"
             "sdl"
@@ -410,6 +413,7 @@ jobs:
             "mingw-w64-${TOOLCHAIN}-cmake"
             "mingw-w64-${TOOLCHAIN}-gcc"
             "mingw-w64-${TOOLCHAIN}-make"
+            "mingw-w64-${TOOLCHAIN}-meson"
             "mingw-w64-${TOOLCHAIN}-nasm"
             "mingw-w64-${TOOLCHAIN}-ninja"
             "mingw-w64-${TOOLCHAIN}-onevpl"
@@ -587,6 +591,14 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           ${{ env.MAKE_CMD }} -C build install
 
+      - name: Verify FFmpeg package
+        run: |
+          set -e
+          cd "$GITHUB_WORKSPACE"
+          compiler=$(cat build/ffmpeg-compiler.txt)
+          bash ./tests/verify-ffmpeg.sh ./build/dist/ffmpeg \
+            "${compiler}" "${{ steps.cross_compile.outputs.CROSS_COMPILE || 'false' }}"
+
       - name: Sync FreeBSD build output to host
         if: startsWith(matrix.shell, 'freebsd')
         shell: bash
@@ -603,7 +615,7 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::FFmpeg config.log"
-          cat ./build/generated-src/FFmpeg/ffbuild/config.log || true
+          cat ./build/FFmpeg/FFmpeg/ffbuild/config.log || true
           echo "::endgroup::"
 
       - name: Debug build directory

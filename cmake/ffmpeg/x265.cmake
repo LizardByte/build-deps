@@ -405,6 +405,7 @@ add_custom_command(
         COMMAND "${CMAKE_COMMAND}" --install "${X265_8BIT_DIR}" --config Release
         COMMAND "${CMAKE_COMMAND}"
             "-DX265_PC_FILE=${X265_PC_FILE}"
+            "-DX265_STATIC_MINGW=${MINGW}"
             -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/x265-verify-pc.cmake"
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different
             "${X265_COMBINED_LIB}" "${X265_INSTALL_LIB}"
@@ -417,3 +418,5 @@ add_custom_command(
 add_custom_target(x265 DEPENDS ${X265_INSTALL_OUTPUTS} COMMENT "Target: x265")
 add_dependencies(x265 x265-8bit x265-10bit x265-12bit)
 add_dependencies(${CMAKE_PROJECT_NAME} x265)
+install(FILES ${X265_GENERATED_SRC_PATH}/COPYING
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/x265)

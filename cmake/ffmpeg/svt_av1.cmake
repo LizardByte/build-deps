@@ -36,6 +36,8 @@ add_custom_target(SvtAv1
 )
 add_dependencies(SvtAv1 SvtAv1Enc)
 add_dependencies(${CMAKE_PROJECT_NAME} SvtAv1)
+install(FILES ${SVT_AV1_GENERATED_SRC_PATH}/LICENSE.md ${SVT_AV1_GENERATED_SRC_PATH}/LICENSE-BSD2.md
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/svt-av1)
 
 # PKG_CONFIG_PATH already set since this is installed directly to the prefix
 

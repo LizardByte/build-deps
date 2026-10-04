@@ -5,6 +5,12 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg DESTINATION ${CMAKE_CUR
 set(FFMPEG_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/FFmpeg)
 set(AVCODEC_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/libavcodec)
 
+if(NOT BUILD_FFMPEG_ENCODERS)
+    foreach(component MF SVT_AV1 X264 X265 CBS)
+        set(BUILD_FFMPEG_${component} OFF)
+    endforeach()
+endif()
+
 if(WIN32)
     set(BUILD_FFMPEG_LIBVA OFF)
     set(BUILD_FFMPEG_VULKAN OFF)
@@ -35,6 +41,13 @@ endif()
 
 set(_original_cmake_install_prefix ${CMAKE_INSTALL_PREFIX})
 set(CMAKE_INSTALL_PREFIX ${FFMPEG_INSTALL_PREFIX})
+
+if(BUILD_FFMPEG_DECODERS AND BUILD_FFMPEG_DAV1D)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/dav1d.cmake)
+endif()
+if(BUILD_FFMPEG_OPUS)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/opus.cmake)
+endif()
 
 if(BUILD_FFMPEG_AMF)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/amf.cmake)

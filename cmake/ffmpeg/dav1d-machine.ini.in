@@ -1,0 +1,13 @@
+[binaries]
+c = '@DAV1D_C_COMPILER_PATH@'
+ar = '@DAV1D_AR_PATH@'
+
+[built-in options]
+c_args = [@DAV1D_C_ARGS@]
+c_link_args = [@DAV1D_C_ARGS@]
+
+[host_machine]
+system = '@DAV1D_SYSTEM@'
+cpu_family = '@DAV1D_CPU_FAMILY@'
+cpu = '@arch@'
+endian = 'little'

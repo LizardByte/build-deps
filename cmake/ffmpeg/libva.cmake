@@ -62,3 +62,10 @@ add_dependencies(${CMAKE_PROJECT_NAME} libva)
 
 # Add to PKG_CONFIG_PATH for FFmpeg to find
 set(PKG_CONFIG_PATH "${CMAKE_CURRENT_BINARY_DIR_UNIX}/libva/lib/pkgconfig:${PKG_CONFIG_PATH}")
+install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/libva/include/"
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/include)
+install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/libva/lib/"
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/lib
+        FILES_MATCHING PATTERN "*.a" PATTERN "*.pc")
+install(FILES ${libva_SOURCE_DIR}/COPYING
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/libva)

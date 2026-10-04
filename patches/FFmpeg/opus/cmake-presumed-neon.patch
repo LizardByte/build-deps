@@ -1,0 +1,19 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -559,13 +559,13 @@
+   if(COMPILER_SUPPORT_NEON)
+     if(OPUS_MAY_HAVE_NEON)
+-      if(RUNTIME_CPU_CAPABILITY_DETECTION)
++      if(RUNTIME_CPU_CAPABILITY_DETECTION AND NOT OPUS_PRESUME_NEON)
+         message(STATUS "OPUS_MAY_HAVE_NEON enabling runtime detection")
+         target_compile_definitions(opus PRIVATE OPUS_HAVE_RTCD)
+         add_sources_group(opus celt ${celt_sources_arm_rtcd})
+         add_sources_group(opus silk ${silk_sources_arm_rtcd})
+         add_sources_group(opus lpcnet ${dnn_sources_arm_rtcd})
+-      else()
++      elseif(NOT OPUS_PRESUME_NEON)
+         message(ERROR "Runtime cpu capability detection needed for MAY_HAVE_NEON")
+       endif()
+       # Do runtime check for NEON
+       target_compile_definitions(opus
