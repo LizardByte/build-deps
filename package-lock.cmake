@@ -33,6 +33,28 @@
 
 set(PATCH_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/patches")
 
+# dav1d AV1 decoder
+# renovate: datasource=github-tags depName=videolan/dav1d
+set(DAV1D_VERSION 1.5.4)
+CPMDeclarePackage(dav1d
+        NAME dav1d
+        VERSION ${DAV1D_VERSION}
+        GIT_REPOSITORY https://github.com/videolan/dav1d.git
+        GIT_TAG ${DAV1D_VERSION}
+        DOWNLOAD_ONLY YES
+)
+
+# libva
+# renovate: datasource=github-tags depName=intel/libva
+set(LIBVA_VERSION 2.24.1)
+CPMDeclarePackage(libva
+        NAME libva
+        VERSION ${LIBVA_VERSION}
+        GIT_REPOSITORY https://github.com/intel/libva.git
+        GIT_TAG ${LIBVA_VERSION}
+        DOWNLOAD_ONLY YES
+)
+
 # NVENC SDK 11.0 headers
 # renovate: datasource=github-tags depName=FFmpeg/nv-codec-headers
 # versioning=regex:^n(?<major>11)\.(?<minor>0)\.(?<patch>\d+)\.(?<build>\d+)$
@@ -77,13 +99,14 @@ CPMDeclarePackage(nv_codec_headers_13_1
         DOWNLOAD_ONLY YES
 )
 
-# libva
-# renovate: datasource=github-tags depName=intel/libva
-set(LIBVA_VERSION 2.24.1)
-CPMDeclarePackage(libva
-        NAME libva
-        VERSION ${LIBVA_VERSION}
-        GIT_REPOSITORY https://github.com/intel/libva.git
-        GIT_TAG ${LIBVA_VERSION}
+# Opus audio codec
+# renovate: datasource=github-tags depName=xiph/opus
+# extractVersion=^v(?<version>.*)$
+set(OPUS_VERSION 1.6.1)
+CPMDeclarePackage(opus
+        NAME opus
+        VERSION ${OPUS_VERSION}
+        GIT_REPOSITORY https://github.com/xiph/opus.git
+        GIT_TAG v${OPUS_VERSION}
         DOWNLOAD_ONLY YES
 )

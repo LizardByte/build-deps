@@ -1,6 +1,6 @@
 set(FFMPEG_PATCH_FILES)
 
-if(BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_CBS_PATCHES)
+if(BUILD_FFMPEG_CBS AND (BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_CBS_PATCHES))
     file(GLOB FFMPEG_CBS_PATCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/FFmpeg/cbs/*.patch)
     list(APPEND FFMPEG_PATCH_FILES ${FFMPEG_CBS_PATCH_FILES})
 endif()
@@ -48,20 +48,56 @@ list(APPEND FFMPEG_EXTRA_CONFIGURE
         --disable-all
         --disable-autodetect
         --disable-iconv
-        --enable-gpl
         --enable-static
         --enable-avcodec
         --enable-avutil
         --enable-bsfs  # ensure config.h will have CONFIG_CBS_ flags
         --enable-swscale
-        --enable-encoder=mpeg2video,h263p
 )
 
-if(BUILD_FFMPEG_AMF)
+if(BUILD_FFMPEG_ENCODERS)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-gpl --enable-encoders)
+endif()
+
+if(BUILD_FFMPEG_DECODERS)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
-            --enable-amf
-            --enable-encoder=h264_amf,hevc_amf,av1_amf
-    )
+            --enable-decoders
+            --enable-parsers
+            --enable-hwaccels)
+    if(BUILD_FFMPEG_DAV1D)
+        list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-libdav1d --enable-decoder=libdav1d)
+    endif()
+endif()
+if(BUILD_FFMPEG_OPUS)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-libopus)
+endif()
+
+if(BUILD_FFMPEG_TOOLS)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE
+            --enable-avformat
+            --enable-avfilter
+            --enable-swresample
+            --enable-ffmpeg
+            --enable-ffprobe
+            --enable-demuxers
+            --enable-muxers
+            --enable-filters
+            --enable-network
+            --enable-protocols)
+    if(WIN32)
+        # The tools are distributed as executables, including their compiler runtimes.
+        list(APPEND FFMPEG_EXTRA_CONFIGURE --extra-ldflags='-static')
+    endif()
+endif()
+if(NOT BUILD_FFMPEG_TOOLS)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE --disable-network)
+endif()
+
+if(BUILD_FFMPEG_AMF)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-amf)
+    if(BUILD_FFMPEG_ENCODERS)
+        list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-encoder=h264_amf,hevc_amf,av1_amf)
+    endif()
 endif()
 if(BUILD_FFMPEG_MF)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
@@ -72,10 +108,14 @@ endif()
 if(BUILD_FFMPEG_NV_CODEC_HEADERS)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
             --enable-cuda
-            --enable-encoder=h264_nvenc,hevc_nvenc,av1_nvenc
             --enable-ffnvcodec
-            --enable-nvenc
     )
+    if(BUILD_FFMPEG_ENCODERS)
+        list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-nvenc --enable-encoder=h264_nvenc,hevc_nvenc,av1_nvenc)
+    endif()
+    if(BUILD_FFMPEG_DECODERS)
+        list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-nvdec --enable-cuvid)
+    endif()
     if(UNIX AND NOT APPLE AND NOT FREEBSD AND BUILD_FFMPEG_CUDA_LLVM)
         list(APPEND FFMPEG_EXTRA_CONFIGURE
                 --enable-cuda_llvm
@@ -89,22 +129,22 @@ if(BUILD_FFMPEG_SVT_AV1)
     )
 endif()
 if(BUILD_FFMPEG_LIBVA)
-    list(APPEND FFMPEG_EXTRA_CONFIGURE
-            --enable-vaapi
-            --enable-encoder=h264_vaapi,hevc_vaapi,av1_vaapi,mpeg2_vaapi
-    )
+    list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-vaapi)
+    if(BUILD_FFMPEG_ENCODERS)
+        list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-encoder=h264_vaapi,hevc_vaapi,av1_vaapi,mpeg2_vaapi)
+    endif()
 endif()
 if(BUILD_FFMPEG_VULKAN)
-    list(APPEND FFMPEG_EXTRA_CONFIGURE
-            --enable-vulkan
-            --enable-encoder=h264_vulkan,hevc_vulkan,av1_vulkan
-    )
+    list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-vulkan)
+    if(BUILD_FFMPEG_ENCODERS)
+        list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-encoder=h264_vulkan,hevc_vulkan,av1_vulkan)
+    endif()
 endif()
 if(BUILD_FFMPEG_V4L2)
-    list(APPEND FFMPEG_EXTRA_CONFIGURE
-            --enable-v4l2_m2m
-            --enable-encoder=h264_v4l2m2m,hevc_v4l2m2m,av1_v4l2m2m
-    )
+    list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-v4l2_m2m)
+    if(BUILD_FFMPEG_ENCODERS)
+        list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-encoder=h264_v4l2m2m,hevc_v4l2m2m,av1_v4l2m2m)
+    endif()
 endif()
 if(BUILD_FFMPEG_X264)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
@@ -123,14 +163,35 @@ endif()
 if(WIN32)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
             --enable-d3d11va
-            --enable-encoder=h264_qsv,hevc_qsv,av1_qsv,mpeg2_qsv
-            --enable-libvpl
     )
+    if(BUILD_FFMPEG_DECODERS)
+        list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-d3d12va --enable-dxva2)
+    endif()
+    if(BUILD_FFMPEG_ENCODERS OR BUILD_FFMPEG_DECODERS)
+        string(TOLOWER ${MSYSTEM} FFMPEG_MSYSTEM_DIRECTORY)
+        find_file(FFMPEG_VPL_STATIC_LIBRARY NAMES libvpl.a
+                HINTS "${MSYS2_ROOT}/${FFMPEG_MSYSTEM_DIRECTORY}/lib" REQUIRED)
+        install(FILES ${FFMPEG_VPL_STATIC_LIBRARY} DESTINATION ${FFMPEG_INSTALL_PREFIX}/lib)
+        install(DIRECTORY "${MSYS2_ROOT}/${FFMPEG_MSYSTEM_DIRECTORY}/share/licenses/libvpl/"
+                DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/vpl)
+        # Static oneVPL is implemented in C++; FFmpeg probes it with the C compiler.
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            list(APPEND FFMPEG_EXTRA_CONFIGURE --extra-libs='-lc++')
+        else()
+            list(APPEND FFMPEG_EXTRA_CONFIGURE --extra-libs='-lstdc++')
+        endif()
+        list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-libvpl)
+        if(BUILD_FFMPEG_ENCODERS)
+            list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-encoder=h264_qsv,hevc_qsv,av1_qsv,mpeg2_qsv)
+        endif()
+    endif()
 elseif(APPLE)
     list(APPEND FFMPEG_EXTRA_CONFIGURE
-            --enable-encoder=h264_videotoolbox,hevc_videotoolbox
             --enable-videotoolbox
     )
+    if(BUILD_FFMPEG_ENCODERS)
+        list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-encoder=h264_videotoolbox,hevc_videotoolbox)
+    endif()
 endif()
 
 if(CMAKE_CROSSCOMPILING)
@@ -187,10 +248,36 @@ if(BUILD_FFMPEG_X265)
     add_dependencies(ffmpeg x265)
 endif()
 add_dependencies(${CMAKE_PROJECT_NAME} ffmpeg)
+if(BUILD_FFMPEG_DECODERS AND BUILD_FFMPEG_DAV1D)
+    add_dependencies(ffmpeg dav1d)
+endif()
+if(BUILD_FFMPEG_OPUS)
+    add_dependencies(ffmpeg opus)
+endif()
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/include/"
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/include)
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/lib/"
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/lib)
+if(BUILD_FFMPEG_TOOLS)
+    install(PROGRAMS
+            "${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/bin/ffmpeg${CMAKE_EXECUTABLE_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/bin/ffprobe${CMAKE_EXECUTABLE_SUFFIX}"
+            DESTINATION ${FFMPEG_INSTALL_PREFIX}/bin)
+endif()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/relocate-pkgconfig.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/relocate-pkgconfig.cmake @ONLY)
+# Run after the pkg-config files from every component have been installed.
+install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/relocate-pkgconfig.cmake)
+install(FILES ${FFMPEG_GENERATED_SRC_PATH}/COPYING.LGPLv2.1
+        DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/ffmpeg)
+if(BUILD_FFMPEG_ENCODERS)
+    install(FILES ${FFMPEG_GENERATED_SRC_PATH}/COPYING.GPLv2
+            DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/ffmpeg)
+endif()
+
+if(NOT BUILD_FFMPEG_CBS)
+    return()
+endif()
 
 
 #
@@ -293,3 +380,5 @@ endif()
 # install pkg-config file
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libcbs.pc
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/lib/pkgconfig)
+# libcbs is installed after the FFmpeg libraries.
+install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/relocate-pkgconfig.cmake)

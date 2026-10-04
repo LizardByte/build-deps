@@ -1,0 +1,45 @@
+file(GLOB pkgconfig_files "$ENV{DESTDIR}@FFMPEG_INSTALL_PREFIX@/lib/pkgconfig/*.pc")
+foreach(pkgconfig_file IN LISTS pkgconfig_files)
+    file(READ "${pkgconfig_file}" content)
+    # FFmpeg records dependency search paths in Libs as well as prefix/libdir.
+    foreach(staging_prefix IN ITEMS
+            "@CMAKE_CURRENT_BINARY_DIR@/codec-deps"
+            "@CMAKE_CURRENT_BINARY_DIR@/FFmpeg"
+            "@CMAKE_CURRENT_BINARY_DIR@/x264"
+            "@CMAKE_CURRENT_BINARY_DIR@/libva"
+            "@CMAKE_CURRENT_BINARY_DIR@/vulkan"
+            "@CMAKE_CURRENT_BINARY_DIR_UNIX@/codec-deps"
+            "@CMAKE_CURRENT_BINARY_DIR_UNIX@/FFmpeg"
+            "@CMAKE_CURRENT_BINARY_DIR_UNIX@/x264"
+            "@CMAKE_CURRENT_BINARY_DIR_UNIX@/libva"
+            "@CMAKE_CURRENT_BINARY_DIR_UNIX@/vulkan"
+            "@FFMPEG_INSTALL_PREFIX@"
+            "@FFMPEG_INSTALL_PREFIX_UNIX@")
+        string(REPLACE "${staging_prefix}" "\${prefix}" content "${content}")
+    endforeach()
+    foreach(variable IN ITEMS prefix exec_prefix libdir includedir)
+        if(variable STREQUAL "prefix")
+            set(value "\${pcfiledir}/../..")
+        elseif(variable STREQUAL "libdir")
+            set(value "\${prefix}/lib")
+        elseif(variable STREQUAL "includedir")
+            set(value "\${prefix}/include")
+        else()
+            set(value "\${prefix}")
+        endif()
+        string(REGEX REPLACE "(^|\n)${variable}=[^\n]*" "\\1${variable}=${value}" content "${content}")
+    endforeach()
+    if("@WIN32@" AND content MATCHES "-lvpl")
+        # oneVPL's Windows pkg-config metadata omits its C++ runtime. Keep the
+        # runtime after the dispatcher so C compiler consumers can link too.
+        if("@CMAKE_CXX_COMPILER_ID@" MATCHES "Clang")
+            set(cxx_runtime -lc++)
+        else()
+            set(cxx_runtime -lstdc++)
+        endif()
+        string(REPLACE "${cxx_runtime}" "" content "${content}")
+        string(REGEX REPLACE "(^|\n)Libs.private:([^\n]*)"
+                "\\1Libs.private:\\2 ${cxx_runtime}" content "${content}")
+    endif()
+    file(WRITE "${pkgconfig_file}" "${content}")
+endforeach()

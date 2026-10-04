@@ -15,11 +15,27 @@
 
 ## Overview
 
-This is a common set of pre-compiled dependencies for [LizardByte/Sunshine](https://github.com/LizardByte/Sunshine).
+This is a common set of pre-compiled dependencies for [Sunshine](https://github.com/LizardByte/Sunshine),
+[Koko](https://github.com/LizardByte/Koko), [One](https://github.com/LizardByte/One), and other LizardByte projects.
 
-- [FFmpeg](https://ffmpeg.org)
+- [FFmpeg](https://ffmpeg.org): static libraries with encoders, decoders, formats, filters, and protocols;
+  `ffmpeg` and `ffprobe` executables; and Sunshine's `libcbs` helpers.
+- [dav1d](https://code.videolan.org/videolan/dav1d): AV1 decoder.
+- [Opus](https://opus-codec.org): audio codec, usable directly by consumers as well as through FFmpeg.
 
 ## Usage
+
+Download the matching `<platform>-ffmpeg.tar.gz` archive from a
+[release](https://github.com/LizardByte/build-deps/releases), and extract its `ffmpeg` directory.
+The package contains `include`, `lib`, `lib/pkgconfig`, `bin`, and `share/licenses`. CI builds encoders,
+decoders, and tools together for each platform. Pin the release tag and archive SHA256 in reproducible builds.
+
+For applications linking the static libraries, point `PKG_CONFIG_PATH` at the extracted `lib/pkgconfig`
+directory and use `pkg-config --static` to obtain the complete link dependencies. The pkg-config files are
+relocatable. Platform graphics and system development libraries may still be required when linking hardware
+acceleration support. Windows archives use the MSYS2 MinGW toolchain and include the static oneVPL dispatcher.
+
+To build the dependencies from source:
 
 1. Add this repository as a submodule to your project.
 
@@ -27,7 +43,6 @@ This is a common set of pre-compiled dependencies for [LizardByte/Sunshine](http
    git submodule add https://github.com/LizardByte/build-deps.git third-party/build-deps
    cd third-party/build-deps
    git submodule update --init --recursive
-   checkout dist
    ```
 
 ## License
@@ -79,6 +94,7 @@ pkg install -y \
   devel/cmake \
   devel/git \
   devel/gmake \
+  devel/meson \
   devel/nasm \
   devel/ninja \
   devel/pkgconf \
@@ -113,6 +129,7 @@ sudo apt install -y \
     libopus-dev \
     libsdl2-dev \
     libtool \
+    meson \
     libvorbis-dev \
     libxcb1-dev \
     libxcb-shm0-dev \
@@ -146,7 +163,9 @@ apk add --no-cache \
     libxrandr-dev \
     linux-headers \
     mesa-dev \
+    meson \
     nasm \
+    ninja \
     numactl-dev \
     pkgconf \
     wayland-dev
@@ -163,6 +182,7 @@ brew install \
     libtool \
     libvorbis \
     libvpx \
+    meson \
     nasm \
     ninja \
     opus \
@@ -197,6 +217,7 @@ pacman -S \
     mingw-w64-ucrt-x86_64-cmake \
     mingw-w64-ucrt-x86_64-gcc \
     mingw-w64-ucrt-x86_64-make \
+    mingw-w64-ucrt-x86_64-meson \
     mingw-w64-ucrt-x86_64-nasm \
     mingw-w64-ucrt-x86_64-ninja \
     mingw-w64-ucrt-x86_64-onevpl
@@ -218,12 +239,34 @@ pacman -S \
     mingw-w64-clang-aarch64-cmake \
     mingw-w64-clang-aarch64-gcc \
     mingw-w64-clang-aarch64-make \
+    mingw-w64-clang-aarch64-meson \
     mingw-w64-clang-aarch64-nasm \
     mingw-w64-clang-aarch64-ninja \
     mingw-w64-clang-aarch64-onevpl
 ```
 
 ### Configure
+
+Encoders, decoders, and tools are built together by default. Set `BUILD_FFMPEG_ENCODERS`,
+`BUILD_FFMPEG_DECODERS`, or `BUILD_FFMPEG_TOOLS` to `OFF` for a smaller custom build.
+FFmpeg's built-in software decoders use `BUILD_FFMPEG_DECODERS`; they do not need x264, x265, or SVT-AV1.
+The dependency switches have the following roles, subject to platform support:
+
+| Switch                                                           | Encoding                  | Decoding            |
+|------------------------------------------------------------------|---------------------------|---------------------|
+| `BUILD_FFMPEG_X264`, `BUILD_FFMPEG_X265`, `BUILD_FFMPEG_SVT_AV1` | Software encoders         | No                  |
+| `BUILD_FFMPEG_MF`                                                | Media Foundation encoders | No                  |
+| `BUILD_FFMPEG_AMF`                                               | AMD AMF encoders          | AMD AMF decoders    |
+| `BUILD_FFMPEG_NV_CODEC_HEADERS`                                  | NVIDIA NVENC              | NVIDIA NVDEC/CUVID  |
+| `BUILD_FFMPEG_LIBVA`                                             | VA-API encoders           | VA-API acceleration |
+| `BUILD_FFMPEG_VULKAN`                                            | Vulkan encoders           | Vulkan acceleration |
+| `BUILD_FFMPEG_V4L2`                                              | V4L2 M2M encoders         | V4L2 M2M decoders   |
+| `BUILD_FFMPEG_DAV1D`                                             | No                        | AV1 decoder         |
+| `BUILD_FFMPEG_OPUS`                                              | Opus encoder              | Opus decoder        |
+
+Disabling encoders preserves shared hardware backends for decoding. Windows D3D11VA, D3D12VA, DXVA2,
+and oneVPL/QSV, and macOS VideoToolbox are enabled by the platform configuration rather than separate
+dependency switches.
 
 Use the `Unix Makefiles` generator for Linux and macOS, and the `MSYS Makefiles` generator for Windows.
 

@@ -17,3 +17,10 @@ file(READ "${X265_PC_FILE}" x265_pc_content)
 if(NOT x265_pc_content MATCHES "Version:[ \t]*[0-9]")
     message(FATAL_ERROR "the installed x265.pc has no usable version: ${X265_PC_FILE}")
 endif()
+
+if(X265_STATIC_MINGW)
+    # CMake's implicit library list names the shared GCC unwinder even though
+    # x265 is static. Let the consumer's compiler choose its matching runtime.
+    string(REPLACE "-lgcc_s" "" x265_pc_content "${x265_pc_content}")
+    file(WRITE "${X265_PC_FILE}" "${x265_pc_content}")
+endif()
