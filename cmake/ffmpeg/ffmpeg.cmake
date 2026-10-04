@@ -56,7 +56,10 @@ list(APPEND FFMPEG_EXTRA_CONFIGURE
 )
 
 if(BUILD_FFMPEG_ENCODERS)
-    list(APPEND FFMPEG_EXTRA_CONFIGURE --enable-gpl --enable-encoders)
+    list(APPEND FFMPEG_EXTRA_CONFIGURE
+            --enable-gpl
+            --enable-encoders
+            --enable-encoder=mpeg2video,h263p)
 endif()
 
 if(BUILD_FFMPEG_DECODERS)
