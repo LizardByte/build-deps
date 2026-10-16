@@ -83,6 +83,21 @@ cd third-party/FFmpeg/x264
 git checkout HEAD -- .
 ```
 
+### VA-API runtime paths
+
+The bundled static libva loads VA-API drivers from the consumer's system. Linux packages search the target's
+multiarch directory and Flatpak driver extensions, followed by the system paths used by Arch Linux, Alpine,
+Fedora, RHEL, openSUSE, Gentoo, NixOS, Homebrew on Linux, and local installations. Each default path is listed
+on its own line with a distribution or installation-layout comment in `cmake/ffmpeg/libva.cmake`.
+The target's multiarch directory comes from `CMAKE_LIBRARY_ARCHITECTURE`, with `CMAKE_C_COMPILER_TARGET` as a
+fallback for cross-compilation. FreeBSD packages search `/usr/local/lib/dri`.
+
+The configuration directory is `/etc` on Linux and `/usr/local/etc` on FreeBSD. These runtime paths are
+independent of the build and installation staging directories.
+
+Set `LIBVA_DRIVERS_PATH` (a colon-separated list) and `LIBVA_SYSCONFDIR` when configuring CMake to build packages
+for a different filesystem layout.
+
 ### Dependencies
 
 #### FreeBSD
