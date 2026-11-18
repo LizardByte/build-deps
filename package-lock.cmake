@@ -35,7 +35,7 @@ set(PATCH_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/patches")
 
 # dav1d AV1 decoder
 # renovate: datasource=github-tags depName=videolan/dav1d
-set(DAV1D_VERSION 1.5.4)
+set(DAV1D_VERSION 1.5.5)
 CPMDeclarePackage(dav1d
         NAME dav1d
         VERSION ${DAV1D_VERSION}
