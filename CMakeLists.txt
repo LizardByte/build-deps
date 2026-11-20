@@ -33,6 +33,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/unix_path.cmake)
 
 # CPM
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpm/CPM.cmake)
+CPMUsePackageLock(package-lock.cmake)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
     set(FREEBSD ON)
@@ -213,6 +214,5 @@ message(STATUS "CI Matrix name should be: '${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_P
 
 # FFmpeg
 if(BUILD_ALL OR BUILD_ALL_SUNSHINE OR BUILD_FFMPEG)
-    CPMUsePackageLock(package-lock.cmake)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/_main.cmake)
 endif()
