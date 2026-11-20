@@ -37,18 +37,16 @@ acceleration support. Windows archives use the MSYS2 MinGW toolchain and include
 
 To build the dependencies from source:
 
-1. Add this repository as a submodule to your project.
+Add this repository as a submodule to your project, then follow [Build](#build).
 
-   ```bash
-   git submodule add https://github.com/LizardByte/build-deps.git third-party/build-deps
-   cd third-party/build-deps
-   git submodule update --init --recursive
-   ```
+```bash
+git submodule add https://github.com/LizardByte/build-deps.git third-party/build-deps
+```
 
 ## License
 
-This repo is licensed under the MIT License, but this does not cover submodules or patches.
-Please see the individual projects for their respective licenses.
+This repository uses the MIT License. See the individual projects for the licenses that apply to
+dependency sources and patches.
 
 
 ## Build
@@ -56,32 +54,18 @@ Please see the individual projects for their respective licenses.
 ### Checkout
 
 ```bash
-git clone --recurse-submodules https://github.com/LizardByte/build-deps.git
+git clone https://github.com/LizardByte/build-deps.git
+cd build-deps
 ```
 
 You can reduce the size of the repo by setting the depth to 1:
 
 ```bash
-git clone --recurse-submodules --depth 1 https://github.com/LizardByte/build-deps.git
+git clone --depth 1 https://github.com/LizardByte/build-deps.git
 ```
 
-ℹ️ If you have already cloned the repository without submodules, you can initialize them with the following command:
-
-```bash
-cd build-deps
-git submodule update --init --recursive
-```
-
-### Line Endings
-
-ℹ️ On Windows, you must copy the `.gitattributes` file to `.git/modules/third-party/FFmpeg/x264/info/attributes`,
-see https://stackoverflow.com/a/23671157/11214013 for more info.
-
-Then run the following commands:
-```bash
-cd third-party/FFmpeg/x264
-git checkout HEAD -- .
-```
+During CMake configuration, CPM downloads enabled dependencies and applies the patches listed in
+`package-lock.cmake`. Use a fresh build directory after changing the patches for an existing revision.
 
 ### Dependencies
 
@@ -138,6 +122,7 @@ sudo apt install -y \
     meson \
     nasm \
     ninja-build \
+    patch \
     pkg-config \
     texinfo \
     wget \
@@ -167,6 +152,7 @@ apk add --no-cache \
     nasm \
     ninja \
     numactl-dev \
+    patch \
     pkgconf \
     wayland-dev
 ```

@@ -1,17 +1,7 @@
 CPMGetPackage(libva)
 
-set(LIBVA_GENERATED_SRC_PATH ${libva_SOURCE_DIR})
-
-if(BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_LIBVA_PATCHES)
-    file(GLOB FFMPEG_LIBVA_PATCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/libva/*.patch)
-
-    foreach(patch_file ${FFMPEG_LIBVA_PATCH_FILES})
-        APPLY_GIT_PATCH(${LIBVA_GENERATED_SRC_PATH} ${patch_file})
-    endforeach()
-endif()
-
 # libva uses autotools build system
-set(WORKING_DIR "${LIBVA_GENERATED_SRC_PATH}")
+set(WORKING_DIR "${libva_SOURCE_DIR}")
 UNIX_PATH(WORKING_DIR_UNIX ${WORKING_DIR})
 
 # Configure options for libva

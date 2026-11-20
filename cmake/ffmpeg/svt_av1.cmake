@@ -1,15 +1,4 @@
-# SVT-AV1 cannot determine version if the git history is not available
-GIT_FETCH_TAGS("third-party/FFmpeg/SVT-AV1")
-
-set(SVT_AV1_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/SVT-AV1)
-
-if(BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_SVT_AV1_PATCHES)
-    file(GLOB FFMPEG_SVT_AV1_PATCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/FFmpeg/SVT-AV1/*.patch)
-
-    foreach(patch_file ${FFMPEG_SVT_AV1_PATCH_FILES})
-        APPLY_GIT_PATCH(${FFMPEG_GENERATED_SRC_PATH} ${patch_file})
-    endforeach()
-endif()
+CPMGetPackage(svt_av1)
 
 # options for SVT-AV1
 set(BUILD_APPS OFF CACHE BOOL "Build applications")
@@ -25,7 +14,7 @@ set(_original_cmake_install_prefix ${CMAKE_INSTALL_PREFIX})
 set(CMAKE_INSTALL_PREFIX ${FFMPEG_INSTALL_PREFIX})
 
 # build SVT-AV1
-add_subdirectory(${SVT_AV1_GENERATED_SRC_PATH} SVT-AV1 SYSTEM)
+add_subdirectory(${svt_av1_SOURCE_DIR} SVT-AV1 SYSTEM)
 add_dependencies(${CMAKE_PROJECT_NAME} SvtAv1Enc)
 
 # install SVT-AV1 as a build target, this must be installed before building FFmpeg
@@ -36,7 +25,7 @@ add_custom_target(SvtAv1
 )
 add_dependencies(SvtAv1 SvtAv1Enc)
 add_dependencies(${CMAKE_PROJECT_NAME} SvtAv1)
-install(FILES ${SVT_AV1_GENERATED_SRC_PATH}/LICENSE.md ${SVT_AV1_GENERATED_SRC_PATH}/LICENSE-BSD2.md
+install(FILES ${svt_av1_SOURCE_DIR}/LICENSE.md ${svt_av1_SOURCE_DIR}/LICENSE-BSD2.md
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/svt-av1)
 
 # PKG_CONFIG_PATH already set since this is installed directly to the prefix

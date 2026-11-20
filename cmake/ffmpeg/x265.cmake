@@ -2,51 +2,13 @@
 # expected at fixed paths inside each build directory, and the combine step
 # merges them statically. Multi-config generators (Visual Studio, Xcode) place
 # their outputs in per-config subdirectories and are not supported. Fail before
-# any side effect (tag fetch, .git rewrite, patches). Do not remove this guard
+# downloading the dependency. Do not remove this guard
 # without teaching the rules about the per-config paths.
 if(CMAKE_CONFIGURATION_TYPES)
     message(FATAL_ERROR "x265 multilib requires a single configuration generator")
 endif()
 
-# x265.pc will not be installed if their cmake cannot detect the latest tag
-GIT_FETCH_TAGS("third-party/FFmpeg/x265_git")
-
-set(X265_GENERATED_SRC_PATH "${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/x265_git")
-
-# The copied source tree inherits the submodule's .git file, whose relative
-# gitdir no longer resolves from the new location. Point it at the real git
-# directory so x265 can detect its version tag and install x265.pc (the install
-# step is checked by x265-verify-pc.cmake). This runs before the patch loop so
-# the patches apply through git apply; the source copy itself is made by
-# _main.cmake before this file is included. This couples the build tree to the
-# source repository's Git metadata; passing the version explicitly instead is a
-# possible follow-up.
-execute_process(
-        COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/x265_git"
-            rev-parse --absolute-git-dir
-        OUTPUT_VARIABLE X265_GIT_DIR
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_QUIET
-        RESULT_VARIABLE X265_GIT_RESULT
-)
-if(X265_GIT_RESULT EQUAL 0)
-    file(WRITE "${X265_GENERATED_SRC_PATH}/.git" "gitdir: ${X265_GIT_DIR}\n")
-endif()
-
-file(GLOB X265_GIT_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/x265_git/*.patch")
-foreach(patch_file ${X265_GIT_FILES})
-    APPLY_GIT_PATCH("${X265_GENERATED_SRC_PATH}" "${patch_file}")
-endforeach()
-# Note: the x265 patches also raise the policy range declared by its
-# cmake_minimum_required, which is what lets CMake 4 and newer configure it
-
-if(BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_X265_PATCHES)
-    file(GLOB FFMPEG_X265_FILES "${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/FFmpeg/x265/*.patch")
-
-    foreach(patch_file ${FFMPEG_X265_FILES})
-        APPLY_GIT_PATCH("${FFMPEG_GENERATED_SRC_PATH}" "${patch_file}")
-    endforeach()
-endif()
+CPMGetPackage(x265)
 
 #
 # x265 multilib (8/10/12-bit)
@@ -213,20 +175,17 @@ if(NOT "${_x265_init_old}" STREQUAL "${_x265_init_content}")
     file(WRITE "${_x265_init_file}" "${_x265_init_content}")
 endif()
 
-# The copied sources are refreshed and patched on every configure, so the
-# nested builds depend on the original submodule sources and the patches,
-# whose timestamps are stable across reconfigures.
+# Depend on the patched sources used by the nested builds.
 file(GLOB_RECURSE X265_BUILD_DEPENDS CONFIGURE_DEPENDS
-        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/x265_git/source/*.asm"
-        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/x265_git/source/*.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/x265_git/source/*.cmake"
-        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/x265_git/source/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/x265_git/source/*.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/x265_git/source/*.in"
-        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/x265_git/source/*.S"
-        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg/x265_git/source/*.txt"
+        "${x265_SOURCE_DIR}/source/*.asm"
+        "${x265_SOURCE_DIR}/source/*.c"
+        "${x265_SOURCE_DIR}/source/*.cmake"
+        "${x265_SOURCE_DIR}/source/*.cpp"
+        "${x265_SOURCE_DIR}/source/*.h"
+        "${x265_SOURCE_DIR}/source/*.in"
+        "${x265_SOURCE_DIR}/source/*.S"
+        "${x265_SOURCE_DIR}/source/*.txt"
 )
-list(APPEND X265_BUILD_DEPENDS ${X265_GIT_FILES})
 list(APPEND X265_BUILD_DEPENDS "${_x265_init_file}")
 if(DEFINED CMAKE_TOOLCHAIN_FILE AND NOT "${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
     list(APPEND X265_BUILD_DEPENDS "${CMAKE_TOOLCHAIN_FILE}")
@@ -241,7 +200,7 @@ function(x265_add_build_variant target build_dir)
     set(library "${build_dir}/${X265_LIB_NAME}")
     set(arguments_file "${X265_MULTILIB_DIR}/${target}-configure-arguments.txt")
     set(applied_arguments_file "${X265_MULTILIB_DIR}/${target}-configure-arguments.applied")
-    set(configure_arguments "${X265_CMAKE_ARGS};${ARGN}")
+    set(configure_arguments "${x265_SOURCE_DIR};${X265_CMAKE_ARGS};${ARGN}")
 
     # write the arguments file only when its content changes, so an unchanged
     # reconfigure does not force a rebuild
@@ -263,7 +222,7 @@ function(x265_add_build_variant target build_dir)
                 "-DX265_APPLIED_FILE=${applied_arguments_file}"
                 -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/x265-prepare-variant.cmake"
             COMMAND "${CMAKE_COMMAND}"
-                -S "${X265_GENERATED_SRC_PATH}/source"
+                -S "${x265_SOURCE_DIR}/source"
                 -B "${build_dir}"
                 ${X265_CMAKE_ARGS}
                 ${ARGN}
@@ -278,7 +237,7 @@ function(x265_add_build_variant target build_dir)
             # succeeded, so a failed attempt cleans and retries
             COMMAND "${CMAKE_COMMAND}" -E copy_if_different
                 "${arguments_file}" "${applied_arguments_file}"
-            WORKING_DIRECTORY "${X265_GENERATED_SRC_PATH}"
+            WORKING_DIRECTORY "${x265_SOURCE_DIR}"
             DEPENDS ${X265_BUILD_DEPENDS} "${arguments_file}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/x265-prepare-variant.cmake"
                 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/x265-verify-library.cmake"
@@ -418,5 +377,5 @@ add_custom_command(
 add_custom_target(x265 DEPENDS ${X265_INSTALL_OUTPUTS} COMMENT "Target: x265")
 add_dependencies(x265 x265-8bit x265-10bit x265-12bit)
 add_dependencies(${CMAKE_PROJECT_NAME} x265)
-install(FILES ${X265_GENERATED_SRC_PATH}/COPYING
+install(FILES ${x265_SOURCE_DIR}/COPYING
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/x265)
