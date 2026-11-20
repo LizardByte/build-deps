@@ -1,19 +1,3 @@
-set(FFMPEG_PATCH_FILES)
-
-if(BUILD_FFMPEG_CBS AND (BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_CBS_PATCHES))
-    file(GLOB FFMPEG_CBS_PATCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/FFmpeg/cbs/*.patch)
-    list(APPEND FFMPEG_PATCH_FILES ${FFMPEG_CBS_PATCH_FILES})
-endif()
-
-if(BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_LIBAVUTIL_PATCHES)
-    file(GLOB FFMPEG_LIBAVUTIL_PATCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/FFmpeg/libavutil/*.patch)
-    list(APPEND FFMPEG_PATCH_FILES ${FFMPEG_LIBAVUTIL_PATCH_FILES})
-endif()
-
-foreach(patch_file ${FFMPEG_PATCH_FILES})
-    APPLY_GIT_PATCH(${FFMPEG_GENERATED_SRC_PATH} ${patch_file})
-endforeach()
-
 if(${arch} STREQUAL "aarch64" OR ${arch} STREQUAL "arm64")
     set(CBS_ARCH_PATH arm)
 elseif (${arch} STREQUAL "ppc64le")
@@ -215,7 +199,7 @@ endif()
 string(REPLACE ";" " " FFMPEG_EXTRA_CONFIGURE "${FFMPEG_EXTRA_CONFIGURE}")
 message(STATUS "FFmpeg configure options: ${FFMPEG_EXTRA_CONFIGURE}")
 
-set(WORKING_DIR "${FFMPEG_GENERATED_SRC_PATH}")
+set(WORKING_DIR "${ffmpeg_SOURCE_DIR}")
 UNIX_PATH(WORKING_DIR_UNIX ${WORKING_DIR})
 # Toolchain files can set the compiler as a normal variable rather than a cache entry.
 file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg-compiler.txt CONTENT "${CMAKE_C_COMPILER}\n")
@@ -223,8 +207,9 @@ add_custom_target(ffmpeg ALL
         COMMAND ${SHELL_CMD} "PKG_CONFIG_PATH='${PKG_CONFIG_PATH}' \
 ./configure \
 ${FFMPEG_EXTRA_CONFIGURE}"
-        COMMAND ${SHELL_CMD} "${FFMPEG_NVENC_SDK_ENV} ${MAKE_EXECUTABLE} --jobs=${N_PROC}"
-        COMMAND ${SHELL_CMD} "${FFMPEG_NVENC_SDK_ENV} ${MAKE_EXECUTABLE} install"
+        # FFmpeg's separate make invocation starts its own jobserver.
+        COMMAND ${SHELL_CMD} "MAKEFLAGS= MFLAGS= ${FFMPEG_NVENC_SDK_ENV} ${MAKE_EXECUTABLE} --jobs=${N_PROC}"
+        COMMAND ${SHELL_CMD} "MAKEFLAGS= MFLAGS= ${FFMPEG_NVENC_SDK_ENV} ${MAKE_EXECUTABLE} install"
         WORKING_DIRECTORY ${WORKING_DIR}
         COMMENT "Target: FFmpeg"
         COMMAND_EXPAND_LISTS
@@ -273,10 +258,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/relocate-pkgconfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/relocate-pkgconfig.cmake @ONLY)
 # Run after the pkg-config files from every component have been installed.
 install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/relocate-pkgconfig.cmake)
-install(FILES ${FFMPEG_GENERATED_SRC_PATH}/COPYING.LGPLv2.1
+install(FILES ${ffmpeg_SOURCE_DIR}/COPYING.LGPLv2.1
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/ffmpeg)
 if(BUILD_FFMPEG_ENCODERS)
-    install(FILES ${FFMPEG_GENERATED_SRC_PATH}/COPYING.GPLv2
+    install(FILES ${ffmpeg_SOURCE_DIR}/COPYING.GPLv2
             DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/ffmpeg)
 endif()
 
@@ -291,11 +276,11 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/libcbs.pc.in
         ${CMAKE_CURRENT_BINARY_DIR}/libcbs.pc @ONLY)
 
-set(AVCODEC_GENERATED_SRC_PATH ${FFMPEG_GENERATED_SRC_PATH}/libavcodec)
-set(AVUTIL_GENERATED_SRC_PATH ${FFMPEG_GENERATED_SRC_PATH}/libavutil)
+set(AVCODEC_GENERATED_SRC_PATH ${ffmpeg_SOURCE_DIR}/libavcodec)
+set(AVUTIL_GENERATED_SRC_PATH ${ffmpeg_SOURCE_DIR}/libavutil)
 
 set(EXTRA_FFMPEG_INCLUDE_FILES
-        ${FFMPEG_GENERATED_SRC_PATH}/config.h
+        ${ffmpeg_SOURCE_DIR}/config.h
 )
 set(EXTRA_AVCODEC_INCLUDE_FILES
         ${AVCODEC_GENERATED_SRC_PATH}/av1.h
@@ -350,7 +335,7 @@ set(CBS_SOURCE_FILES
 
 add_library(cbs STATIC ${CBS_SOURCE_FILES})
 target_include_directories(cbs PRIVATE
-        ${FFMPEG_GENERATED_SRC_PATH}
+        ${ffmpeg_SOURCE_DIR}
 )
 target_compile_options(cbs PRIVATE -Wall -Wno-incompatible-pointer-types -Wno-format -Wno-format-extra-args)
 add_dependencies(cbs ffmpeg)

@@ -1,4 +1,5 @@
 CPMGetPackage(opus)
+set(OPUS_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/opus-build/${OPUS_VERSION}")
 
 set(OPUS_CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/codec-deps
@@ -22,18 +23,17 @@ if(APPLE)
 endif()
 if(WIN32 AND arch MATCHES "^(arm64|aarch64)$")
     # NEON is part of the ARM64 baseline; Opus's runtime detection does not support MinGW ARM64.
-    APPLY_GIT_PATCH(${opus_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/opus/cmake-presumed-neon.patch)
     list(APPEND OPUS_CMAKE_ARGS -DOPUS_MAY_HAVE_NEON=ON -DOPUS_PRESUME_NEON=ON)
 endif()
 add_custom_target(opus ALL
         COMMAND ${CMAKE_COMMAND}
             -S ${opus_SOURCE_DIR}
-            -B ${CMAKE_CURRENT_BINARY_DIR}/opus-build
+            -B ${OPUS_BUILD_DIR}
             -G "${CMAKE_GENERATOR}"
             ${OPUS_CMAKE_ARGS}
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR}/opus-build
+        COMMAND ${CMAKE_COMMAND} --build ${OPUS_BUILD_DIR}
             --config Release --parallel ${N_PROC}
-        COMMAND ${CMAKE_COMMAND} --install ${CMAKE_CURRENT_BINARY_DIR}/opus-build --config Release
+        COMMAND ${CMAKE_COMMAND} --install ${OPUS_BUILD_DIR} --config Release
         COMMENT "Target: Opus"
         USES_TERMINAL
         VERBATIM

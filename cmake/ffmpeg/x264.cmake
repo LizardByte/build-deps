@@ -1,12 +1,4 @@
-set(X264_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/x264)
-
-if(BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_X264_PATCHES)
-    file(GLOB FFMPEG_X264_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/FFmpeg/x264/*.patch)
-
-    foreach(patch_file ${FFMPEG_X264_FILES})
-        APPLY_GIT_PATCH(${FFMPEG_GENERATED_SRC_PATH} ${patch_file})
-    endforeach()
-endif()
+CPMGetPackage(x264)
 
 if(${arch} STREQUAL "aarch64" OR ${arch} STREQUAL "arm64")
     set(X264_ARCH aarch64)
@@ -43,9 +35,7 @@ endif()
 # configure command will only take the first argument if not converted to string
 string(REPLACE ";" " " FFMPEG_X264_EXTRA_CONFIGURE "${FFMPEG_X264_EXTRA_CONFIGURE}")
 
-# On Windows, the x264 submodule needs to have line endings converted to LF, see the README.md
-
-set(WORKING_DIR "${X264_GENERATED_SRC_PATH}")
+set(WORKING_DIR "${x264_SOURCE_DIR}")
 UNIX_PATH(WORKING_DIR_UNIX ${WORKING_DIR})
 # Static x264 archives are linked into PIE executables. On AArch64, non-PIC
 # assembly creates text relocations that hardened package builders reject.
@@ -76,6 +66,6 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/x264/lib/libx264.a
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/lib)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/x264/lib/pkgconfig/x264.pc
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/lib/pkgconfig)
-install(FILES ${X264_GENERATED_SRC_PATH}/COPYING
+install(FILES ${x264_SOURCE_DIR}/COPYING
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/x264)
 set(PKG_CONFIG_PATH "${CMAKE_CURRENT_BINARY_DIR_UNIX}/x264/lib/pkgconfig:${PKG_CONFIG_PATH}")

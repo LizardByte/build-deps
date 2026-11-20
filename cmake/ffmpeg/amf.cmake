@@ -1,19 +1,11 @@
-set(AMF_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/AMF)
-install(FILES ${AMF_GENERATED_SRC_PATH}/LICENSE.txt
+CPMGetPackage(amf)
+install(FILES ${amf_SOURCE_DIR}/LICENSE.txt
         DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/amf)
-
-if(BUILD_FFMPEG_ALL_PATCHES OR BUILD_FFMPEG_AMF_PATCHES)
-    file(GLOB FFMPEG_AMF_PATCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/patches/FFmpeg/FFmpeg/AMF/*.patch)
-
-    foreach(patch_file ${FFMPEG_AMF_PATCH_FILES})
-        APPLY_GIT_PATCH(${FFMPEG_GENERATED_SRC_PATH} ${patch_file})
-    endforeach()
-endif()
 
 set(AMF_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR}/usr/local/include/AMF)
 add_custom_target(amf ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${AMF_GENERATED_SRC_PATH}/amf/public/include"
+            "${amf_SOURCE_DIR}/amf/public/include"
             "${AMF_TARGET_DIR}"
         COMMENT "Copying AMF headers"
 )

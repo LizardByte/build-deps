@@ -164,13 +164,12 @@ jobs:
             ninja \
             nasm \
             numactl-dev \
+            patch \
             pkgconf \
             wayland-dev
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          submodules: recursive
 
       - name: Prepare Dependencies Linux
         id: cross_compile
@@ -221,6 +220,7 @@ jobs:
             "meson"
             "nasm"
             "ninja-build"
+            "patch"
             "pkg-config"
             "texinfo"
             "wget"
@@ -611,11 +611,11 @@ jobs:
         shell: bash
         run: |
           echo "::group::x264 config.log"
-          cat ./third-party/FFmpeg/x264/config.log || true
+          cat ./build/_deps/x264-src/config.log || true
           echo "::endgroup::"
 
           echo "::group::FFmpeg config.log"
-          cat ./build/FFmpeg/FFmpeg/ffbuild/config.log || true
+          cat ./build/_deps/ffmpeg-*/ffbuild/config.log || true
           echo "::endgroup::"
 
       - name: Debug build directory

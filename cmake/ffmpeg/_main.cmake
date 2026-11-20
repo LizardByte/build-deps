@@ -1,9 +1,4 @@
-# the destination directory needs to be same level down as the original source directory
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/third-party/FFmpeg DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
-        PATTERN "Vulkan-Loader/tests" EXCLUDE)  # vulkan loader test files contain emojis in file names which can fail
-
-set(FFMPEG_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/FFmpeg)
-set(AVCODEC_GENERATED_SRC_PATH ${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/libavcodec)
+CPMGetPackage(ffmpeg)
 
 if(NOT BUILD_FFMPEG_ENCODERS)
     foreach(component MF SVT_AV1 X264 X265 CBS)
@@ -51,10 +46,6 @@ endif()
 
 if(BUILD_FFMPEG_AMF)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/amf.cmake)
-endif()
-
-if(BUILD_FFMPEG_MF)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/mf.cmake)
 endif()
 
 if(BUILD_FFMPEG_NV_CODEC_HEADERS)
