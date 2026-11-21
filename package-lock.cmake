@@ -194,7 +194,7 @@ CPMDeclarePackage(x264
 
 # x265
 # renovate: datasource=github-tags depName=LizardByte-infrastructure/x265_git
-set(X265_TAG 4.1)
+set(X265_TAG 4.2)
 file(GLOB X265_PATCHES CONFIGURE_DEPENDS "${PATCH_DIRECTORY}/x265_git/*.patch")
 CPMDeclarePackage(x265
         NAME x265
