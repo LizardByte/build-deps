@@ -61,7 +61,7 @@ CPMDeclarePackage(dav1d
 # FFmpeg
 # renovate: datasource=github-tags depName=FFmpeg/FFmpeg
 # versioning=regex:^n(?<major>\d+)\.(?<minor>\d+)(?:\.(?<patch>\d+))?$
-set(FFMPEG_TAG n9.0.2)
+set(FFMPEG_TAG n9.1)
 file(GLOB_RECURSE FFMPEG_PATCHES CONFIGURE_DEPENDS "${PATCH_DIRECTORY}/FFmpeg/*.patch")
 CPMDeclarePackage(ffmpeg
         NAME ffmpeg
