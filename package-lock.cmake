@@ -129,7 +129,6 @@ CPMDeclarePackage(opus
 
 # SVT-AV1
 # renovate: datasource=github-tags depName=AOMediaCodec/SVT-AV1
-# packageName=LizardByte-infrastructure/SVT-AV1
 set(SVT_AV1_TAG v4.3.0)
 CPMDeclarePackage(svt_av1
         NAME svt_av1
@@ -161,7 +160,7 @@ CPMDeclarePackage(vulkan_headers
 
 # x264
 # renovate: datasource=git-refs depName=videolan/x264
-# ref=master
+# ref=stable
 set(X264_COMMIT b35605ace3ddf7c1a5d67a2eb553f034aef41d55)
 CPMDeclarePackage(x264
         NAME x264
@@ -174,7 +173,6 @@ CPMDeclarePackage(x264
 
 # x265
 # renovate: datasource=github-tags depName=Multicorewareinc/x265
-# packageName=LizardByte-infrastructure/x265_git
 set(X265_TAG 4.1)
 file(GLOB X265_PATCHES CONFIGURE_DEPENDS "${PATCH_DIRECTORY}/x265_git/*.patch")
 CPMDeclarePackage(x265
