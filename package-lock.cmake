@@ -182,7 +182,7 @@ CPMDeclarePackage(vulkan_headers
 # x264
 # renovate: datasource=git-refs depName=LizardByte-infrastructure/x264
 # ref=master
-set(X264_COMMIT b35605ace3ddf7c1a5d67a2eb553f034aef41d55)
+set(X264_COMMIT 0480cb05fa188d37ae87e8f4fd8f1aea3711f7ee)
 CPMDeclarePackage(x264
         NAME x264
         GIT_REPOSITORY https://github.com/LizardByte-infrastructure/x264.git
