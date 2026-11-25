@@ -29,7 +29,10 @@ foreach(pkgconfig_file IN LISTS pkgconfig_files)
         endif()
         string(REGEX REPLACE "(^|\n)${variable}=[^\n]*" "\\1${variable}=${value}" content "${content}")
     endforeach()
-    if("@WIN32@" AND pkgconfig_file MATCHES "/libavutil[.]pc$" AND NOT content MATCHES "-lpthread")
+    if("@BUILD_FFMPEG_NXDK@" AND pkgconfig_file MATCHES "/libavutil[.]pc$")
+        string(REGEX REPLACE "(^|\n)Libs.private:([^\n]*)"
+                "\\1Libs.private:\\2 -lffmpeg-nxdk-compat" content "${content}")
+    elseif("@WIN32@" AND pkgconfig_file MATCHES "/libavutil[.]pc$" AND NOT content MATCHES "-lpthread")
         # MinGW's clock_gettime and nanosleep wrappers require the winpthreads runtime.
         string(REGEX REPLACE "(^|\n)Libs.private:([^\n]*)"
                 "\\1Libs.private:\\2 -lpthread" content "${content}")

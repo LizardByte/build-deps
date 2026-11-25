@@ -11,6 +11,7 @@ option(BUILD_ALL_SUNSHINE "Build all Sunshine dependencies" OFF)
 
 # FFmpeg options
 option(BUILD_FFMPEG "Build FFmpeg" OFF)
+option(BUILD_FFMPEG_NXDK "Build the FFmpeg decoder package for the original Xbox" OFF)
 option(BUILD_FFMPEG_ENCODERS "Build FFmpeg encoders" ON)
 option(BUILD_FFMPEG_DECODERS "Build FFmpeg decoders" ON)
 option(BUILD_FFMPEG_TOOLS "Build ffmpeg and ffprobe with formats, filters, and protocols" ON)
@@ -71,6 +72,11 @@ elseif(NOT N_PROC MATCHES "^[0-9]+$")
     set(N_PROC 1)
 endif()
 message(STATUS "parallel builds: ${N_PROC}")
+
+if(BUILD_FFMPEG_NXDK)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/nxdk.cmake)
+    return()
+endif()
 
 set(MSYS2_ROOT "C:/msys64")
 if(WIN32 AND DEFINED ENV{MSYS2_ROOT})

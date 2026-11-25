@@ -648,8 +648,48 @@ jobs:
           name: ${{ matrix.name }}-${{ matrix.build }}
           path: ./${{ matrix.name }}-*.tar.gz
 
+  build-ffmpeg-nxdk:
+    name: FFMPEG - NXDK-i386
+    needs: release-setup
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Install nxdk build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld llvm nasm
+
+      - name: Build and install Xbox FFmpeg
+        run: |
+          cmake -S . -B build -DBUILD_FFMPEG_NXDK=ON -DCMAKE_INSTALL_PREFIX="$PWD/build/dist"
+          cmake --build build
+          cmake --install build
+
+      - name: Print FFmpeg configure log
+        if: failure()
+        run: |
+          if [ -f build/ffmpeg-nxdk/ffmpeg/ffbuild/config.log ]; then
+            tail -n 200 build/ffmpeg-nxdk/ffmpeg/ffbuild/config.log
+          fi
+
+      - name: Create Xbox FFmpeg archive
+        run: tar -C build/dist -czf NXDK-i386-ffmpeg.tar.gz ffmpeg
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          if-no-files-found: error
+          name: NXDK-i386-FFMPEG
+          path: NXDK-i386-ffmpeg.tar.gz
+
   conclude:
-    needs: build
+    needs:
+      - build
+      - build-ffmpeg-nxdk
     permissions: {}
     runs-on: ubuntu-latest
     steps:
@@ -664,6 +704,7 @@ jobs:
     needs:
       - release-setup
       - build
+      - build-ffmpeg-nxdk
     permissions:
       contents: read
     runs-on: ubuntu-latest

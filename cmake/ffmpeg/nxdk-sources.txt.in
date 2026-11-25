@@ -1,0 +1,4 @@
+FFmpeg: https://github.com/FFmpeg/FFmpeg/tree/@FFMPEG_TAG@
+nxdk: https://github.com/XboxDev/nxdk/tree/@NXDK_REVISION@
+Xbox patch, compiler wrappers and compatibility code:
+https://github.com/SunshineStream/Moonlight-XboxOG/tree/@MOONLIGHT_NXDK_REVISION@
