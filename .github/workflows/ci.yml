@@ -119,7 +119,7 @@ jobs:
             generator: "Unix Makefiles"
             shell: bash
           - name: NXDK-i386
-            os: ubuntu-24.04
+            os: ubuntu-latest
             arch: i386
             build_ffmpeg_nxdk: 'ON'
             generator: "Unix Makefiles"
@@ -181,7 +181,7 @@ jobs:
       - name: Prepare Dependencies Linux
         id: cross_compile
         if: >-
-          runner.os == 'Linux' && matrix.name != 'NXDK-i386' &&
+          runner.os == 'Linux' && matrix.build_ffmpeg_nxdk != 'ON' &&
           !startsWith(matrix.shell, 'freebsd') && !startsWith(matrix.name, 'Alpine')
         run: |
           echo "::group::distro detection"
@@ -359,7 +359,7 @@ jobs:
 
       - name: Setup Dependencies Linux
         if: >-
-          runner.os == 'Linux' && matrix.name != 'NXDK-i386' &&
+          runner.os == 'Linux' &&
           !startsWith(matrix.shell, 'freebsd') && !startsWith(matrix.name, 'Alpine')
         run: |
           echo "::group::apt update"
@@ -367,14 +367,12 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::install dependencies"
-          sudo aptitude install -y --without-recommends ${{ steps.cross_compile.outputs.DEPENDENCIES }}
+          if [[ "${{ matrix.build_ffmpeg_nxdk }}" == 'ON' ]]; then
+            sudo apt-get install -y --no-install-recommends clang lld llvm nasm pkg-config
+          else
+            sudo aptitude install -y --without-recommends ${{ steps.cross_compile.outputs.DEPENDENCIES }}
+          fi
           echo "::endgroup::"
-
-      - name: Setup Dependencies NXDK
-        if: matrix.name == 'NXDK-i386'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang lld llvm nasm pkg-config
 
       - name: Setup Dependencies MacOS
         if: runner.os == 'macOS'
@@ -610,7 +608,7 @@ jobs:
           ${{ env.MAKE_CMD }} -C build install
 
       - name: Verify FFmpeg package
-        if: matrix.name != 'NXDK-i386'
+        if: matrix.build_ffmpeg_nxdk != 'ON'
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"
@@ -635,9 +633,6 @@ jobs:
 
           echo "::group::FFmpeg config.log"
           cat ./build/_deps/ffmpeg-*/ffbuild/config.log || true
-          if [ "${{ matrix.name }}" = "NXDK-i386" ]; then
-            cat ./build/ffmpeg-nxdk/ffbuild/config.log || true
-          fi
           echo "::endgroup::"
 
       - name: Debug build directory

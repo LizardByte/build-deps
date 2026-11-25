@@ -1,9 +1,11 @@
-if(BUILD_FFMPEG_NXDK)
-    include(${CMAKE_CURRENT_LIST_DIR}/nxdk.cmake)
-    return()
-endif()
-
 CPMGetPackage(ffmpeg)
+
+if(BUILD_FFMPEG_NXDK)
+    # The Xbox profile selects its built-in codecs and parsers in ffmpeg.cmake.
+    foreach(component ENCODERS DECODERS TOOLS OPUS AMF NV_CODEC_HEADERS LIBVA VULKAN V4L2)
+        set(BUILD_FFMPEG_${component} OFF)
+    endforeach()
+endif()
 
 if(NOT BUILD_FFMPEG_ENCODERS)
     foreach(component MF SVT_AV1 X264 X265 CBS)
