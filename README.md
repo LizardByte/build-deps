@@ -27,15 +27,33 @@ This is a common set of pre-compiled dependencies for [Sunshine](https://github.
 
 Download the matching `<platform>-ffmpeg.tar.gz` archive from a
 [release](https://github.com/LizardByte/build-deps/releases), and extract its `ffmpeg` directory.
-The package contains `include`, `lib`, `lib/pkgconfig`, `bin`, and `share/licenses`. CI builds encoders,
-decoders, and tools together for each platform. Pin the release tag and archive SHA256 in reproducible builds.
+The native packages contain `include`, `lib`, `lib/pkgconfig`, `bin`, and `share/licenses`.
+CI builds native encoders, decoders, and tools together. Pin the release tag and archive SHA256
+in reproducible builds.
 
 For applications linking the static libraries, point `PKG_CONFIG_PATH` at the extracted `lib/pkgconfig`
 directory and use `pkg-config --static` to obtain the complete link dependencies. The pkg-config files are
 relocatable. Platform graphics and system development libraries may still be required when linking hardware
 acceleration support. Windows archives use the MSYS2 MinGW toolchain and include the static oneVPL dispatcher.
 
-To build the dependencies from source:
+### Original Xbox
+
+Use `NXDK-i386-ffmpeg.tar.gz` for nxdk projects. It includes i386 COFF archives for
+`libavcodec`, `libavutil`, `libswscale`, and `libswresample`, built for the Xbox's Pentium III.
+The decoder profile supports H.264, H.263, MPEG-2, and Opus. Link with your nxdk runtime and the
+included `libffmpeg-nxdk-compat.a` for aligned allocation and timing. The package records its
+source revisions in `ffmpeg/share/ffmpeg-nxdk/sources.txt`.
+
+To reproduce the archive's install tree from a checkout on Ubuntu, run:
+
+```bash
+sudo apt-get install clang cmake git lld llvm make nasm pkg-config
+cmake -S . -B build-nxdk -DBUILD_FFMPEG_NXDK=ON -DCMAKE_INSTALL_PREFIX="$PWD/build-nxdk/dist"
+cmake --build build-nxdk
+cmake --install build-nxdk
+```
+
+### Build from source for your project
 
 Add this repository as a submodule to your project, then follow [Build](#build).
 
@@ -47,6 +65,7 @@ git submodule add https://github.com/LizardByte/build-deps.git third-party/build
 
 This repository uses the MIT License. See the individual projects for the licenses that apply to
 dependency sources and patches.
+The [Xbox FFmpeg compatibility code](cmake/ffmpeg/nxdk/NOTICE.md) retains its GNU GPL version 3 license.
 
 
 ## Build

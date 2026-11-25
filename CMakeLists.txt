@@ -11,6 +11,7 @@ option(BUILD_ALL_SUNSHINE "Build all Sunshine dependencies" OFF)
 
 # FFmpeg options
 option(BUILD_FFMPEG "Build FFmpeg" OFF)
+option(BUILD_FFMPEG_NXDK "Build the FFmpeg decoder package for the original Xbox" OFF)
 option(BUILD_FFMPEG_ENCODERS "Build FFmpeg encoders" ON)
 option(BUILD_FFMPEG_DECODERS "Build FFmpeg decoders" ON)
 option(BUILD_FFMPEG_TOOLS "Build ffmpeg and ffprobe with formats, filters, and protocols" ON)
@@ -213,6 +214,6 @@ message(STATUS "Detected architecture: ${CMAKE_SYSTEM_PROCESSOR}")
 message(STATUS "CI Matrix name should be: '${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}'")
 
 # FFmpeg
-if(BUILD_ALL OR BUILD_ALL_SUNSHINE OR BUILD_FFMPEG)
+if(BUILD_ALL OR BUILD_ALL_SUNSHINE OR BUILD_FFMPEG OR BUILD_FFMPEG_NXDK)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/_main.cmake)
 endif()
