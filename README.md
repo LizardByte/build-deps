@@ -42,12 +42,12 @@ Use `NXDK-i386-ffmpeg.tar.gz` for nxdk projects. It includes i386 COFF archives 
 `libavcodec`, `libavutil`, `libswscale`, and `libswresample`, built for the Xbox's Pentium III.
 The decoder profile supports H.264, H.263, MPEG-2, and Opus. Link with your nxdk runtime and the
 included `libffmpeg-nxdk-compat.a` for aligned allocation and timing. The package records its
-SDK and adapter revisions in `ffmpeg/share/ffmpeg-nxdk/sources.txt`.
+source revisions in `ffmpeg/share/ffmpeg-nxdk/sources.txt`.
 
 To reproduce the archive's install tree from a checkout on Ubuntu, run:
 
 ```bash
-sudo apt-get install clang cmake git lld llvm make nasm
+sudo apt-get install clang cmake git lld llvm make nasm pkg-config
 cmake -S . -B build-nxdk -DBUILD_FFMPEG_NXDK=ON -DCMAKE_INSTALL_PREFIX="$PWD/build-nxdk/dist"
 cmake --build build-nxdk
 cmake --install build-nxdk
@@ -65,6 +65,7 @@ git submodule add https://github.com/LizardByte/build-deps.git third-party/build
 
 This repository uses the MIT License. See the individual projects for the licenses that apply to
 dependency sources and patches.
+The [Xbox FFmpeg compatibility code](cmake/ffmpeg/nxdk/NOTICE.md) retains its GNU GPL version 3 license.
 
 
 ## Build

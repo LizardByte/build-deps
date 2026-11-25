@@ -1,0 +1,47 @@
+SPDX-License-Identifier: GPL-3.0-only
+See cmake/ffmpeg/nxdk/NOTICE.md for attribution.
+
+Adapt FFmpeg to the Xbox runtime:
+
+- nxdk condition variables own kernel events and require explicit destruction.
+- Desktop Windows thread naming APIs are unavailable on Xbox.
+- nxdk has VirtualAlloc but lacks VirtualProtect, and the Xbox scaler has no JIT backend.
+
+diff --git a/compat/w32pthreads.h b/compat/w32pthreads.h
+--- a/compat/w32pthreads.h
++++ b/compat/w32pthreads.h
+@@ -165,9 +165,10 @@
+     return 0;
+ }
+
+-/* native condition variables do not destroy */
++/* nxdk condition variables own kernel events. */
+ static inline int pthread_cond_destroy(pthread_cond_t *cond)
+ {
++    UninitializeConditionVariable(cond);
+     return 0;
+ }
+
+@@ -212,7 +213,7 @@
+
+ static inline int win32_thread_setname(const char *name)
+ {
+-#if !HAVE_UWP
++#if !HAVE_UWP && !defined(NXDK)
+     typedef HRESULT (WINAPI *SetThreadDescriptionFn)(HANDLE, PCWSTR);
+
+     // Although SetThreadDescription lives in kernel32.dll, on Windows Server 2016,
+diff --git a/libswscale/jit.c b/libswscale/jit.c
+--- a/libswscale/jit.c
++++ b/libswscale/jit.c
+@@ -59,9 +59,9 @@ void ff_sws_jit_free(void *ptr, size_t size)
+         munmap(ptr, size);
+ }
+
+-#elif HAVE_VIRTUALALLOC
++#elif HAVE_VIRTUALALLOC && !defined(NXDK)
+
+ #include <windows.h>
+
+ void *ff_sws_jit_alloc(size_t size)
+ {

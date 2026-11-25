@@ -1,3 +1,8 @@
+if(BUILD_FFMPEG_NXDK)
+    include(${CMAKE_CURRENT_LIST_DIR}/nxdk.cmake)
+    return()
+endif()
+
 CPMGetPackage(ffmpeg)
 
 if(NOT BUILD_FFMPEG_ENCODERS)

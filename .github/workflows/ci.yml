@@ -65,6 +65,7 @@ jobs:
           - Linux-aarch64
           - Linux-ppc64le
           - Linux-x86_64
+          - NXDK-i386
           - Windows-AMD64
           - Windows-ARM64
         include:
@@ -115,6 +116,12 @@ jobs:
           - name: Linux-x86_64
             os: ubuntu-22.04
             arch: x86_64
+            generator: "Unix Makefiles"
+            shell: bash
+          - name: NXDK-i386
+            os: ubuntu-24.04
+            arch: i386
+            build_ffmpeg_nxdk: 'ON'
             generator: "Unix Makefiles"
             shell: bash
           - name: Windows-AMD64
@@ -173,7 +180,9 @@ jobs:
 
       - name: Prepare Dependencies Linux
         id: cross_compile
-        if: runner.os == 'Linux' && !startsWith(matrix.shell, 'freebsd') && !startsWith(matrix.name, 'Alpine')
+        if: >-
+          runner.os == 'Linux' && matrix.name != 'NXDK-i386' &&
+          !startsWith(matrix.shell, 'freebsd') && !startsWith(matrix.name, 'Alpine')
         run: |
           echo "::group::distro detection"
           # detect dist name like bionic, focal, etc
@@ -349,7 +358,9 @@ jobs:
           echo "::endgroup::"
 
       - name: Setup Dependencies Linux
-        if: runner.os == 'Linux' && !startsWith(matrix.shell, 'freebsd') && !startsWith(matrix.name, 'Alpine')
+        if: >-
+          runner.os == 'Linux' && matrix.name != 'NXDK-i386' &&
+          !startsWith(matrix.shell, 'freebsd') && !startsWith(matrix.name, 'Alpine')
         run: |
           echo "::group::apt update"
           sudo apt-get update
@@ -358,6 +369,12 @@ jobs:
           echo "::group::install dependencies"
           sudo aptitude install -y --without-recommends ${{ steps.cross_compile.outputs.DEPENDENCIES }}
           echo "::endgroup::"
+
+      - name: Setup Dependencies NXDK
+        if: matrix.name == 'NXDK-i386'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld llvm nasm pkg-config
 
       - name: Setup Dependencies MacOS
         if: runner.os == 'macOS'
@@ -574,6 +591,7 @@ jobs:
             -G "${{ matrix.generator }}" \
             -DBUILD_ALL=OFF \
             -DBUILD_${{ matrix.build }}=ON \
+            -DBUILD_FFMPEG_NXDK=${{ matrix.build_ffmpeg_nxdk || 'OFF' }} \
             -DBUILD_FFMPEG_CUDA_LLVM=${build_ffmpeg_cuda_llvm} \
             -DCMAKE_TOOLCHAIN_FILE=${{ env.CMAKE_TOOLCHAIN_FILE }} \
             -DCMAKE_INSTALL_PREFIX="${{ env.ROOT_PATH }}/build/dist" \
@@ -592,6 +610,7 @@ jobs:
           ${{ env.MAKE_CMD }} -C build install
 
       - name: Verify FFmpeg package
+        if: matrix.name != 'NXDK-i386'
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"
@@ -616,6 +635,9 @@ jobs:
 
           echo "::group::FFmpeg config.log"
           cat ./build/_deps/ffmpeg-*/ffbuild/config.log || true
+          if [ "${{ matrix.name }}" = "NXDK-i386" ]; then
+            cat ./build/ffmpeg-nxdk/ffbuild/config.log || true
+          fi
           echo "::endgroup::"
 
       - name: Debug build directory
@@ -648,48 +670,8 @@ jobs:
           name: ${{ matrix.name }}-${{ matrix.build }}
           path: ./${{ matrix.name }}-*.tar.gz
 
-  build-ffmpeg-nxdk:
-    name: FFMPEG - NXDK-i386
-    needs: release-setup
-    permissions:
-      contents: read
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-
-      - name: Install nxdk build tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang lld llvm nasm
-
-      - name: Build and install Xbox FFmpeg
-        run: |
-          cmake -S . -B build -DBUILD_FFMPEG_NXDK=ON -DCMAKE_INSTALL_PREFIX="$PWD/build/dist"
-          cmake --build build
-          cmake --install build
-
-      - name: Print FFmpeg configure log
-        if: failure()
-        run: |
-          if [ -f build/ffmpeg-nxdk/ffmpeg/ffbuild/config.log ]; then
-            tail -n 200 build/ffmpeg-nxdk/ffmpeg/ffbuild/config.log
-          fi
-
-      - name: Create Xbox FFmpeg archive
-        run: tar -C build/dist -czf NXDK-i386-ffmpeg.tar.gz ffmpeg
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
-        with:
-          if-no-files-found: error
-          name: NXDK-i386-FFMPEG
-          path: NXDK-i386-ffmpeg.tar.gz
-
   conclude:
-    needs:
-      - build
-      - build-ffmpeg-nxdk
+    needs: build
     permissions: {}
     runs-on: ubuntu-latest
     steps:
@@ -704,7 +686,6 @@ jobs:
     needs:
       - release-setup
       - build
-      - build-ffmpeg-nxdk
     permissions:
       contents: read
     runs-on: ubuntu-latest

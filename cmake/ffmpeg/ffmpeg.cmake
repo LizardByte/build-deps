@@ -11,7 +11,6 @@ else()
 endif()
 
 list(APPEND FFMPEG_EXTRA_CONFIGURE
-        --prefix=${CMAKE_CURRENT_BINARY_DIR_UNIX}/FFmpeg
         --pkg-config=${PKG_CONFIG_EXECUTABLE}
         --extra-cflags='${CMAKE_C_FLAGS}'
         --extra-cxxflags='${CMAKE_CXX_FLAGS}'
@@ -194,28 +193,11 @@ if(CMAKE_CROSSCOMPILING)
     endif()
 endif()
 
-# convert list to string
-# configure command will only take the first argument if not converted to string
-string(REPLACE ";" " " FFMPEG_EXTRA_CONFIGURE "${FFMPEG_EXTRA_CONFIGURE}")
-message(STATUS "FFmpeg configure options: ${FFMPEG_EXTRA_CONFIGURE}")
-
-set(WORKING_DIR "${ffmpeg_SOURCE_DIR}")
-UNIX_PATH(WORKING_DIR_UNIX ${WORKING_DIR})
 # Toolchain files can set the compiler as a normal variable rather than a cache entry.
 file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg-compiler.txt CONTENT "${CMAKE_C_COMPILER}\n")
-add_custom_target(ffmpeg ALL
-        COMMAND ${SHELL_CMD} "PKG_CONFIG_PATH='${PKG_CONFIG_PATH}' \
-./configure \
-${FFMPEG_EXTRA_CONFIGURE}"
-        # FFmpeg's separate make invocation starts its own jobserver.
-        COMMAND ${SHELL_CMD} "MAKEFLAGS= MFLAGS= ${FFMPEG_NVENC_SDK_ENV} ${MAKE_EXECUTABLE} --jobs=${N_PROC}"
-        COMMAND ${SHELL_CMD} "MAKEFLAGS= MFLAGS= ${FFMPEG_NVENC_SDK_ENV} ${MAKE_EXECUTABLE} install"
-        WORKING_DIRECTORY ${WORKING_DIR}
-        COMMENT "Target: FFmpeg"
-        COMMAND_EXPAND_LISTS
-        USES_TERMINAL
-        VERBATIM
-)
+set(FFMPEG_SOURCE_DIR "${ffmpeg_SOURCE_DIR}")
+include(${CMAKE_CURRENT_LIST_DIR}/build.cmake)
+
 if(BUILD_FFMPEG_AMF)
     add_dependencies(ffmpeg amf)
 endif()
@@ -237,29 +219,12 @@ endif()
 if(BUILD_FFMPEG_X265)
     add_dependencies(ffmpeg x265)
 endif()
-add_dependencies(${CMAKE_PROJECT_NAME} ffmpeg)
 if(BUILD_FFMPEG_DECODERS AND BUILD_FFMPEG_DAV1D)
     add_dependencies(ffmpeg dav1d)
 endif()
 if(BUILD_FFMPEG_OPUS)
     add_dependencies(ffmpeg opus)
 endif()
-install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/include/"
-        DESTINATION ${FFMPEG_INSTALL_PREFIX}/include)
-install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/lib/"
-        DESTINATION ${FFMPEG_INSTALL_PREFIX}/lib)
-if(BUILD_FFMPEG_TOOLS)
-    install(PROGRAMS
-            "${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/bin/ffmpeg${CMAKE_EXECUTABLE_SUFFIX}"
-            "${CMAKE_CURRENT_BINARY_DIR}/FFmpeg/bin/ffprobe${CMAKE_EXECUTABLE_SUFFIX}"
-            DESTINATION ${FFMPEG_INSTALL_PREFIX}/bin)
-endif()
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/relocate-pkgconfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/relocate-pkgconfig.cmake @ONLY)
-# Run after the pkg-config files from every component have been installed.
-install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/relocate-pkgconfig.cmake)
-install(FILES ${ffmpeg_SOURCE_DIR}/COPYING.LGPLv2.1
-        DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/ffmpeg)
 if(BUILD_FFMPEG_ENCODERS)
     install(FILES ${ffmpeg_SOURCE_DIR}/COPYING.GPLv2
             DESTINATION ${FFMPEG_INSTALL_PREFIX}/share/licenses/ffmpeg)

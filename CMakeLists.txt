@@ -73,11 +73,6 @@ elseif(NOT N_PROC MATCHES "^[0-9]+$")
 endif()
 message(STATUS "parallel builds: ${N_PROC}")
 
-if(BUILD_FFMPEG_NXDK)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/nxdk.cmake)
-    return()
-endif()
-
 set(MSYS2_ROOT "C:/msys64")
 if(WIN32 AND DEFINED ENV{MSYS2_ROOT})
     file(TO_CMAKE_PATH "$ENV{MSYS2_ROOT}" MSYS2_ROOT)
@@ -219,6 +214,6 @@ message(STATUS "Detected architecture: ${CMAKE_SYSTEM_PROCESSOR}")
 message(STATUS "CI Matrix name should be: '${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}'")
 
 # FFmpeg
-if(BUILD_ALL OR BUILD_ALL_SUNSHINE OR BUILD_FFMPEG)
+if(BUILD_ALL OR BUILD_ALL_SUNSHINE OR BUILD_FFMPEG OR BUILD_FFMPEG_NXDK)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffmpeg/_main.cmake)
 endif()

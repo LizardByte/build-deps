@@ -54,24 +54,30 @@ CPMDeclarePackage(ffmpeg
         PATCHES ${FFMPEG_PATCHES}
 )
 
-# The original Xbox decoder package uses a separately pinned SDK and adapters.
-set(NXDK_REVISION fafbe41b48fa00a31b79dd49ad1f86a30adcdd9e)
-set(MOONLIGHT_NXDK_REVISION af34ad6db9c638207d00a783d4e84c38f1ea96b7)
+CPMDeclarePackage(ffmpeg_nxdk
+        NAME ffmpeg_nxdk
+        GIT_REPOSITORY https://github.com/FFmpeg/FFmpeg.git
+        GIT_TAG ${FFMPEG_TAG}
+        GIT_SHALLOW TRUE
+        GIT_CONFIG core.autocrlf=false
+        SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/ffmpeg-nxdk-${FFMPEG_TAG}"
+        UPDATE_DISCONNECTED TRUE
+        DOWNLOAD_ONLY YES
+        PATCHES "${PATCH_DIRECTORY}/nxdk/ffmpeg-nxdk.patch"
+)
+
+# nxdk
+# renovate: datasource=git-refs depName=XboxDev/nxdk
+# ref=master
+set(NXDK_COMMIT fafbe41b48fa00a31b79dd49ad1f86a30adcdd9e)
 CPMDeclarePackage(nxdk
         NAME nxdk
         GIT_REPOSITORY https://github.com/XboxDev/nxdk.git
-        GIT_TAG ${NXDK_REVISION}
+        GIT_TAG ${NXDK_COMMIT}
         GIT_CONFIG core.autocrlf=false
         GIT_SUBMODULES lib/libcxx lib/net/lwip lib/pdclib
         GIT_SUBMODULES_RECURSE FALSE
         NO_CACHE YES
-        DOWNLOAD_ONLY YES
-)
-CPMDeclarePackage(moonlight_nxdk
-        NAME moonlight_nxdk
-        URL https://codeload.github.com/SunshineStream/Moonlight-XboxOG/tar.gz/${MOONLIGHT_NXDK_REVISION}
-        URL_HASH SHA256=c47f2141b002254982bdf4e734833f76e996f3a7104a133a3c68346974a53b6c
-        TLS_VERIFY TRUE
         DOWNLOAD_ONLY YES
 )
 
