@@ -65,7 +65,6 @@ jobs:
           - Linux-aarch64
           - Linux-ppc64le
           - Linux-x86_64
-          - NXDK-i386
           - Windows-AMD64
           - Windows-ARM64
         include:
@@ -116,12 +115,6 @@ jobs:
           - name: Linux-x86_64
             os: ubuntu-22.04
             arch: x86_64
-            generator: "Unix Makefiles"
-            shell: bash
-          - name: NXDK-i386
-            os: ubuntu-latest
-            arch: i386
-            build_ffmpeg_nxdk: 'ON'
             generator: "Unix Makefiles"
             shell: bash
           - name: Windows-AMD64
@@ -180,9 +173,7 @@ jobs:
 
       - name: Prepare Dependencies Linux
         id: cross_compile
-        if: >-
-          runner.os == 'Linux' && matrix.build_ffmpeg_nxdk != 'ON' &&
-          !startsWith(matrix.shell, 'freebsd') && !startsWith(matrix.name, 'Alpine')
+        if: runner.os == 'Linux' && !startsWith(matrix.shell, 'freebsd') && !startsWith(matrix.name, 'Alpine')
         run: |
           echo "::group::distro detection"
           # detect dist name like bionic, focal, etc
@@ -358,20 +349,14 @@ jobs:
           echo "::endgroup::"
 
       - name: Setup Dependencies Linux
-        if: >-
-          runner.os == 'Linux' &&
-          !startsWith(matrix.shell, 'freebsd') && !startsWith(matrix.name, 'Alpine')
+        if: runner.os == 'Linux' && !startsWith(matrix.shell, 'freebsd') && !startsWith(matrix.name, 'Alpine')
         run: |
           echo "::group::apt update"
           sudo apt-get update
           echo "::endgroup::"
 
           echo "::group::install dependencies"
-          if [[ "${{ matrix.build_ffmpeg_nxdk }}" == 'ON' ]]; then
-            sudo apt-get install -y --no-install-recommends clang lld llvm nasm pkg-config
-          else
-            sudo aptitude install -y --without-recommends ${{ steps.cross_compile.outputs.DEPENDENCIES }}
-          fi
+          sudo aptitude install -y --without-recommends ${{ steps.cross_compile.outputs.DEPENDENCIES }}
           echo "::endgroup::"
 
       - name: Setup Dependencies MacOS
@@ -589,7 +574,6 @@ jobs:
             -G "${{ matrix.generator }}" \
             -DBUILD_ALL=OFF \
             -DBUILD_${{ matrix.build }}=ON \
-            -DBUILD_FFMPEG_NXDK=${{ matrix.build_ffmpeg_nxdk || 'OFF' }} \
             -DBUILD_FFMPEG_CUDA_LLVM=${build_ffmpeg_cuda_llvm} \
             -DCMAKE_TOOLCHAIN_FILE=${{ env.CMAKE_TOOLCHAIN_FILE }} \
             -DCMAKE_INSTALL_PREFIX="${{ env.ROOT_PATH }}/build/dist" \
@@ -608,7 +592,6 @@ jobs:
           ${{ env.MAKE_CMD }} -C build install
 
       - name: Verify FFmpeg package
-        if: matrix.build_ffmpeg_nxdk != 'ON'
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"
