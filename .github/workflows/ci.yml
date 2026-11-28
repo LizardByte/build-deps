@@ -652,10 +652,8 @@ jobs:
           cd "$GITHUB_WORKSPACE/build/dist"
 
           # Create archives based on what was built
-          if [ "${{ matrix.build }}" = "FFMPEG" ] || [ "${{ matrix.build }}" = "ALL" ]; then
-            if [ -d "ffmpeg" ]; then
-              tar -czf "../../${{ matrix.name }}-ffmpeg.tar.gz" ffmpeg
-            fi
+          if [[ ( "${{ matrix.build }}" == "FFMPEG" || "${{ matrix.build }}" == "ALL" ) && -d "ffmpeg" ]]; then
+            tar -czf "../../${{ matrix.name }}-ffmpeg.tar.gz" ffmpeg
           fi
 
       - name: Upload Artifacts
