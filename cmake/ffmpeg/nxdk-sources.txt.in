@@ -1,4 +1,0 @@
-FFmpeg: https://github.com/FFmpeg/FFmpeg/tree/@FFMPEG_TAG@
-nxdk: https://github.com/XboxDev/nxdk/tree/@NXDK_COMMIT@
-The matching build-deps release source contains the Xbox patch under patches/FFmpeg/nxdk
-and the static compatibility library source under cmake/ffmpeg/nxdk.

@@ -41,39 +41,17 @@ CPMDeclarePackage(dav1d
 # renovate: datasource=github-tags depName=FFmpeg/FFmpeg
 # versioning=regex:^n(?<major>\d+)\.(?<minor>\d+)(?:\.(?<patch>\d+))?$
 set(FFMPEG_TAG n9.1)
-if(BUILD_FFMPEG_NXDK)
-    set(FFMPEG_PATCHES "${PATCH_DIRECTORY}/nxdk/ffmpeg-nxdk.patch")
-    # Keep the two patch sets and their generated objects in distinct checkouts.
-    set(FFMPEG_SOURCE_SUFFIX "-nxdk")
-else()
-    file(GLOB_RECURSE FFMPEG_PATCHES CONFIGURE_DEPENDS "${PATCH_DIRECTORY}/FFmpeg/*.patch")
-endif()
+file(GLOB_RECURSE FFMPEG_PATCHES CONFIGURE_DEPENDS "${PATCH_DIRECTORY}/FFmpeg/*.patch")
 CPMDeclarePackage(ffmpeg
         NAME ffmpeg
         GIT_REPOSITORY https://github.com/FFmpeg/FFmpeg.git
         GIT_TAG ${FFMPEG_TAG}
         GIT_SHALLOW TRUE
         GIT_CONFIG core.autocrlf=false
-        # Use a clean checkout when the tag or patch set changes.
-        SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/ffmpeg-${FFMPEG_TAG}${FFMPEG_SOURCE_SUFFIX}"
+        SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/ffmpeg-${FFMPEG_TAG}"  # Clean checkout when the tag changes.
         UPDATE_DISCONNECTED TRUE  # Keep patches from running again on reconfigure.
         DOWNLOAD_ONLY YES
         PATCHES ${FFMPEG_PATCHES}
-)
-
-# nxdk
-# renovate: datasource=git-refs depName=XboxDev/nxdk
-# ref=master
-set(NXDK_COMMIT fafbe41b48fa00a31b79dd49ad1f86a30adcdd9e)
-CPMDeclarePackage(nxdk
-        NAME nxdk
-        GIT_REPOSITORY https://github.com/XboxDev/nxdk.git
-        GIT_TAG ${NXDK_COMMIT}
-        GIT_CONFIG core.autocrlf=false
-        GIT_SUBMODULES lib/libcxx lib/net/lwip lib/pdclib
-        GIT_SUBMODULES_RECURSE FALSE
-        NO_CACHE YES
-        DOWNLOAD_ONLY YES
 )
 
 # libva
